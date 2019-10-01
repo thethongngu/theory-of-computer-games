@@ -9,10 +9,12 @@ Author: Hung Guei (moporgic)
 """
 
 class board:
-    """ simple implementation of 2048 puzzle """
+    """ simple implementation of Threes puzzle """
+
+    SCORES = [0, 0, 0, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441]
     
-    def __init__(self, state = None):
-        self.state = state[:] if state is not None else [0] * 16
+    def __init__(self, input_state=None):
+        self.state = input_state[:] if input_state is not None else [0] * 16
         return
     
     def __getitem__(self, pos):
@@ -50,21 +52,21 @@ class board:
         return -1
     
     def slide_left(self):
-        move, score = [], 0
-        for row in [self.state[r:r + 4] for r in range(0, 16, 4)]:
-            buf = sorted(row, key = lambda t: not t) + [0]
-            while buf[0]:
-                if buf[0] == buf[1]:
-                    buf = buf[1:] + [0]
-                    buf[0] += 1
-                    score += 1 << buf[0]
-                move += [buf[0]]
-                buf = buf[1:]
-            move += buf[1:]
-        if move != self.state:
-            self.state = move
-            return score
-        return -1
+        new_state, score = [], 0
+        for i in range(0, 16, 4):
+            row = self.state[i: i + 4]
+            for offset in range(3):
+                if (row[offset] + row[offset + 1]) % 3 == 0:
+                    row[offset] = max(row[offset], row[offset + 1]) + 1
+                    row[offset + 1] = 0
+                    score += self.SCORES[row[offset]] - self.SCORES[row[offset] - 1]
+            new_state += row
+
+        if self.state == new_state:
+            return -1
+
+        self.state = new_state
+        return score
     
     def slide_right(self):
         self.reflect_horizontal()
@@ -140,4 +142,3 @@ if __name__ == '__main__':
     state = board()
     state[10] = 10
     print(state)
-    
