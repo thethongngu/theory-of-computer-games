@@ -47,7 +47,7 @@ class episode:
 
     def take_turns(self, play, evil):
         self.ep_time = self.millisec()
-        if max(self.step_by_agent() + 1, 2) % 2 != 0:
+        if max(self.step_by_agent() + 1, 9) % 2 == 0:
             return play
         else:
             return evil
