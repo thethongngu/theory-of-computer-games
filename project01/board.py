@@ -60,8 +60,10 @@ class board:
                 if row[r] == 0:
                     row[r] = row[r + 1]
                     row[r + 1] = 0
+                    continue
 
-                if (row[r] == row[r + 1] and (row[r] + row[r + 1]) % 3 == 0) or (row[r] + row[r + 1] == 3):
+                if (row[r] == row[r + 1] and (row[r] + row[r + 1]) % 3 == 0) or \
+                   (row[r] * row[r + 1] != 0 and row[r] + row[r + 1] == 3):
                     score += self.SCORES[row[r]] - self.SCORES[row[r] - 1]
                     row[r] = max(row[r], row[r + 1]) + 1
                     row[r + 1] = 0
