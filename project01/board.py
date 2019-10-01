@@ -13,6 +13,7 @@ class board:
     """ simple implementation of Threes puzzle """
 
     SCORES = [0, 0, 0, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441]
+    POWER_3 = [0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144]
 
     def __init__(self, input_state=None):
         self.state = input_state[:] if input_state is not None else [0] * 16
@@ -130,11 +131,11 @@ class board:
         return
 
     def __str__(self):
-        state = '+' + '-' * 24 + '+\n'
+        curr_state = '+' + '-' * 24 + '+\n'
         for row in [self.state[r:r + 4] for r in range(0, 16, 4)]:
-            state += ('|' + ''.join('{0:6d}'.format((1 << t) & -2) for t in row) + '|\n')
-        state += '+' + '-' * 24 + '+'
-        return state
+            curr_state += ('|' + ''.join('{0:6d}'.format(self.POWER_3[t]) for t in row) + '|\n')
+        curr_state += '+' + '-' * 24 + '+'
+        return curr_state
 
 
 if __name__ == '__main__':
