@@ -64,9 +64,9 @@ class statistic:
             ssc += ep.score()
             msc = max(ep.score(), msc)
             stat[max(ep.state().state)] += 1
-            sop += ep.step()
-            pop += ep.step(action.slide.type)
-            eop += ep.step(action.place.type)
+            sop += ep.step_by_agent()
+            pop += ep.step_by_agent(action.slide.type)
+            eop += ep.step_by_agent(action.place.type)
             sdu += ep.time()
             pdu += ep.time(action.slide.type)
             edu += ep.time(action.place.type)
