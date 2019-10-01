@@ -55,13 +55,17 @@ class board:
 
     def slide_left(self):
         new_state, score = [], 0
-        for i in range(0, 16, 4):
-            row = self.state[i: i + 4]
-            for offset in range(3):
-                if (row[offset] + row[offset + 1]) % 3 == 0:
-                    row[offset] = max(row[offset], row[offset + 1]) + 1
-                    row[offset + 1] = 0
-                    score += self.SCORES[row[offset]] - self.SCORES[row[offset] - 1]
+        for row in [self.state[r:r + 4] for r in range(0, 16, 4)]:
+            for r in range(3):
+                if row[r] == 0:
+                    row[r] = row[r + 1]
+                    row[r + 1] = 0
+
+                if (row[r] == row[r + 1] and (row[r] + row[r + 1]) % 3 == 0) or (row[r] + row[r + 1] == 3):
+                    score += self.SCORES[row[r]] - self.SCORES[row[r] - 1]
+                    row[r] = max(row[r], row[r + 1]) + 1
+                    row[r + 1] = 0
+
             new_state += row
 
         if self.state == new_state:

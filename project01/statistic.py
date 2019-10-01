@@ -15,8 +15,8 @@ from episode import episode
 
 class statistic:
     """ container & statistic of episodes """
-    
-    def __init__(self, total, block = 0, limit = 0):
+
+    def __init__(self, total, block=0, limit=0):
         """
         the total episodes to run
         the block size of statistic
@@ -30,8 +30,8 @@ class statistic:
         self.data = []
         self.count = 0
         return
-    
-    def show(self, tstat = True):
+
+    def show(self, tstat=True):
         """
         show the statistic of last 'block' games
         
@@ -70,9 +70,10 @@ class statistic:
             sdu += ep.time()
             pdu += ep.time(action.slide.type)
             edu += ep.time(action.place.type)
-        
-        print("%d\t" "avg = %d, max = %d, ops = %d (%d|%d)" % (self.count, ssc / blk, msc, sop * 1000 / sdu, pop * 1000 / pdu, eop * 1000 / edu))
-        
+
+        print("%d\t" "avg = %d, max = %d, ops = %d (%d|%d)" % (
+        self.count, ssc / blk, msc, sop * 1000 / sdu, pop * 1000 / pdu, eop * 1000 / edu))
+
         if not tstat:
             return
         c = 0
@@ -82,50 +83,51 @@ class statistic:
             if not stat[t]:
                 continue
             accu = sum(stat[t:])
-            print("\t" "%d" "\t" "%s%%" "\t" "(%s%%)" % ((1 << t) & -2, accu * 100 / blk, stat[t] * 100 / blk)) # type, win rate, % of ending
+            print("\t" "%d" "\t" "%s%%" "\t" "(%s%%)" % (
+            (1 << t) & -2, accu * 100 / blk, stat[t] * 100 / blk))  # type, win rate, % of ending
             c += stat[t]
-        
+
         print()
         return
-    
+
     def summary(self):
         block = self.block
         self.block = len(self.data)
         self.show()
         self.block = block
         return
-    
+
     def is_finished(self):
         return self.count >= self.total
-    
-    def open_episode(self, flag = ""):
+
+    def open_episode(self, flag=""):
         if self.count >= self.limit:
             self.data = self.data[1:]
         self.count += 1
         self.data += [episode()]
         self.data[-1].open_episode(flag)
         return
-    
-    def close_episode(self, flag = ""):
+
+    def close_episode(self, flag=""):
         self.data[-1].close_episode(flag)
         if self.count % self.block == 0:
             self.show()
         return
-    
+
     def at(self, i):
         return self.data[i]
-    
+
     def front(self):
         return self.data[0]
-    
+
     def back(self):
         return self.data[-1]
-    
+
     def save(self, output):
         """ serialize this action to a file object """
         output.write(self.__str__())
         return True
-    
+
     def load(self, input):
         """ deserialize from a file object """
         self.data = []
@@ -139,11 +141,11 @@ class statistic:
         self.total = max(self.total, len(self.data))
         self.count = len(self.data)
         return True
-    
+
     def __str__(self):
         return "\n".join([str(ep) for ep in self.data]) + "\n"
-    
-    
+
+
 if __name__ == '__main__':
     print('2048 Demo: statistic.py\n')
 
@@ -151,7 +153,6 @@ if __name__ == '__main__':
     with open('X:/save.txt', 'r') as save:
         stat.load(save)
         print(stat)
-    
+
     with open('X:/test.txt', 'w') as save:
         stat.save(save)
-        

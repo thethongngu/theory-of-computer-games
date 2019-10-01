@@ -39,14 +39,15 @@ class episode:
         reward = move.apply(self.state())
         if reward == -1:
             return False
-        usage = self.millisec() - self.ep_time
-        record = move, reward, usage  # action, reward, time usage
+        time_usage = self.millisec() - self.ep_time
+        record = move, reward, time_usage  # action, reward, time usage
         self.ep_moves += [record]
         self.ep_score += reward
         return True
 
     def take_turns(self, play, evil):
         self.ep_time = self.millisec()
+        print('Step: ' + str(self.step_by_agent()))
         if max(self.step_by_agent() + 1, 9) % 2 == 0:
             return play
         else:
@@ -77,10 +78,8 @@ class episode:
             if who == action.slide.type:
                 return [mv[0] for mv in self.ep_moves[slice(2, self.step_by_agent(), 2)]]  # action, reward, time usage
             if who == action.place.type:
-                return [
-                    self.ep_moves[0][0]] + \
-                    [mv[0] for mv in self.ep_moves[slice(1, self.step_by_agent(), 2)]
-                ]  # action, reward, time usage
+                return [self.ep_moves[0][0]] + \
+                       [mv[0] for mv in self.ep_moves[slice(1, self.step_by_agent(), 2)]]  # action, reward, time usage
 
         return [mv[0] for mv in self.ep_moves]  # action, reward, time usage
 
