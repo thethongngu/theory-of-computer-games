@@ -65,6 +65,7 @@ if __name__ == '__main__':
             move = who.take_action(game.state())
             if not game.apply_action(move) or who.check_for_win(game.state()):
                 break
+            print(game.state())
         win = game.last_turns(play, evil)
         stat.close_episode(win.name())
         
