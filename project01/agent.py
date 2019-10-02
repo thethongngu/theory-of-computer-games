@@ -84,10 +84,9 @@ class rndenv(random_agent):
     3-tile: 33.33%
     """
 
-    bag = []
-
     def __init__(self, options=""):
         super().__init__("name=random role=environment " + options)
+        self.bag = []
         return
 
     def take_action(self, input_state, actions):
