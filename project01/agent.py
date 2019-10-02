@@ -113,8 +113,10 @@ class rndenv(random_agent):
 
         if empty_cell:
             pos = self.choice(empty_cell)
-            tile = self.choice([0, 1, 2])  # randomize choose the index of tile in the bag
-            return action.place(pos, self.bag[tile])
+            self.shuffle(self.bag)
+            tile = self.bag[-1]
+            self.bag.pop()
+            return action.place(pos, tile)
         else:
             return action()
 
