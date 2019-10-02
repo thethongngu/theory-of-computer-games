@@ -89,6 +89,9 @@ class rndenv(random_agent):
         self.bag = []
         return
 
+    def open_episode(self, flag=""):
+        self.bag = []
+
     def take_action(self, input_state, actions):
 
         side_tile = []
