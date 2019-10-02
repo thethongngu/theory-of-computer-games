@@ -30,7 +30,7 @@ class agent:
     def close_episode(self, flag=""):
         return
 
-    def take_action(self, state):
+    def take_action(self, state, actions):
         return action()
 
     def check_for_win(self, state):
@@ -84,16 +84,37 @@ class rndenv(random_agent):
     3-tile: 33.33%
     """
 
+    bag = []
+
     def __init__(self, options=""):
         super().__init__("name=random role=environment " + options)
         return
 
-    def take_action(self, input_state):
-        empty_cell = [pos for pos, tile in enumerate(input_state.state) if not tile]
+    def take_action(self, input_state, actions):
+
+        side_tile = []
+        if actions:
+            last_move = actions[-1].event()
+            if last_move == 0:
+                side_tile = [12, 13, 14, 15]
+            if last_move == 1:
+                side_tile = [0, 4, 8, 12]
+            if last_move == 2:
+                side_tile = [0, 1, 2, 3]
+            if last_move == 3:
+                side_tile = [3, 7, 11, 15]
+        else:
+            side_tile = [i for i in range(16)]
+
+        empty_cell = [pos for pos, tile in enumerate(input_state.state) if not tile and pos in side_tile]
+
+        if not self.bag:  # refill the bag if empty
+            self.bag = [1, 2, 3]
+
         if empty_cell:
             pos = self.choice(empty_cell)
-            tile = self.choice([1, 2, 3])
-            return action.place(pos, tile)
+            tile = self.choice([0, 1, 2])  # randomize choose the index of tile in the bag
+            return action.place(pos, self.bag[tile])
         else:
             return action()
 
@@ -108,7 +129,7 @@ class player(random_agent):
         super().__init__("name=dummy role=player " + options)
         return
 
-    def take_action(self, state):
+    def take_action(self, state, actions):
         legal = [op for op in range(4) if board(state).slide(op) != -1]
         if legal:
             op = self.choice(legal)
@@ -119,45 +140,3 @@ class player(random_agent):
 
 if __name__ == '__main__':
     print('2048 Demo: agent.py\n')
-
-    state = board()
-    env = rndenv()
-    ply = player()
-
-    a = env.take_action(state)
-    r = a.apply(state)
-    print(a)
-    print(r)
-    print(state)
-
-    a = env.take_action(state)
-    r = a.apply(state)
-    print(a)
-    print(r)
-    print(state)
-
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-
-    state = board()
-    state[0] = 1
-    state[1] = 1
-    print(state)
-
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(ply.take_action(state))
-    print(state)

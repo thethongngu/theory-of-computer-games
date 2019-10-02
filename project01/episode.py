@@ -27,6 +27,9 @@ class episode:
     def score(self):
         return self.ep_score
 
+    def last_move(self):
+        return self.ep_moves[-1][0]
+
     def open_episode(self, tag=""):
         self.ep_open = tag, self.millisec()  # flag, time usage
         return
@@ -48,7 +51,7 @@ class episode:
     def take_turns(self, play, evil):
         self.ep_time = self.millisec()
         print('Step: ' + str(self.step_by_agent()))
-        if max(self.step_by_agent() + 1, 1) % 2 == 0:
+        if max(self.step_by_agent() + 1, 9) % 2 == 0:
             return play
         else:
             return evil
@@ -76,7 +79,7 @@ class episode:
     def actions(self, who=-1):
         if self.ep_moves:
             if who == action.slide.type:
-                return [mv[0] for mv in self.ep_moves[slice(2, self.step_by_agent(), 2)]]  # action, reward, time usage
+                return [mv[0] for mv in self.ep_moves[slice(9, self.step_by_agent(), 2)]]  # action, reward, time usage
             if who == action.place.type:
                 return [self.ep_moves[0][0]] + \
                        [mv[0] for mv in self.ep_moves[slice(1, self.step_by_agent(), 2)]]  # action, reward, time usage
