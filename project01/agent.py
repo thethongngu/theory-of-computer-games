@@ -134,10 +134,16 @@ class player(random_agent):
         return
 
     def take_action(self, state, actions):
-        legal = [op for op in range(4) if board(state).slide(op) != -1]
-        if legal:
-            op = self.choice(legal)
-            return action.slide(op)
+
+        max_score, max_op = -1, 0
+        for op in range(4):
+            curr_score = board(state).slide(op)
+            if curr_score > max_score:
+                max_score = curr_score
+                max_op = op
+
+        if max_score != -1:
+            return action.slide(max_op)
         else:
             return action()
 

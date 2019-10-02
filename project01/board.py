@@ -65,7 +65,7 @@ class board:
                 elif (row[i - 1] == row[i] and row[i - 1] >= 3 and row[i] >= 3) or \
                      (self.TILE_VALUES[row[i - 1]] + self.TILE_VALUES[row[i]] == 3):
 
-                    score += self.SCORES[row[i] + 1] - 2 * self.SCORES[row[i]]
+                    score += self.SCORES[max(row[i - 1], row[i]) + 1] - 2 * self.SCORES[row[i]]
                     row[i - 1] = max(row[i - 1], row[i]) + 1
                     row[i] = 0
 
