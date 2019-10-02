@@ -18,7 +18,7 @@ import sys
 
 
 if __name__ == '__main__':
-    print('2048 Demo: ' + " ".join(sys.argv))
+    print('Threes Demo: ' + " ".join(sys.argv))
     print()
     
     total, block, limit = 1000, 0, 0
@@ -79,5 +79,3 @@ if __name__ == '__main__':
         output = open(save, "w")
         stat.save(output)
         output.close()
-    
-        

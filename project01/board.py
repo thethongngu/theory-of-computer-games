@@ -53,6 +53,18 @@ class board:
             return self.slide_left()
         return -1
 
+    def curr_score(self):
+        res = 0
+        for i in range(16):
+            res += self.SCORES[self.state[i]]
+        return res
+
+    def num_spaces(self):
+        res = 0
+        for i in range(16):
+            res += 1 if self.state[i] == 0 else 0
+        return res
+
     def slide_left(self):
         new_state, score = [], 0
         for row in [self.state[r:r + 4] for r in range(0, 16, 4)]:
@@ -65,7 +77,6 @@ class board:
                 elif (row[i - 1] == row[i] and row[i - 1] >= 3 and row[i] >= 3) or \
                      (self.TILE_VALUES[row[i - 1]] + self.TILE_VALUES[row[i]] == 3):
 
-                    score += self.SCORES[max(row[i - 1], row[i]) + 1] - 2 * self.SCORES[row[i]]
                     row[i - 1] = max(row[i - 1], row[i]) + 1
                     row[i] = 0
 
@@ -75,7 +86,7 @@ class board:
             return -1
 
         self.state = new_state
-        return score
+        return self.curr_score()
 
     def slide_right(self):
         self.reflect_horizontal()

@@ -137,9 +137,11 @@ class player(random_agent):
 
         max_score, max_op = -1, 0
         for op in range(4):
-            curr_score = board(state).slide(op)
-            if curr_score > max_score:
-                max_score = curr_score
+            curr_board = board(state)
+            curr_score = curr_board.slide(op)
+            curr_space = curr_board.num_spaces()
+            if curr_score + curr_space > max_score:
+                max_score = curr_score + curr_space
                 max_op = op
 
         if max_score != -1:
