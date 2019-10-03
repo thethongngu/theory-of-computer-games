@@ -86,7 +86,7 @@ class board:
             return -1
 
         self.state = new_state
-        return self.curr_score()
+        return self.curr_score() + self.num_spaces()
 
     def slide_right(self):
         self.reflect_horizontal()
