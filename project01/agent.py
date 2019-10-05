@@ -133,6 +133,9 @@ class player(random_agent):
         super().__init__("name=dummy role=player " + options)
         return
 
+    def generate_tree(self):
+        """ Generate tree from current board """
+
     def take_action(self, state, actions):
         legal_actions = []
         for op in range(4):
