@@ -133,8 +133,20 @@ class player(random_agent):
         super().__init__("name=dummy role=player " + options)
         return
 
-    def generate_tree(self):
+    def generate_tree(self, curr_state, who, depth):
         """ Generate tree from current board """
+
+        if depth == 0:
+        else:
+            if who == action.slide.type:
+                for op in range(4):
+                    curr_board = board(curr_state)
+                    curr_board.slide(op)
+                    self.generate_tree(curr_board, action.place.type, depth - 1)
+            else:
+
+
+
 
     def take_action(self, state, actions):
         legal_actions = []
