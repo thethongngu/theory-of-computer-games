@@ -10,6 +10,7 @@ Author: Hung Guei (moporgic)
 
 from board import board
 from action import action
+from tree import node
 import random
 
 
@@ -92,22 +93,22 @@ class rndenv(random_agent):
     def open_episode(self, flag=""):
         self.bag = []
 
+    @staticmethod
+    def get_tile_id_by_action(last_move):
+        side_tile = []
+        if last_move == 0:
+            side_tile = [12, 13, 14, 15]
+        if last_move == 1:
+            side_tile = [0, 4, 8, 12]
+        if last_move == 2:
+            side_tile = [0, 1, 2, 3]
+        if last_move == 3:
+            side_tile = [3, 7, 11, 15]
+        return side_tile
+
     def take_action(self, input_state, actions):
 
-        side_tile = []
-        if actions:
-            last_move = actions[-1].event()
-            if last_move == 0:
-                side_tile = [12, 13, 14, 15]
-            if last_move == 1:
-                side_tile = [0, 4, 8, 12]
-            if last_move == 2:
-                side_tile = [0, 1, 2, 3]
-            if last_move == 3:
-                side_tile = [3, 7, 11, 15]
-        else:
-            side_tile = [i for i in range(16)]
-
+        side_tile = self.get_tile_id_by_action(actions[-1].event()) if actions else [i for i in range(16)]
         empty_cell = [pos for pos, tile in enumerate(input_state.state) if not tile and pos in side_tile]
 
         if not self.bag:  # refill the bag if empty
@@ -133,34 +134,38 @@ class player(random_agent):
         super().__init__("name=dummy role=player " + options)
         return
 
-    def generate_tree(self, curr_state, who, depth):
+    def generate_tree(self, curr_state, last_action, parent, depth):
         """ Generate tree from current board """
 
+        curr_node = node(parent, curr_state, last_action)
         if depth == 0:
+            return curr_node.get_score()
         else:
-            if who == action.slide.type:
+            if last_action == action.place.type:  # parent node is environment
+                max_score, max_op = 0
                 for op in range(4):
                     curr_board = board(curr_state)
-                    curr_board.slide(op)
-                    self.generate_tree(curr_board, action.place.type, depth - 1)
-            else:
+                    if curr_board.slide(op):
+                        curr_score, _ = self.generate_tree(curr_board, op, curr_node, depth - 1)
+                        if curr_score > max_score:
+                            max_score = curr_score
+                            max_op = op
+                return max_score, max_op
 
-
-
+            else:  # parent node is player
+                side_tiles = rndenv.get_tile_id_by_action(last_action)
+                min_score = 0
+                for pos in side_tiles:
+                    for tile_id in [1, 2, 3]:
+                        curr_board = board(curr_state)
+                        curr_board.place(pos, tile_id)
+                        curr_score, _ = self.generate_tree(curr_board, action.place.type, curr_node, depth - 1)
+                        min_score = min(min_score, curr_score)
+                return min_score, None
 
     def take_action(self, state, actions):
-        legal_actions = []
-        for op in range(4):
-            score = board(state).slide(op)
-            if score != -1:
-                legal_actions.append((op, score))
-
-        if legal_actions:
-            sorted(legal_actions, key=lambda t: t[1])
-            op = legal_actions[0][0]
-            return action.slide(op)
-        else:
-            return action()
+        max_score, max_op = self.generate_tree(state, actions[-1], None, 3)
+        return action() if max_op is None else action.slide(max_op)
 
 
 if __name__ == '__main__':

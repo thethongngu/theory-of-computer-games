@@ -62,8 +62,8 @@ if __name__ == '__main__':
         game = stat.back()
         while True:
             who = game.take_turns(play, evil)
-            action_type = action.slide.type if who is evil else action.place.type
-            move = who.take_action(game.state(), game.actions(action_type))
+            old_action_type = action.slide.type if who is evil else action.place.type
+            move = who.take_action(game.state(), game.actions(old_action_type))
             if not game.apply_action(move) or who.check_for_win(game.state()):
                 break
         win = game.last_turns(play, evil)
