@@ -153,9 +153,10 @@ class player(random_agent):
                 return max_score, max_op
 
             else:  # parent node is player
+                min_score = 1000000000
                 side_tiles = rndenv.get_tile_id_by_action(last_action.event())
-                min_score = 0
-                for pos in side_tiles:
+                empty_cell = [pos for pos, tile in enumerate(curr_state) if not tile and pos in side_tiles]
+                for pos in empty_cell:
                     for tile_id in [1, 2, 3]:
                         curr_board = board(curr_state)
                         curr_board.place(pos, tile_id)
@@ -165,7 +166,20 @@ class player(random_agent):
 
     def take_action(self, state, actions):
         max_score, max_op = self.generate_tree(state, actions[-1], None, 3)
-        return action() if max_op is None else action.slide(max_op)
+        if max_op == -1:
+            legal = []
+            for op in range(4):
+                score = board(state).slide(op)
+                if score != -1:
+                    legal.append((score, op))
+
+            if legal:
+                sorted(legal, key=lambda t: t[0])
+                return action.slide(legal[0][1])
+            else:
+                return action()
+        else:
+            return action.slide(max_op)
 
 
 if __name__ == '__main__':

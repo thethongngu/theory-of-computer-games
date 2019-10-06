@@ -9,5 +9,5 @@ class node:
         self.last_action = last_action
 
     def get_score(self):
-        return self.curr_board.curr_score()
+        return self.curr_board.curr_score() + self.curr_board.num_spaces()
 
