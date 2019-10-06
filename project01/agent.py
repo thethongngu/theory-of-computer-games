@@ -139,27 +139,27 @@ class player(random_agent):
 
         curr_node = node(parent, curr_state, last_action)
         if depth == 0:
-            return curr_node.get_score()
+            return curr_node.get_score(), last_action.event()
         else:
-            if last_action == action.place.type:  # parent node is environment
-                max_score, max_op = 0
+            if last_action.type is action.place.type:  # parent node is environment
+                max_score, max_op = 0, -1
                 for op in range(4):
                     curr_board = board(curr_state)
-                    if curr_board.slide(op):
-                        curr_score, _ = self.generate_tree(curr_board, op, curr_node, depth - 1)
+                    if curr_board.slide(op) != -1:
+                        curr_score, _ = self.generate_tree(curr_board, action.slide(op), curr_node, depth - 1)
                         if curr_score > max_score:
                             max_score = curr_score
                             max_op = op
                 return max_score, max_op
 
             else:  # parent node is player
-                side_tiles = rndenv.get_tile_id_by_action(last_action)
+                side_tiles = rndenv.get_tile_id_by_action(last_action.event())
                 min_score = 0
                 for pos in side_tiles:
                     for tile_id in [1, 2, 3]:
                         curr_board = board(curr_state)
                         curr_board.place(pos, tile_id)
-                        curr_score, _ = self.generate_tree(curr_board, action.place.type, curr_node, depth - 1)
+                        curr_score, _ = self.generate_tree(curr_board, action.place(pos, tile_id), curr_node, depth - 1)
                         min_score = min(min_score, curr_score)
                 return min_score, None
 

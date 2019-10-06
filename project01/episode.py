@@ -80,8 +80,8 @@ class episode:
             if who == action.slide.type:
                 return [mv[0] for mv in self.ep_moves[slice(9, self.step_by_agent(), 2)]]  # action, reward, time usage
             if who == action.place.type:
-                return [self.ep_moves[0][0]] + \
-                       [mv[0] for mv in self.ep_moves[slice(1, self.step_by_agent(), 2)]]  # action, reward, time usage
+                return [mv[0] for mv in self.ep_moves[0: 9]] + \
+                       [mv[0] for mv in self.ep_moves[slice(10, self.step_by_agent(), 2)]]  # action, reward, time usage
 
         return [mv[0] for mv in self.ep_moves]  # action, reward, time usage
 
