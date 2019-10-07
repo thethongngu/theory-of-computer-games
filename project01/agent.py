@@ -93,32 +93,37 @@ class rndenv(random_agent):
     def open_episode(self, flag=""):
         self.bag = []
 
+    slide_up_tile = [12, 13, 14, 15]
+    slide_right_tile = [0, 4, 8, 12]
+    slide_down_tile = [0, 1, 2, 3]
+    slide_left_tile = [3, 7, 11, 15]
+    whole_board = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
     @staticmethod
     def get_tile_id_by_action(last_move):
-        side_tile = []
         if last_move == 0:
-            side_tile = [12, 13, 14, 15]
-        if last_move == 1:
-            side_tile = [0, 4, 8, 12]
-        if last_move == 2:
-            side_tile = [0, 1, 2, 3]
-        if last_move == 3:
-            side_tile = [3, 7, 11, 15]
-        return side_tile
+            return rndenv.slide_up_tile
+        elif last_move == 1:
+            return rndenv.slide_right_tile
+        elif last_move == 2:
+            return rndenv.slide_down_tile
+        elif last_move == 3:
+            return rndenv.slide_left_tile
+        else:
+            return rndenv.whole_board
 
     def take_action(self, input_state, actions):
 
-        side_tile = self.get_tile_id_by_action(actions[-1].event()) if actions else [i for i in range(16)]
-        empty_cell = [pos for pos, tile in enumerate(input_state.state) if not tile and pos in side_tile]
+        side_tile = self.get_tile_id_by_action(actions[-1].event()) if actions else rndenv.whole_board
+        empty_cell = [tile for tile in side_tile if not input_state.state[tile]]
 
         if not self.bag:  # refill the bag if empty
             self.bag = [1, 2, 3]
+            self.shuffle(self.bag)
 
         if empty_cell:
             pos = self.choice(empty_cell)
-            self.shuffle(self.bag)
-            tile = self.bag[-1]
-            self.bag.pop()
+            tile = self.bag.pop()
             return action.place(pos, tile)
         else:
             return action()
@@ -138,15 +143,15 @@ class player(random_agent):
         """ Generate tree from current board """
 
         if depth == 0:
-            return curr_state.curr_score(), last_action.event()
+            return curr_state.curr_score(), last_action
 
-        elif last_action.type is action.place.type:   # player
+        elif last_action == action.place.type:  # player
             max_score, max_op = 0, -1
             for op in range(4):
                 curr_board = board(curr_state)
                 if curr_board.slide(op) != -1:
                     curr_score, _ = self.generate_tree(
-                        curr_board, action.slide(op), avai_env_tile, depth - 1, alpha, beta
+                        curr_board, op, avai_env_tile, depth - 1, alpha, beta
                     )
                     if curr_score > max_score:
                         max_score = curr_score
@@ -158,7 +163,7 @@ class player(random_agent):
 
         else:  # environment
             min_score = 1000000000
-            side_tiles = rndenv.get_tile_id_by_action(last_action.event())
+            side_tiles = rndenv.get_tile_id_by_action(last_action)
             stop = False
             if not avai_env_tile:
                 avai_env_tile = [1, 2, 3]
@@ -173,7 +178,7 @@ class player(random_agent):
                     avai_env_tile.remove(tile_id)
 
                     curr_score, _ = self.generate_tree(
-                        curr_board, action.place(pos, tile_id), avai_env_tile, depth - 1, alpha, beta
+                        curr_board, action.place.type, avai_env_tile, depth - 1, alpha, beta
                     )
 
                     avai_env_tile.append(tile_id)
@@ -192,7 +197,7 @@ class player(random_agent):
         for i in range(-1, -1 * (len(actions) % 3), -1):
             avai_env_tiles.remove(actions[-1 * i].tile())
 
-        max_score, max_op = self.generate_tree(state, actions[-1], avai_env_tiles, 3, 0, 1000000000)
+        max_score, max_op = self.generate_tree(state, actions[-1].type, avai_env_tiles, 3, 0, 1000000000)
         if max_op == -1:
             legal = []
             for op in range(4):

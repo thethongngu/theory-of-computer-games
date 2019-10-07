@@ -21,7 +21,7 @@ if __name__ == '__main__':
     print('Threes Demo: ' + " ".join(sys.argv))
     print()
     
-    total, block, limit = 10, 0, 0
+    total, block, limit = 50, 0, 0
     play_args, evil_args = "", ""
     load, save = "", ""
     summary = False

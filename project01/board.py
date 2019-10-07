@@ -81,7 +81,7 @@ class board:
                     row[i - 1] = max(row[i - 1], row[i]) + 1
                     row[i] = 0
 
-            new_state += row
+            new_state.extend(row)
             r += 4
 
         if self.state == new_state:
