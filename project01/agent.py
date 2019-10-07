@@ -134,53 +134,65 @@ class player(random_agent):
         super().__init__("name=dummy role=player " + options)
         return
 
-    def generate_tree(self, curr_state, last_action, avai_env_tile, parent, depth):
+    def generate_tree(self, curr_state, last_action, avai_env_tile, depth, alpha, beta):
         """ Generate tree from current board """
 
-        curr_node = node(parent, curr_state, last_action)
         if depth == 0:
-            return curr_node.get_score(), last_action.event()
-        else:
-            if last_action.type is action.place.type:  # parent node is environment
-                max_score, max_op = 0, -1
-                for op in range(4):
+            return curr_state.curr_score(), last_action.event()
+
+        elif last_action.type is action.place.type:   # player
+            max_score, max_op = 0, -1
+            for op in range(4):
+                curr_board = board(curr_state)
+                if curr_board.slide(op) != -1:
+                    curr_score, _ = self.generate_tree(
+                        curr_board, action.slide(op), avai_env_tile, depth - 1, alpha, beta
+                    )
+                    if curr_score > max_score:
+                        max_score = curr_score
+                        max_op = op
+                        alpha = max_score
+                    if beta <= alpha:
+                        break
+            return max_score, max_op
+
+        else:  # environment
+            min_score = 1000000000
+            side_tiles = rndenv.get_tile_id_by_action(last_action.event())
+            stop = False
+            if not avai_env_tile:
+                avai_env_tile = [1, 2, 3]
+
+            for pos in side_tiles:
+                if curr_state[pos]:
+                    continue
+                for tile_id in avai_env_tile:
+
                     curr_board = board(curr_state)
-                    if curr_board.slide(op) != -1:
-                        curr_score, _ = self.generate_tree(curr_board, action.slide(op), avai_env_tile, curr_node, depth - 1)
-                        if curr_score > max_score:
-                            max_score = curr_score
-                            max_op = op
-                return max_score, max_op
+                    curr_board.place(pos, tile_id)
+                    avai_env_tile.remove(tile_id)
 
-            else:  # parent node is player
-                min_score = 1000000000
-                side_tiles = rndenv.get_tile_id_by_action(last_action.event())
-                empty_cell = [pos for pos, tile in enumerate(curr_state) if not tile and pos in side_tiles]
-                if not avai_env_tile:
-                    avai_env_tile = [1, 2, 3]
+                    curr_score, _ = self.generate_tree(
+                        curr_board, action.place(pos, tile_id), avai_env_tile, depth - 1, alpha, beta
+                    )
 
-                for pos in empty_cell:
-                    for tile_id in avai_env_tile:
+                    avai_env_tile.append(tile_id)
+                    min_score = min(min_score, curr_score)
+                    beta = min(beta, min_score)
+                    if beta <= alpha:
+                        stop = True
+                        break
+                if stop:
+                    break
 
-                        curr_board = board(curr_state)
-                        curr_board.place(pos, tile_id)
-                        avai_env_tile.remove(tile_id)
-
-                        curr_score, _ = self.generate_tree(
-                            curr_board, action.place(pos, tile_id), avai_env_tile, curr_node, depth - 1
-                        )
-
-                        avai_env_tile.append(tile_id)
-                        min_score = min(min_score, curr_score)
-
-                return min_score, None
+            return min_score, None
 
     def take_action(self, state, actions):
         avai_env_tiles = [1, 2, 3]
         for i in range(-1, -1 * (len(actions) % 3), -1):
             avai_env_tiles.remove(actions[-1 * i].tile())
 
-        max_score, max_op = self.generate_tree(state, actions[-1], avai_env_tiles, None, 2)
+        max_score, max_op = self.generate_tree(state, actions[-1], avai_env_tiles, 3, 0, 1000000000)
         if max_op == -1:
             legal = []
             for op in range(4):

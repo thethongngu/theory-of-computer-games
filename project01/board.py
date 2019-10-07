@@ -33,7 +33,7 @@ class board:
         """
         if pos >= 16 or pos < 0:
             return -1
-        if tile < 1 and tile > 3:
+        if 1 > tile > 3:
             return -1
         self.state[pos] = tile
         return 0
@@ -66,8 +66,9 @@ class board:
         return res
 
     def slide_left(self):
-        new_state, score = [], 0
-        for row in [self.state[r:r + 4] for r in range(0, 16, 4)]:
+        new_state, score, r = [], 0, 0
+        while r < len(self.state):
+            row = self.state[r: r + 4]
             for i in range(1, 4):
                 if row[i] == 0:
                     continue
@@ -81,6 +82,7 @@ class board:
                     row[i] = 0
 
             new_state += row
+            r += 4
 
         if self.state == new_state:
             return -1

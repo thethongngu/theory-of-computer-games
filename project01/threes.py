@@ -21,7 +21,7 @@ if __name__ == '__main__':
     print('Threes Demo: ' + " ".join(sys.argv))
     print()
     
-    total, block, limit = 1000, 0, 0
+    total, block, limit = 10, 0, 0
     play_args, evil_args = "", ""
     load, save = "", ""
     summary = False
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         stat.open_episode(play.name() + ":" + evil.name())
         game = stat.back()
         while True:
-            # print(game.state())
+            # print(len(game.ep_moves))
             who = game.take_turns(play, evil)
             old_action_type = action.slide.type if who is evil else action.place.type
             move = who.take_action(game.state(), game.actions(old_action_type))
