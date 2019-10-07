@@ -115,7 +115,7 @@ class rndenv(random_agent):
     def take_action(self, input_state, actions):
 
         side_tile = self.get_tile_id_by_action(actions[-1].event()) if actions else rndenv.whole_board
-        empty_cell = [tile for tile in side_tile if not input_state.state[tile]]
+        empty_cell = [tile for tile in side_tile if not input_state[tile]]
 
         if not self.bag:  # refill the bag if empty
             self.bag = [1, 2, 3]
@@ -197,6 +197,8 @@ class player(random_agent):
         for i in range(-1, -1 * (len(actions) % 3), -1):
             avai_env_tiles.remove(actions[-1 * i].tile())
 
+        # print("df")
+        # print(state)
         max_score, max_op = self.generate_tree(state, actions[-1].type, avai_env_tiles, 3, 0, 1000000000)
         if max_op == -1:
             legal = []

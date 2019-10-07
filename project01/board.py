@@ -16,14 +16,20 @@ class board:
     TILE_VALUES = [0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144]
 
     def __init__(self, input_state=None):
-        self.state = input_state[:] if input_state is not None else [0] * 16
+        self.state = 0 if input_state is None else input_state.state
         return
 
     def __getitem__(self, pos):
-        return self.state[pos]
+        # print("pos: " + str(pos))
+        # print(15 << (pos * 4))
+        # print(self.state)
+        # print()
+        return (self.state & (15 << (pos * 4))) >> (pos * 4)
 
     def __setitem__(self, pos, tile):
-        self.state[pos] = tile
+        remove_mask = (1 << 64) - (1 << (pos + 1) * 4) + ((1 << (pos * 4)) - 1)
+        add_mask = tile << (pos * 4)
+        self.state = (self.state & remove_mask) | add_mask
         return
 
     def place(self, pos, tile):
@@ -35,7 +41,7 @@ class board:
             return -1
         if 1 > tile > 3:
             return -1
-        self.state[pos] = tile
+        self[pos] = tile
         return 0
 
     def slide(self, opcode):
@@ -55,20 +61,15 @@ class board:
 
     def curr_score(self):
         res = 0
-        for i in range(16):
-            res += self.SCORES[self.state[i]]
-        return res
-
-    def num_spaces(self):
-        res = 0
-        for i in range(16):
-            res += 1 if self.state[i] == 0 else 0
+        for pos in range(0, 15):
+            res += self.SCORES[self[pos]]
         return res
 
     def slide_left(self):
-        new_state, score, r = [], 0, 0
-        while r < len(self.state):
-            row = self.state[r: r + 4]
+        new_state = board()
+        score, r = 0, 0
+        while r < 16:
+            row = [self[r], self[r + 1], self[r + 2], self[r + 3]]
             for i in range(1, 4):
                 if row[i] == 0:
                     continue
@@ -81,14 +82,17 @@ class board:
                     row[i - 1] = max(row[i - 1], row[i]) + 1
                     row[i] = 0
 
-            new_state.extend(row)
+            new_state[r] = row[0]
+            new_state[r + 1] = row[1]
+            new_state[r + 2] = row[2]
+            new_state[r + 3] = row[3]
             r += 4
 
-        if self.state == new_state:
+        if self.state == new_state.state:
             return -1
 
-        self.state = new_state
-        return self.curr_score() + self.num_spaces()
+        self.state = new_state.state
+        return self.curr_score()
 
     def slide_right(self):
         self.reflect_horizontal()
@@ -109,15 +113,27 @@ class board:
         return score
 
     def reflect_horizontal(self):
-        self.state = [self.state[r + i] for r in range(0, 16, 4) for i in reversed(range(4))]
+        tmp = [self[r + i] for r in range(0, 16, 4) for i in reversed(range(4))]
+        new_state = 0
+        for pos in range(15):
+            new_state += tmp[pos] << (pos + 4)
+        self.state = new_state
         return
 
     def reflect_vertical(self):
-        self.state = [self.state[c + i] for c in reversed(range(0, 16, 4)) for i in range(4)]
+        tmp = [self[c + i] for c in reversed(range(0, 16, 4)) for i in range(4)]
+        new_state = 0
+        for pos in range(15):
+            new_state += tmp[pos] << (pos + 4)
+        self.state = new_state
         return
 
     def transpose(self):
-        self.state = [self.state[r + i] for i in range(4) for r in range(0, 16, 4)]
+        tmp = [self[r + i] for i in range(4) for r in range(0, 16, 4)]
+        new_state = 0
+        for pos in range(15):
+            new_state += tmp[pos] << (pos + 4)
+        self.state = new_state
         return
 
     def rotate(self, rot=1):
@@ -152,8 +168,8 @@ class board:
 
     def __str__(self):
         curr_state = '+' + '-' * 24 + '+\n'
-        for row in [self.state[r:r + 4] for r in range(0, 16, 4)]:
-            curr_state += ('|' + ''.join('{0:6d}'.format(self.TILE_VALUES[t]) for t in row) + '|\n')
+        for row in [[self[r], self[r + 1], self[r + 2], self[r + 3]] for r in range(0, 16, 4)]:
+            curr_state += ('|' + ''.join('{0:6d}'.format(t) for t in row) + '|\n')
         curr_state += '+' + '-' * 24 + '+'
         return curr_state
 
@@ -162,5 +178,9 @@ if __name__ == '__main__':
     print('2048 Demo: board.py\n')
 
     state = board()
-    state[10] = 10
+    state[1] = 2
+    state[2] = 2
+    state[5] = 3
+    state[15] = 1
+    print(state[1])
     print(state)
