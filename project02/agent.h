@@ -23,8 +23,8 @@ public:
 	virtual ~agent() {}
 	virtual void open_episode(const std::string& flag = "") {}
 	virtual void close_episode(const std::string& flag = "") {}
-	virtual action take_action(const board& b) { return action(); }
-	virtual bool check_for_win(const board& b) { return false; }
+	virtual action take_action(const Board& b) { return action(); }
+	virtual bool check_for_win(const Board& b) { return false; }
 
 public:
 	virtual std::string property(const std::string& key) const { return meta.at(key); }
@@ -125,11 +125,11 @@ public:
 	rndenv(const std::string& args = "") : random_agent("name=random role=environment " + args),
 		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
 
-	virtual action take_action(const board& after) {
+	virtual action take_action(const Board& after) {
 		std::shuffle(space.begin(), space.end(), engine);
 		for (int pos : space) {
 			if (after(pos) != 0) continue;
-			board::cell tile = popup(engine) ? 1 : 2;
+			Board::Cell tile = popup(engine) ? 1 : 2;
 			return action::place(pos, tile);
 		}
 		return action();
@@ -149,10 +149,10 @@ public:
 	player(const std::string& args = "") : random_agent("name=dummy role=player " + args),
 		opcode({ 0, 1, 2, 3 }) {}
 
-	virtual action take_action(const board& before) {
+	virtual action take_action(const Board& before) {
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
-			board::reward reward = board(before).slide(op);
+			Board::Reward reward = Board(before).slide(op);
 			if (reward != -1) return action::slide(op);
 		}
 		return action();

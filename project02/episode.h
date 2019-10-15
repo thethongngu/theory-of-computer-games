@@ -18,9 +18,9 @@ public:
 	episode() : ep_state(initial_state()), ep_score(0), ep_time(0) { ep_moves.reserve(10000); }
 
 public:
-	board& state() { return ep_state; }
-	const board& state() const { return ep_state; }
-	board::reward score() const { return ep_score; }
+	Board& state() { return ep_state; }
+	const Board& state() const { return ep_state; }
+	Board::Reward score() const { return ep_score; }
 
 	void open_episode(const std::string& tag) {
 		ep_open = { tag, millisec() };
@@ -29,7 +29,7 @@ public:
 		ep_close = { tag, millisec() };
 	}
 	bool apply_action(action move) {
-		board::reward reward = move.apply(state());
+		Board::Reward reward = move.apply(state());
 		if (reward == -1) return false;
 		ep_moves.emplace_back(move, reward, millisec() - ep_time);
 		ep_score += reward;
@@ -115,9 +115,9 @@ protected:
 
 	struct move {
 		action code;
-		board::reward reward;
+		Board::Reward reward;
 		time_t time;
-		move(action code = {}, board::reward reward = 0, time_t time = 0) : code(code), reward(reward), time(time) {}
+		move(action code = {}, Board::Reward reward = 0, time_t time = 0) : code(code), reward(reward), time(time) {}
 
 		operator action() const { return code; }
 		friend std::ostream& operator <<(std::ostream& out, const move& m) {
@@ -157,7 +157,7 @@ protected:
 		}
 	};
 
-	static board initial_state() {
+	static Board initial_state() {
 		return {};
 	}
 	static time_t millisec() {
@@ -166,8 +166,8 @@ protected:
 	}
 
 private:
-	board ep_state;
-	board::reward ep_score;
+	Board ep_state;
+	Board::Reward ep_score;
 	std::vector<move> ep_moves;
 	time_t ep_time;
 

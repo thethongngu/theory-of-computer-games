@@ -13,37 +13,37 @@
  * (12) (13) (14) (15)
  *
  */
-class board {
+class Board {
 public:
-	typedef uint32_t cell;
-	typedef std::array<cell, 4> row;
-	typedef std::array<row, 4> grid;
-	typedef uint64_t data;
-	typedef int reward;
-
-public:
-	board() : tile(), attr(0) {}
-	board(const grid& b, data v = 0) : tile(b), attr(v) {}
-	board(const board& b) = default;
-	board& operator =(const board& b) = default;
-
-	operator grid&() { return tile; }
-	operator const grid&() const { return tile; }
-	row& operator [](unsigned i) { return tile[i]; }
-	const row& operator [](unsigned i) const { return tile[i]; }
-	cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
-	const cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
-
-	data info() const { return attr; }
-	data info(data dat) { data old = attr; attr = dat; return old; }
+	typedef uint32_t Cell;
+	typedef std::array<Cell, 4> Row;
+	typedef std::array<Row, 4> Grid;
+	typedef uint64_t Data;
+	typedef int Reward;
 
 public:
-	bool operator ==(const board& b) const { return tile == b.tile; }
-	bool operator < (const board& b) const { return tile <  b.tile; }
-	bool operator !=(const board& b) const { return !(*this == b); }
-	bool operator > (const board& b) const { return b < *this; }
-	bool operator <=(const board& b) const { return !(b < *this); }
-	bool operator >=(const board& b) const { return !(*this < b); }
+	Board() : tile(), attr(0) {}
+	explicit Board(const Grid& b, Data v = 0) : tile(b), attr(v) {}
+	Board(const Board& b) = default;
+	Board& operator =(const Board& b) = default;
+
+	explicit operator Grid&() { return tile; }
+	explicit operator const Grid&() const { return tile; }
+	Row& operator [](unsigned i) { return tile[i]; }
+	const Row& operator [](unsigned i) const { return tile[i]; }
+	Cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
+	const Cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
+
+	Data info() const { return attr; }
+	Data info(Data dat) { Data old = attr; attr = dat; return old; }
+
+public:
+	bool operator ==(const Board& b) const { return tile == b.tile; }
+	bool operator < (const Board& b) const { return tile < b.tile; }
+	bool operator !=(const Board& b) const { return !(*this == b); }
+	bool operator > (const Board& b) const { return b < *this; }
+	bool operator <=(const Board& b) const { return !(b < *this); }
+	bool operator >=(const Board& b) const { return !(*this < b); }
 
 public:
 
@@ -51,7 +51,7 @@ public:
 	 * place a tile (index value) to the specific position (1-d form index)
 	 * return 0 if the action is valid, or -1 if not
 	 */
-	reward place(unsigned pos, cell tile) {
+	Reward place(unsigned pos, Cell tile) {
 		if (pos >= 16) return -1;
 		if (tile != 1 && tile != 2) return -1;
 		operator()(pos) = tile;
@@ -62,7 +62,7 @@ public:
 	 * apply an action to the board
 	 * return the reward of the action, or -1 if the action is illegal
 	 */
-	reward slide(unsigned opcode) {
+	Reward slide(unsigned opcode) {
 		switch (opcode & 0b11) {
 		case 0: return slide_up();
 		case 1: return slide_right();
@@ -72,9 +72,9 @@ public:
 		}
 	}
 
-	reward slide_left() {
-		board prev = *this;
-		reward score = 0;
+	Reward slide_left() {
+		Board prev = *this;
+		Reward score = 0;
 		for (int r = 0; r < 4; r++) {
 			auto& row = tile[r];
 			int top = 0, hold = 0;
@@ -99,21 +99,21 @@ public:
 		}
 		return (*this != prev) ? score : -1;
 	}
-	reward slide_right() {
+	Reward slide_right() {
 		reflect_horizontal();
-		reward score = slide_left();
+		Reward score = slide_left();
 		reflect_horizontal();
 		return score;
 	}
-	reward slide_up() {
+	Reward slide_up() {
 		rotate_right();
-		reward score = slide_right();
+		Reward score = slide_right();
 		rotate_left();
 		return score;
 	}
-	reward slide_down() {
+	Reward slide_down() {
 		rotate_right();
-		reward score = slide_left();
+		Reward score = slide_left();
 		rotate_left();
 		return score;
 	}
@@ -158,7 +158,7 @@ public:
 	void reverse() { reflect_horizontal(); reflect_vertical(); }
 
 public:
-	friend std::ostream& operator <<(std::ostream& out, const board& b) {
+	friend std::ostream& operator <<(std::ostream& out, const Board& b) {
 		out << "+------------------------+" << std::endl;
 		for (auto& row : b.tile) {
 			out << "|" << std::dec;
@@ -170,6 +170,6 @@ public:
 	}
 
 private:
-	grid tile;
-	data attr;
+	Grid tile;
+	Data attr;
 };
