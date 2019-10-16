@@ -5,10 +5,10 @@
  * place a tile (index value) to the specific position (1-d form index)
  * return 0 if the action is valid, or -1 if not
  */
-Board::Reward Board::place(unsigned pos, Board::Cell tile) {
+Board::Reward Board::place(unsigned pos, Board::Cell tile_id) {
     if (pos >= 16) return -1;
-    if (tile != 1 && tile != 2) return -1;
-    operator()(pos) = tile;
+    if (tile_id != 1 && tile_id != 2) return -1;
+    operator()(pos) = tile_id;
     return 0;
 }
 
@@ -17,7 +17,7 @@ Board::Reward Board::place(unsigned pos, Board::Cell tile) {
  * return the reward of the action, or -1 if the action is illegal
  */
 Board::Reward Board::slide(unsigned opcode) {
-    switch (opcode & 0b11) {
+    switch (opcode & 0b11u) {
         case 0: return slide_up();
         case 1: return slide_right();
         case 2: return slide_down();
@@ -31,28 +31,25 @@ Board::Reward Board::slide_left() {
     Board::Reward score = 0;
     for (int r = 0; r < 4; r++) {
         auto& row = tile[r];
-        int top = 0, hold = 0;
-        for (int c = 0; c < 4; c++) {
-            int tile = row[c];
-            if (tile == 0) continue;
-            row[c] = 0;
-            if (hold) {
-                if (tile == hold) {
-                    row[top++] = ++tile;
-                    score += (1 << tile);
-                    hold = 0;
-                } else {
-                    row[top++] = hold;
-                    hold = tile;
-                }
-            } else {
-                hold = tile;
+        for (int c = 0; c < 3; c++) {
+            if (Board::can_merge(row[c], row[c + 1])) {
+                Cell new_tile = std::max(row[c], row[c + 1]) + 1;
+                set_score(get_score() - kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);
+                row[c] = new_tile;  row[c + 1] = 0;
+            }
+            if (row[c] == 0) {  // can slide
+                row[c] = row[c + 1];
+                row[c + 1] = 0;
             }
         }
-        if (hold) tile[r][top] = hold;
     }
     return (*this != prev) ? score : -1;
 }
+
+void Board::set_score(Reward new_score) {
+    score = new_score;
+}
+
 Board::Reward Board::slide_right() {
     reflect_horizontal();
     Reward score = slide_left();
@@ -120,5 +117,17 @@ std::ostream& operator <<(std::ostream& out, const Board& b) {
     }
     out << "+------------------------+" << std::endl;
     return out;
+}
+
+Board::Reward Board::get_score() {
+    return score;
+}
+
+bool Board::can_merge(Board::Cell cell01, Board::Cell cell02) {
+    if (cell01 == 1 && cell02 == 2) return true;
+    if (cell01 == 2 && cell02 == 1) return true;
+    if (cell01 > 2 && cell02 > 2 && cell01 == cell02) return true;
+
+    return false;
 }
 

@@ -31,13 +31,14 @@ public:
     typedef int Reward;
 
 public:
-    Board() : tile(), attr(0) {}
-    explicit Board(const Grid& b, Data v = 0) : tile(b), attr(v) {}
+    Board() : tile(), attr(0), score{0} {}
+    explicit Board(const Grid& b, Data v = 0) : tile(b), attr(v), score{0} {}
     Board(const Board& b) = default;
     Board& operator =(const Board& b) = default;
 
     explicit operator Grid&() { return tile; }
     explicit operator const Grid&() const { return tile; }
+
     Row& operator [](unsigned i) { return tile[i]; }
     const Row& operator [](unsigned i) const { return tile[i]; }
     Cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
@@ -45,6 +46,9 @@ public:
 
     Data info() const { return attr; }
     Data info(Data dat) { Data old = attr; attr = dat; return old; }
+
+    constexpr static const Cell kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
+    constexpr static const Reward kTileScore[15] = {3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441};
 
 public:
     bool operator ==(const Board& b) const { return tile == b.tile; }
@@ -55,7 +59,11 @@ public:
     bool operator >=(const Board& b) const { return !(*this < b); }
 
 public:
-    Reward place(unsigned pos, Cell tile);
+    Reward get_score();
+    void set_score(Reward new_score);
+    bool can_merge(Cell cell01, Cell cell02);
+
+    Reward place(unsigned pos, Cell tile_id);
     Reward slide(unsigned opcode);
     Reward slide_left();
     Reward slide_right();
@@ -74,6 +82,7 @@ public:
 
 private:
     Grid tile;
+    Reward score;
     Data attr;
 };
 
