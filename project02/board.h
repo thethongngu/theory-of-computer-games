@@ -47,8 +47,8 @@ public:
     Data info() const { return attr; }
     Data info(Data dat) { Data old = attr; attr = dat; return old; }
 
-    constexpr static const Cell kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
-    constexpr static const Reward kTileScore[15] = {3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441};
+    static const Cell kTileValue[15];
+    static const Reward kTileScore[15];
 
 public:
     bool operator ==(const Board& b) const { return tile == b.tile; }
@@ -59,9 +59,10 @@ public:
     bool operator >=(const Board& b) const { return !(*this < b); }
 
 public:
+    static bool can_merge(Cell cell01, Cell cell02);
+
     Reward get_score();
     void set_score(Reward new_score);
-    bool can_merge(Cell cell01, Cell cell02);
 
     Reward place(unsigned pos, Cell tile_id);
     Reward slide(unsigned opcode);

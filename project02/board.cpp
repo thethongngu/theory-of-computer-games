@@ -1,5 +1,11 @@
-#include <ostream>
+#include <iostream>
 #include "board.h"
+
+#define debug(a) std::cout << #a << " = " << a << std::endl
+#define print(a) std::cout << a << std::endl
+
+const Board::Reward Board::kTileScore[15] = {3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441};
+const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
 
 /**
  * place a tile (index value) to the specific position (1-d form index)
@@ -28,13 +34,13 @@ Board::Reward Board::slide(unsigned opcode) {
 
 Board::Reward Board::slide_left() {
     Board prev = *this;
-    Board::Reward score = 0;
+    print(*this);
     for (int r = 0; r < 4; r++) {
         auto& row = tile[r];
         for (int c = 0; c < 3; c++) {
             if (Board::can_merge(row[c], row[c + 1])) {
                 Cell new_tile = std::max(row[c], row[c + 1]) + 1;
-                set_score(get_score() - kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);
+                set_score(get_score() - Board::kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);
                 row[c] = new_tile;  row[c + 1] = 0;
             }
             if (row[c] == 0) {  // can slide
@@ -43,6 +49,7 @@ Board::Reward Board::slide_left() {
             }
         }
     }
+    print(*this);
     return (*this != prev) ? score : -1;
 }
 
@@ -112,7 +119,7 @@ std::ostream& operator <<(std::ostream& out, const Board& b) {
     out << "+------------------------+" << std::endl;
     for (auto& row : b.tile) {
         out << "|" << std::dec;
-        for (auto t : row) out << std::setw(6) << ((1 << t) & -2u);
+        for (auto t : row) out << std::setw(6) << (Board::kTileValue[t]);
         out << "|" << std::endl;
     }
     out << "+------------------------+" << std::endl;
