@@ -66,7 +66,7 @@ int main(int argc, const char* argv[]) {
 		Episode& game = stat.back();
 		while (true) {
 			Agent& who = game.take_turns(play, evil);
-			Action move = who.take_action(game.state());
+			Action move = who.take_action(game.state(), game.actions(who.action_type()));
 			if (game.apply_action(move) != true) break;
 			if (who.check_for_win(game.state())) break;
 		}
