@@ -100,7 +100,7 @@ public:
 
 public:
 	Board::Reward apply(Board& b) const {
-		return b.place(position(), tile());
+	    return b.place(position(), tile());
 	}
 	std::ostream& operator >>(std::ostream& out) const {
 		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ?";
