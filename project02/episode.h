@@ -47,8 +47,8 @@ public:
 	size_t step(unsigned action_type = -1u) const {
 		int size = ep_moves.size(); // 'int' is important for handling 0
 		switch (action_type) {
-		case Action::slide::type: return (size - 1) / 2;
-		case Action::place::type: return (size - (size - 1) / 2);
+		case Action::slide::type: return (size - 8) / 2;
+		case Action::place::type: return size - (size - 8) / 2;
 		default:                  return size;
 		}
 	}
