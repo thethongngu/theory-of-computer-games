@@ -34,7 +34,6 @@ Board::Reward Board::slide(unsigned opcode) {
 
 Board::Reward Board::slide_left() {
     Board prev = *this;
-    print(*this);
     for (int r = 0; r < 4; r++) {
         auto& row = tile[r];
         for (int c = 0; c < 3; c++) {
@@ -49,7 +48,6 @@ Board::Reward Board::slide_left() {
             }
         }
     }
-    print(*this);
     return (*this != prev) ? score : -1;
 }
 
@@ -59,21 +57,21 @@ void Board::set_score(Reward new_score) {
 
 Board::Reward Board::slide_right() {
     reflect_horizontal();
-    Reward score = slide_left();
+    Reward slide_score = slide_left();
     reflect_horizontal();
-    return score;
+    return slide_score;
 }
 Board::Reward Board::slide_up() {
     rotate_right();
-    Reward score = slide_right();
+    Reward slide_score = slide_right();
     rotate_left();
-    return score;
+    return slide_score;
 }
 Board::Reward Board::slide_down() {
     rotate_right();
-    Reward score = slide_left();
+    Reward slide_score = slide_left();
     rotate_left();
-    return score;
+    return slide_score;
 }
 
 void Board::transpose() {
