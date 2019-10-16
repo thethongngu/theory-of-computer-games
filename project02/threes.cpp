@@ -46,7 +46,7 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 
-	statistic stat(total, block, limit);
+	Statistics stat(total, block, limit);
 
 	if (load.size()) {
 		std::ifstream in(load, std::ios::in);
@@ -55,22 +55,22 @@ int main(int argc, const char* argv[]) {
 		summary |= stat.is_finished();
 	}
 
-	player play(play_args);
-	rndenv evil(evil_args);
+	Player play(play_args);
+	RandomEnv evil(evil_args);
 
 	while (!stat.is_finished()) {
 		play.open_episode("~:" + evil.name());
 		evil.open_episode(play.name() + ":~");
 
 		stat.open_episode(play.name() + ":" + evil.name());
-		episode& game = stat.back();
+		Episode& game = stat.back();
 		while (true) {
-			agent& who = game.take_turns(play, evil);
-			action move = who.take_action(game.state());
+			Agent& who = game.take_turns(play, evil);
+			Action move = who.take_action(game.state());
 			if (game.apply_action(move) != true) break;
 			if (who.check_for_win(game.state())) break;
 		}
-		agent& win = game.last_turns(play, evil);
+		Agent& win = game.last_turns(play, evil);
 		stat.close_episode(win.name());
 
 		play.close_episode(win.name());

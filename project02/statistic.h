@@ -8,7 +8,7 @@
 #include "agent.h"
 #include "episode.h"
 
-class statistic {
+class Statistics {
 public:
 	/**
 	 * the total episodes to run
@@ -17,7 +17,7 @@ public:
 	 *
 	 * note that total >= limit >= block
 	 */
-	statistic(size_t total, size_t block = 0, size_t limit = 0)
+	Statistics(size_t total, size_t block = 0, size_t limit = 0)
 		: total(total),
 		  block(block ? block : total),
 		  limit(limit ? limit : total),
@@ -59,11 +59,11 @@ public:
 			max = std::max(ep.score(), max);
 			stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
 			sop += ep.step();
-			pop += ep.step(action::slide::type);
-			eop += ep.step(action::place::type);
+			pop += ep.step(Action::Slide::type);
+			eop += ep.step(Action::Place::type);
 			sdu += ep.time();
-			pdu += ep.time(action::slide::type);
-			edu += ep.time(action::place::type);
+			pdu += ep.time(Action::Slide::type);
+			edu += ep.time(Action::Place::type);
 		}
 
 		std::ios ff(nullptr);
@@ -92,9 +92,9 @@ public:
 
 	void summary() const {
 		auto block_temp = block;
-		const_cast<statistic&>(*this).block = data.size();
+		const_cast<Statistics&>(*this).block = data.size();
 		show();
-		const_cast<statistic&>(*this).block = block_temp;
+		const_cast<Statistics&>(*this).block = block_temp;
 	}
 
 	bool is_finished() const {
@@ -112,23 +112,23 @@ public:
 		if (count % block == 0) show();
 	}
 
-	episode& at(size_t i) {
+	Episode& at(size_t i) {
 		auto it = data.begin();
 		while (i--) it++;
 		return *it;
 	}
-	episode& front() {
+	Episode& front() {
 		return data.front();
 	}
-	episode& back() {
+	Episode& back() {
 		return data.back();
 	}
 
-	friend std::ostream& operator <<(std::ostream& out, const statistic& stat) {
-		for (const episode& rec : stat.data) out << rec << std::endl;
+	friend std::ostream& operator <<(std::ostream& out, const Statistics& stat) {
+		for (const Episode& rec : stat.data) out << rec << std::endl;
 		return out;
 	}
-	friend std::istream& operator >>(std::istream& in, statistic& stat) {
+	friend std::istream& operator >>(std::istream& in, Statistics& stat) {
 		for (std::string line; std::getline(in, line) && line.size(); ) {
 			stat.data.emplace_back();
 			std::stringstream(line) >> stat.data.back();
@@ -143,5 +143,5 @@ private:
 	size_t block;
 	size_t limit;
 	size_t count;
-	std::list<episode> data;
+	std::list<Episode> data;
 };

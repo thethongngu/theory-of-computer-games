@@ -10,9 +10,9 @@
 #include "weight.h"
 #include <fstream>
 
-class agent {
+class Agent {
 public:
-	agent(const std::string& args = "") {
+	Agent(const std::string& args = "") {
 		std::stringstream ss("name=unknown role=unknown " + args);
 		for (std::string pair; ss >> pair; ) {
 			std::string key = pair.substr(0, pair.find('='));
@@ -20,11 +20,13 @@ public:
 			meta[key] = { value };
 		}
 	}
-	virtual ~agent() {}
+	virtual ~Agent() {}
 	virtual void open_episode(const std::string& flag = "") {}
 	virtual void close_episode(const std::string& flag = "") {}
-	virtual action take_action(const Board& b) { return action(); }
+	virtual Action take_action(const Board& b) { return Action(); }
 	virtual bool check_for_win(const Board& b) { return false; }
+
+	virtual unsigned action_type();
 
 public:
 	virtual std::string property(const std::string& key) const { return meta.at(key); }
@@ -43,13 +45,18 @@ protected:
 	std::map<key, value> meta;
 };
 
-class random_agent : public agent {
+class RandomAgent : public Agent {
 public:
-	random_agent(const std::string& args = "") : agent(args) {
+
+    unsigned action_type() override {
+        return Action::Slide::type;
+    }
+
+	RandomAgent(const std::string& args = "") : Agent(args) {
 		if (meta.find("seed") != meta.end())
 			engine.seed(int(meta["seed"]));
 	}
-	virtual ~random_agent() {}
+	virtual ~RandomAgent() {}
 
 protected:
 	std::default_random_engine engine;
@@ -58,15 +65,20 @@ protected:
 /**
  * base agent for agents with weight tables
  */
-class weight_agent : public agent {
+class WeightAgent : public Agent {
 public:
-	weight_agent(const std::string& args = "") : agent(args) {
+
+    virtual unsigned action_type() {
+        return Action::Slide::type;
+    }
+
+	WeightAgent(const std::string& args = "") : Agent(args) {
 		if (meta.find("init") != meta.end()) // pass init=... to initialize the weight
 			init_weights(meta["init"]);
 		if (meta.find("load") != meta.end()) // pass load=... to load from a specific file
 			load_weights(meta["load"]);
 	}
-	virtual ~weight_agent() {
+	virtual ~WeightAgent() {
 		if (meta.find("save") != meta.end()) // pass save=... to save to a specific file
 			save_weights(meta["save"]);
 	}
@@ -102,13 +114,18 @@ protected:
 /**
  * base agent for agents with a learning rate
  */
-class learning_agent : public agent {
+class LearningAgent : public Agent {
 public:
-	learning_agent(const std::string& args = "") : agent(args), alpha(0.1f) {
+
+    virtual unsigned action_type() {
+        return Action::Slide::type;
+    }
+
+	LearningAgent(const std::string& args = "") : Agent(args), alpha(0.1f) {
 		if (meta.find("alpha") != meta.end())
 			alpha = float(meta["alpha"]);
 	}
-	virtual ~learning_agent() {}
+	virtual ~LearningAgent() {}
 
 protected:
 	float alpha;
@@ -120,19 +137,24 @@ protected:
  * 2-tile: 90%
  * 4-tile: 10%
  */
-class rndenv : public random_agent {
+class RandomEnv : public RandomAgent {
 public:
-	rndenv(const std::string& args = "") : random_agent("name=random role=environment " + args),
-		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
+	RandomEnv(const std::string& args = "") : RandomAgent("name=random role=environment " + args),
+                                              space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }),
+                                              popup(1, 3) {}
 
-	virtual action take_action(const Board& after) {
+    virtual unsigned action_type() {
+	    return Action::Place::type;
+	}
+
+	virtual Action take_action(const Board& board) {
 		std::shuffle(space.begin(), space.end(), engine);
 		for (int pos : space) {
-			if (after(pos) != 0) continue;
-			Board::Cell tile = popup(engine) ? 1 : 2;
-			return action::place(pos, tile);
+			if (board(pos) != 0) continue;
+			Board::Cell tile = popup(engine);
+			return Action::Place(pos, tile);
 		}
-		return action();
+		return Action();
 	}
 
 private:
@@ -144,18 +166,22 @@ private:
  * dummy player
  * select a legal action randomly
  */
-class player : public random_agent {
+class Player : public RandomAgent {
 public:
-	player(const std::string& args = "") : random_agent("name=dummy role=player " + args),
-		opcode({ 0, 1, 2, 3 }) {}
+	Player(const std::string& args = "") : RandomAgent("name=dummy role=player " + args),
+                                           opcode({ 0, 1, 2, 3 }) {}
 
-	virtual action take_action(const Board& before) {
+    virtual unsigned action_type() {
+        return Action::Slide::type;
+    }
+
+	virtual Action take_action(const Board& before) {
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
 			Board::Reward reward = Board(before).slide(op);
-			if (reward != -1) return action::slide(op);
+			if (reward != -1) return Action::Slide(op);
 		}
-		return action();
+		return Action();
 	}
 
 private:

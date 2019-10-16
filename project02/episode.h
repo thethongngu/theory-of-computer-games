@@ -13,7 +13,9 @@
 class Statistics;
 
 class Episode {
+
 friend class statistic;
+
 public:
 	Episode() : ep_state(initial_state()), ep_score(0), ep_time(0) { ep_moves.reserve(10000); }
 
@@ -47,8 +49,8 @@ public:
 	size_t step(unsigned action_type = -1u) const {
 		int size = ep_moves.size(); // 'int' is important for handling 0
 		switch (action_type) {
-		case Action::slide::type: return (size - 8) / 2;
-		case Action::place::type: return size - (size - 8) / 2;
+		case Action::Slide::type: return (size - 8) / 2;
+		case Action::Place::type: return size - (size - 8) / 2;
 		default:                  return size;
 		}
 	}
@@ -56,11 +58,11 @@ public:
 	time_t time(unsigned who = -1u) const {
 		time_t time = 0;
 		switch (who) {
-		case Action::place::type:
+		case Action::Place::type:
             for(int i = 0; i < 9 && i < ep_moves.size(); i++) time += ep_moves[i].time;  // 9 first steps (0-8)
             for(int i = 10; i < ep_moves.size(); i++) time += ep_moves[i].time;
             break;
-		case Action::slide::type:
+		case Action::Slide::type:
             for(int i = 9; i < ep_moves.size(); i++) time += ep_moves[i].time;  // start from 9
 			break;
 		default:
@@ -70,14 +72,14 @@ public:
 		return time;
 	}
 
-	std::vector<Action> actions(unsigned who = -1u) const {
+	std::vector<Action> actions(unsigned action_type = -1u) const {
 		std::vector<Action> res;
-		switch (who) {
-            case Action::place::type:
+		switch (action_type) {
+            case Action::Place::type:
                 for(int i = 0; i < 9 && i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);  // 9 first steps (0-8)
                 for(int i = 10; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);
                 break;
-            case Action::slide::type:
+            case Action::Slide::type:
                 for(int i = 9; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);  // start from 9
                 break;
             default:
@@ -119,7 +121,7 @@ protected:
 		time_t time;
 		move(Action code = {}, Board::Reward reward = 0, time_t time = 0) : action(code), reward(reward), time(time) {}
 
-		operator Action() const { return action; }
+		explicit operator Action() const { return action; }
 		friend std::ostream& operator <<(std::ostream& out, const move& m) {
 			out << m.action;
 			if (m.reward) out << '[' << std::dec << m.reward << ']';
@@ -157,6 +159,10 @@ protected:
 		}
 	};
 
+	/**
+	 * Zero board
+	 * @return Board()
+	 */
 	static Board initial_state() {
 		return {};
 	}
