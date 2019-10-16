@@ -4,11 +4,11 @@
 #include <string>
 #include "board.h"
 
-class action {
+class Action {
 public:
-	action(unsigned code = -1u) : code(code) {}
-	action(const action& a) : code(a.code) {}
-	virtual ~action() {}
+	Action(unsigned code = -1u) : code(code) {}
+	Action(const Action& a) : code(a.code) {}
+	virtual ~Action() {}
 
 	class slide; // create a sliding action with board opcode
 	class place; // create a placing action with position and tile
@@ -37,24 +37,24 @@ public:
 	operator unsigned() const { return code; }
 	unsigned type() const { return code & type_flag(-1u); }
 	unsigned event() const { return code & ~type(); }
-	friend std::ostream& operator <<(std::ostream& out, const action& a) { return a >> out; }
-	friend std::istream& operator >>(std::istream& in, action& a) { return a << in; }
+	friend std::ostream& operator <<(std::ostream& out, const Action& a) { return a >> out; }
+	friend std::istream& operator >>(std::istream& in, Action& a) { return a << in; }
 
 protected:
 	static constexpr unsigned type_flag(unsigned v) { return v << 24; }
 
-	typedef std::unordered_map<unsigned, action*> prototype;
+	typedef std::unordered_map<unsigned, Action*> prototype;
 	static prototype& entries() { static prototype m; return m; }
-	virtual action& reinterpret(const action* a) const { return *new (const_cast<action*>(a)) action(*a); }
+	virtual Action& reinterpret(const Action* a) const { return *new (const_cast<Action*>(a)) Action(*a); }
 
 	unsigned code;
 };
 
-class action::slide : public action {
+class Action::slide : public Action {
 public:
 	static constexpr unsigned type = type_flag('s');
-	slide(unsigned oper) : action(slide::type | (oper & 0b11)) {}
-	slide(const action& a = {}) : action(a) {}
+	slide(unsigned oper) : Action(slide::type | (oper & 0b11)) {}
+	slide(const Action& a = {}) : Action(a) {}
 public:
 	Board::Reward apply(Board& b) const {
 		return b.slide(event());
@@ -69,7 +69,7 @@ public:
 			const char* opc = "URDL";
 			unsigned oper = std::find(opc, opc + 4, v) - opc;
 			if (oper < 4) {
-				operator= (action::slide(oper));
+				operator= (Action::slide(oper));
 				return in;
 			}
 		}
@@ -77,15 +77,15 @@ public:
 		return in;
 	}
 protected:
-	action& reinterpret(const action* a) const { return *new (const_cast<action*>(a)) slide(*a); }
+	Action& reinterpret(const Action* a) const { return *new (const_cast<Action*>(a)) slide(*a); }
 	static __attribute__((constructor)) void init() { entries()[type_flag('s')] = new slide; }
 };
 
-class action::place : public action {
+class Action::place : public Action {
 public:
 	static constexpr unsigned type = type_flag('p');
-	place(unsigned pos, unsigned tile) : action(place::type | (pos & 0x0f) | (std::min(tile, 35u) << 4)) {}
-	place(const action& a = {}) : action(a) {}
+	place(unsigned pos, unsigned tile) : Action(place::type | (pos & 0x0f) | (std::min(tile, 35u) << 4)) {}
+	place(const Action& a = {}) : Action(a) {}
 	unsigned position() const { return event() & 0x0f; }
 	unsigned tile() const { return event() >> 4; }
 public:
@@ -104,7 +104,7 @@ public:
 			in.ignore(1) >> v;
 			unsigned tile = std::find(idx, idx + 36, v) - idx;
 			if (tile < 36) {
-				operator =(action::place(pos, tile));
+				operator =(Action::place(pos, tile));
 				return in;
 			}
 		}
@@ -112,6 +112,6 @@ public:
 		return in;
 	}
 protected:
-	action& reinterpret(const action* a) const { return *new (const_cast<action*>(a)) place(*a); }
+	Action& reinterpret(const Action* a) const { return *new (const_cast<Action*>(a)) place(*a); }
 	static __attribute__((constructor)) void init() { entries()[type_flag('p')] = new place; }
 };

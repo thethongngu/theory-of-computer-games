@@ -55,13 +55,13 @@ public:
 
 	time_t time(unsigned who = -1u) const {
 		time_t time = 0;
-		size_t i = 2;
 		switch (who) {
 		case Action::place::type:
-			if (ep_moves.size()) time += ep_moves[0].time, i = 1;
-			// no break;
+            for(int i = 0; i < 9 && i < ep_moves.size(); i++) time += ep_moves[i].time;  // 9 first steps (0-8)
+            for(int i = 10; i < ep_moves.size(); i++) time += ep_moves[i].time;
+            break;
 		case Action::slide::type:
-			while (i < ep_moves.size()) time += ep_moves[i].time, i += 2;
+            for(int i = 9; i < ep_moves.size(); i++) time += ep_moves[i].time;  // start from 9
 			break;
 		default:
 			time = ep_close.when - ep_open.when;
@@ -72,17 +72,17 @@ public:
 
 	std::vector<Action> actions(unsigned who = -1u) const {
 		std::vector<Action> res;
-		size_t i = 2;
 		switch (who) {
-		case Action::place::type:
-			if (ep_moves.size()) res.push_back(ep_moves[0]), i = 1;
-			// no break;
-		case Action::slide::type:
-			while (i < ep_moves.size()) res.push_back(ep_moves[i]), i += 2;
-			break;
-		default:
-			res.assign(ep_moves.begin(), ep_moves.end());
-			break;
+            case Action::place::type:
+                for(int i = 0; i < 9 && i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);  // 9 first steps (0-8)
+                for(int i = 10; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);
+                break;
+            case Action::slide::type:
+                for(int i = 9; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);  // start from 9
+                break;
+            default:
+                for(int i = 0; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);
+                break;
 		}
 		return res;
 	}
@@ -114,20 +114,20 @@ public:
 protected:
 
 	struct move {
-		Action code;
+		Action action;
 		Board::Reward reward;
 		time_t time;
-		move(Action code = {}, Board::Reward reward = 0, time_t time = 0) : code(code), reward(reward), time(time) {}
+		move(Action code = {}, Board::Reward reward = 0, time_t time = 0) : action(code), reward(reward), time(time) {}
 
-		operator Action() const { return code; }
+		operator Action() const { return action; }
 		friend std::ostream& operator <<(std::ostream& out, const move& m) {
-			out << m.code;
+			out << m.action;
 			if (m.reward) out << '[' << std::dec << m.reward << ']';
 			if (m.time) out << '(' << std::dec << m.time << ')';
 			return out;
 		}
 		friend std::istream& operator >>(std::istream& in, move& m) {
-			in >> m.code;
+			in >> m.action;
 			m.reward = 0;
 			m.time = 0;
 			if (in.peek() == '[') {
