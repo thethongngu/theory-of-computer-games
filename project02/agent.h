@@ -32,7 +32,7 @@ public:
 
     virtual bool check_for_win(const Board &b) { return false; }
 
-    virtual unsigned action_type() {}
+    virtual unsigned opponent_type() {};
 
 public:
     virtual std::string property(const std::string &key) const { return meta.at(key); }
@@ -62,10 +62,6 @@ protected:
 
 class RandomAgent : public Agent {
 public:
-
-    unsigned action_type() override {
-        return Action::Slide::type;
-    }
 
     RandomAgent(const std::string &args = "") : Agent(args) {
         if (meta.find("seed") != meta.end())
@@ -161,14 +157,19 @@ class RandomEnv : public RandomAgent {
 public:
     RandomEnv(const std::string &args = "") : RandomAgent("name=random role=environment " + args),
                                               space({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}),
+                                              bag({1, 2, 3}),
                                               top({0, 1, 2, 3}),
                                               bottom({12, 13, 14, 15}),
                                               left({0, 4, 8, 12}),
                                               right({3, 7, 11, 15}),
                                               popup(1, 3) {}
 
-    unsigned action_type() override {
-        return Action::Place::type;
+    virtual void close_episode(const std::string &flag = "") {
+        bag.assign({1, 2, 3});
+    }
+
+    unsigned opponent_type() override {
+        return Action::Slide::type;
     }
 
     Action take_action(const Board &board, const std::vector<Action> &actions) override {
@@ -181,19 +182,23 @@ public:
         else if (actions.back().event() == 2) { tiles = &top;  }    // down
         else if (actions.back().event() == 3) { tiles = &right;  }  // left
 
+        if (bag.empty()) bag.assign({1, 2, 3});
+        std::shuffle(bag.begin(), bag.end(), engine);
         std::shuffle(tiles->begin(), tiles->end(), engine);
+
         for (auto it = tiles->begin(); it < tiles->end(); it++) {
             if (board(*it) != 0) continue;
-            Board::Cell tile = popup(engine);
+            Board::Cell tile = bag.back();   bag.pop_back();
             return Action::Place(*it, tile);
         }
         return Action();
-    }
+}
 
 private:
     std::vector<int> space;
     std::vector<int> top, bottom, left, right;
     std::uniform_int_distribution<int> popup;
+    std::vector<int> bag;
 };
 
 /**
@@ -205,8 +210,8 @@ public:
     Player(const std::string &args = "") : RandomAgent("name=dummy role=player " + args),
                                            opcode({0, 1, 2, 3}) {}
 
-    unsigned action_type() override {
-        return Action::Slide::type;
+    unsigned opponent_type() override {
+        return Action::Place::type;
     }
 
     virtual Action take_action(const Board &before, const std::vector<Action> &actions) {

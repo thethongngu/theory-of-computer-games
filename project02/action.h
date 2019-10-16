@@ -61,13 +61,13 @@ public:
 	explicit Slide(const Action& a = {}) : Action(a) {}
 
 public:
-	Board::Reward apply(Board& b) const override {
+	Board::Reward apply(Board& b) const {
 		return b.slide(event());
 	}
-	std::ostream& operator >>(std::ostream& out) const override {
+	std::ostream& operator >>(std::ostream& out) const {
 		return out << '#' << ("URDL")[event() & 0b11];
 	}
-	std::istream& operator <<(std::istream& in) override {
+	std::istream& operator <<(std::istream& in) {
 		if (in.peek() == '#') {
 			char v;
 			in.ignore(1) >> v;
@@ -99,14 +99,14 @@ public:
 	unsigned tile() const { return event() >> 4; }
 
 public:
-	Board::Reward apply(Board& b) const override {
+	Board::Reward apply(Board& b) const {
 		return b.place(position(), tile());
 	}
-	std::ostream& operator >>(std::ostream& out) const override {
+	std::ostream& operator >>(std::ostream& out) const {
 		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ?";
 		return out << idx[position()] << idx[std::min(tile(), 36u)];
 	}
-	std::istream& operator <<(std::istream& in) override {
+	std::istream& operator <<(std::istream& in) {
 		const char* idx = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		char v = in.peek();
 		unsigned pos = std::find(idx, idx + 16, v) - idx;

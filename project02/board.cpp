@@ -13,7 +13,7 @@ const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 3
  */
 Board::Reward Board::place(unsigned pos, Board::Cell tile_id) {
     if (pos >= 16) return -1;
-    if (tile_id != 1 && tile_id != 2) return -1;
+    if (tile_id != 1 && tile_id != 2 && tile_id != 3) return -1;
     operator()(pos) = tile_id;
     return 0;
 }
@@ -39,7 +39,7 @@ Board::Reward Board::slide_left() {
         for (int c = 0; c < 3; c++) {
             if (Board::can_merge(row[c], row[c + 1])) {
                 Cell new_tile = std::max(row[c], row[c + 1]) + 1;
-                set_score(get_score() - Board::kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);
+                set_score(get_score() - kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);
                 row[c] = new_tile;  row[c + 1] = 0;
             }
             if (row[c] == 0) {  // can slide

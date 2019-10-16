@@ -16,6 +16,9 @@
 #include "episode.h"
 #include "statistic.h"
 
+#define debug(a) std::cout << #a << " = " << a << std::endl
+#define print(a) std::cout << a << std::endl
+
 int main(int argc, const char* argv[]) {
 	std::cout << "Threes-Demo: ";
 	std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, " "));
@@ -65,8 +68,9 @@ int main(int argc, const char* argv[]) {
 		stat.open_episode(play.name() + ":" + evil.name());
 		Episode& game = stat.back();
 		while (true) {
+		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
-			Action move = who.take_action(game.state(), game.actions(who.action_type()));
+			Action move = who.take_action(game.state(), game.actions(who.opponent_type()));
 			if (game.apply_action(move) != true) break;
 			if (who.check_for_win(game.state())) break;
 		}
