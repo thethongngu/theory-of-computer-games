@@ -61,7 +61,12 @@ int main(int argc, const char* argv[]) {
 	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
 
+	int c = 0;
 	while (!stat.is_finished()) {
+	    c++;
+	    if (c == 854) {
+	        c = 854;
+	    }
 		play.open_episode("~:" + evil.name());
 		evil.open_episode(play.name() + ":~");
 

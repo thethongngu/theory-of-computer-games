@@ -284,7 +284,7 @@ public:
     Board::Reward evaluation(const Board& s, const Action& a) {
         Board s_prime(s);  // TODO: Does s_prime is a copy is s?
         Board::Reward r = a.apply(s_prime);
-        return r + get_value_function(s_prime);
+        return (r == -1) ? 0 : r + get_value_function(s_prime);
     }
 
     int get_max_action(const Board &state) {
