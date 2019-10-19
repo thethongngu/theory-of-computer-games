@@ -234,7 +234,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    double learning_rate = 0.0001;
+    float learning_rate = 0.003125;
     int tuple_index[8][4] = {
             { 0,  1,  2,  3},
             { 4,  5,  6,  7},
@@ -255,7 +255,7 @@ public:
         for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^4)
     }
 
-    int get_tuple_index(const Board& s, int index) {
+    int get_posval_index(const Board& s, int index) {
         int res = 0, base = 1;
         for(int i = 0; i < tuple_len; i++) {
             res += s(tuple_index[index][i]) * base;
@@ -267,7 +267,7 @@ public:
     Board::Reward get_value_function(const Board& s) {
         int res = 0;
         for(int i = 0; i < net.size(); i++) {
-            int index = get_tuple_index(s, i);
+            int index = get_posval_index(s, i);
             res += net[i][index];
         }
         return res;
@@ -275,16 +275,16 @@ public:
 
     void update_value_function(Board::Reward r_next, const Board& s_prime_next, const Board& s_prime) {
         for(int i = 0; i < net.size(); i++) {
-            int prime_index = get_tuple_index(s_prime, i);
-            int prime_next_index = get_tuple_index(s_prime_next, i);
-            net[i][prime_index] = net[i][prime_index] + learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
+            int prime_index = get_posval_index(s_prime, i);
+            int prime_next_index = get_posval_index(s_prime_next, i);
+            net[i][prime_index] += learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
         }
     }
 
     Board::Reward evaluation(const Board& s, const Action& a) {
         Board s_prime(s);
         Board::Reward r = a.apply(s_prime);
-        return (r == -1) ? 0 : r + get_value_function(s_prime);
+        return (r == -1) ? -1 : r + get_value_function(s_prime);
     }
 
     int get_max_action(const Board &state) {
@@ -315,8 +315,8 @@ public:
 
         // update last board state (TD target = 0)
         for(int i = 0; i < net.size(); i++) {
-            int prime_index = get_tuple_index(boards.back(), i);
-            net[i][prime_index] = net[i][prime_index] + learning_rate * (0 - net[i][prime_index]);
+            int posval_index = get_posval_index(boards[boards.size() - 2], i);
+            net[i][posval_index] += learning_rate * (0 - net[i][posval_index]);
         }
     }
 
