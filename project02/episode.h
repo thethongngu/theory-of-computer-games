@@ -38,6 +38,7 @@ public:
 		if (reward == -1) return false;
 		ep_moves.emplace_back(move, reward, millisec() - ep_time);
 		ep_boards.push_back(state());
+		ep_rewards.push_back(reward);
 		ep_score += reward;
 		return true;
 	}
@@ -95,6 +96,10 @@ public:
 
 	const std::vector<Board>& states() {
 	    return ep_boards;
+	}
+
+	const std::vector<Board::Reward>& rewards() {
+	    return ep_rewards;
 	}
 
 public:
@@ -184,6 +189,7 @@ private:
 	Board::Reward ep_score;
 	std::vector<move> ep_moves;
 	std::vector<Board> ep_boards;
+	std::vector<Board::Reward> ep_rewards;
 	time_t ep_time;
 
 	meta ep_open;

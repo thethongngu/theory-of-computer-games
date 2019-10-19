@@ -282,7 +282,7 @@ public:
     }
 
     Board::Reward evaluation(const Board& s, const Action& a) {
-        Board s_prime = Board(s);  // TODO: Does s_prime is a copy is s?
+        Board s_prime(s);  // TODO: Does s_prime is a copy is s?
         Board::Reward r = a.apply(s_prime);
         return r + get_value_function(s_prime);
     }
@@ -303,13 +303,15 @@ public:
 
     void learn_evaluation(const Board& s, const Action& a, Board::Reward r, const Board& s_prime, const Board& s_double_prime) {
         int max_op = get_max_action(s_double_prime);
-        Board s_prime_next = Board(s_double_prime);
+        Board s_prime_next(s_double_prime);
         Board::Reward r_next = Action::Slide(max_op).apply(s_prime_next);
         update_value_function(r_next, s_prime_next, s_prime);
     }
 
-    void td_training(const std::vector<Board>& boards, const std::vector<Action>& actions) {
-
+    void td_training(const std::vector<Board>& boards, const std::vector<Action>& actions, const std::vector<Board::Reward>& rewards) {
+        for(int i = 9; i < boards.size() - 2; i += 2) {
+            learn_evaluation(boards[i], actions[i], rewards[i], boards[i + 1], boards[i + 2]);
+        }
     }
 
     virtual Action take_action(const Board &state, const std::vector<Action> &actions) {
