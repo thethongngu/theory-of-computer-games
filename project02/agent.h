@@ -308,6 +308,10 @@ public:
         update_value_function(r_next, s_prime_next, s_prime);
     }
 
+    void td_training(const std::vector<Board>& boards, const std::vector<Action>& actions) {
+
+    }
+
     virtual Action take_action(const Board &state, const std::vector<Action> &actions) {
         int max_op = get_max_action(state);
         return Action::Slide(max_op);

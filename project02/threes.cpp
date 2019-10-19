@@ -58,7 +58,7 @@ int main(int argc, const char* argv[]) {
 		summary |= stat.is_finished();
 	}
 
-	Player play(play_args);
+	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
 
 	while (!stat.is_finished()) {
@@ -76,6 +76,8 @@ int main(int argc, const char* argv[]) {
 		}
 		Agent& win = game.last_turns(play, evil);
 		stat.close_episode(win.name());
+
+		play.td_training(game.states(), game.actions());
 
 		play.close_episode(win.name());
 		evil.close_episode(win.name());

@@ -17,7 +17,10 @@ class Episode {
 friend class statistic;
 
 public:
-	Episode() : ep_state(initial_state()), ep_score(0), ep_time(0) { ep_moves.reserve(10000); }
+	Episode() : ep_state(initial_state()), ep_score(0), ep_time(0) {
+	    ep_boards.push_back(initial_state());
+	    ep_moves.reserve(10000);
+	}
 
 public:
 	Board& state() { return ep_state; }
@@ -34,6 +37,7 @@ public:
 		Board::Reward reward = move.apply(state());
 		if (reward == -1) return false;
 		ep_moves.emplace_back(move, reward, millisec() - ep_time);
+		ep_boards.push_back(state());
 		ep_score += reward;
 		return true;
 	}
@@ -87,6 +91,10 @@ public:
                 break;
 		}
 		return res;
+	}
+
+	const std::vector<Board>& states() {
+	    return ep_boards;
 	}
 
 public:
@@ -175,6 +183,7 @@ private:
 	Board ep_state;
 	Board::Reward ep_score;
 	std::vector<move> ep_moves;
+	std::vector<Board> ep_boards;
 	time_t ep_time;
 
 	meta ep_open;
