@@ -234,7 +234,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.003125;
+    float learning_rate = 0.4;
     int tuple_index[8][4] = {
             { 0,  1,  2,  3},
             { 4,  5,  6,  7},

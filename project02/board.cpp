@@ -34,7 +34,7 @@ Board::Reward Board::slide(unsigned opcode) {
 
 Board::Reward Board::slide_left() {
     Board prev = *this;
-    Board::Reward score = 0;
+    Board::Reward score = 1;
     for (int r = 0; r < 4; r++) {
         auto& row = tile[r];
         for (int c = 0; c < 3; c++) {

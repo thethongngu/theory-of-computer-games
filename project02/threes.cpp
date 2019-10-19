@@ -72,6 +72,9 @@ int main(int argc, const char* argv[]) {
 		stat.open_episode(play.name() + ":" + evil.name());
 		Episode& game = stat.back();
 		while (true) {
+//		    if (game.step() == 35) {
+//		        std::cout << "here" << std::endl;
+//		    }
 //		    debug(game.step());
 //		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
