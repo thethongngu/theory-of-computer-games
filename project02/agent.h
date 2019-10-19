@@ -28,7 +28,7 @@ public:
 
     virtual void close_episode(const std::string &flag = "") {}
 
-    virtual Action take_action(const Board &board, const std::vector<Action> &actions) { return Action(); }
+    virtual Action take_action(const Board &board, const std::vector<Action> &opponent_actions) { return Action(); }
 
     virtual bool check_for_win(const Board &b) { return false; }
 
@@ -172,15 +172,15 @@ public:
         return Action::Slide::type;
     }
 
-    Action take_action(const Board &board, const std::vector<Action> &actions) override {
+    Action take_action(const Board &board, const std::vector<Action> &opponent_actions) override {
 
         // Choose tiles to generate
         std::vector<int> *tiles = &space;
-        if (actions.empty()) {  tiles = &space; }  // first 9-moves
-        else if (actions.back().event() == 0) { tiles = &bottom; }  // up
-        else if (actions.back().event() == 1) { tiles = &left;  }   // right
-        else if (actions.back().event() == 2) { tiles = &top;  }    // down
-        else if (actions.back().event() == 3) { tiles = &right;  }  // left
+        if (opponent_actions.empty()) { tiles = &space; }  // first 9-moves
+        else if (opponent_actions.back().event() == 0) { tiles = &bottom; }  // up
+        else if (opponent_actions.back().event() == 1) { tiles = &left;  }   // right
+        else if (opponent_actions.back().event() == 2) { tiles = &top;  }    // down
+        else if (opponent_actions.back().event() == 3) { tiles = &right;  }  // left
 
         if (bag.empty()) bag.assign({1, 2, 3});
         std::shuffle(bag.begin(), bag.end(), engine);
@@ -225,4 +225,92 @@ public:
 
 private:
     std::array<int, 4> opcode;
+};
+
+class TDPlayer : public WeightAgent {
+
+public:
+    static int num_tuple;
+    static int tuple_len;
+    static int num_tile;
+
+    double learning_rate = 0.1;
+    int tuple_index[8][4] = {
+            { 0,  1,  2,  3},
+            { 4,  5,  6,  7},
+            { 8,  9, 10, 11},
+            {12, 13, 14, 15},
+
+            { 0,  4,  8, 12},
+            { 1,  5,  9, 13},
+            { 2,  6, 10, 13},
+            { 3,  7, 11, 14},
+    };
+
+public:
+    TDPlayer(const std::string &args = "") {
+        num_tuple = 8;  tuple_len = 4;  num_tile = 15;
+        int num_element = 1;
+        for(int i = 0; i < tuple_len; i++) num_element *= 15;
+        for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^4)
+    }
+
+    int get_tuple_index(const Board& s, int index) {
+        int res = 0, base = 1;
+        for(int i = 0; i < tuple_len; i++) {
+            base *= num_tile;
+            res += s(tuple_index[index][i]) * base;
+        }
+        return res;
+    }
+
+    Board::Reward get_value_function(const Board& s) {
+        int res = 0;
+        for(int i = 0; i < net.size(); i++) {
+            int index = get_tuple_index(s, i);
+            res += net[i][index];
+        }
+        return res;
+    }
+
+    void update_value_function(Board::Reward r_next, const Board& s_prime_next, const Board& s_prime) {
+        for(int i = 0; i < net.size(); i++) {
+            int prime_index = get_tuple_index(s_prime, i);
+            int prime_next_index = get_tuple_index(s_prime_next, i);
+            net[i][prime_index] = learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
+        }
+    }
+
+    Board::Reward evaluation(const Board& s, const Action& a) {
+        Board s_prime = Board(s);  // TODO: Does s_prime is a copy is s?
+        Board::Reward r = a.apply(s_prime);
+        return r + get_value_function(s_prime);
+    }
+
+    int get_max_action(const Board &state) {
+        int max_op = 0;
+        Board::Reward max_return = 0.0;
+
+        for(int op = 0; op < 4; op++) {
+            auto curr_return = evaluation(state, Action::Slide(op));
+            if (curr_return > max_return) {
+                max_return = curr_return;
+                max_op = op;
+            }
+        }
+        return max_op;
+    }
+
+    void learn_evaluation(const Board& s, const Action& a, Board::Reward r, const Board& s_prime, const Board& s_double_prime) {
+        int max_op = get_max_action(s_double_prime);
+        Board s_prime_next = Board(s_double_prime);
+        Board::Reward r_next = Action::Slide(max_op).apply(s_prime_next);
+        update_value_function(r_next, s_prime_next, s_prime);
+    }
+
+    virtual Action take_action(const Board &state, const std::vector<Action> &actions) {
+        int max_op = get_max_action(state);
+        return Action::Slide(max_op);
+    }
+
 };

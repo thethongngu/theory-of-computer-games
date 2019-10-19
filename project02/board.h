@@ -32,7 +32,7 @@ public:
 
 public:
     Board() : tile(), attr(0), score{0} {}
-    explicit Board(const Grid& b, Data v = 0) : tile(b), attr(v), score{0} {}
+    Board(const Grid& b, Data v = 0) : tile(b), attr(v), score{0} {}
     Board(const Board& b) = default;
     Board& operator =(const Board& b) = default;
 
