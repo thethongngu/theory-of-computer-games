@@ -230,11 +230,11 @@ private:
 class TDPlayer : public WeightAgent {
 
 public:
-    static int num_tuple;
-    static int tuple_len;
-    static int num_tile;
+    int num_tuple;
+    int tuple_len;
+    int num_tile;
 
-    double learning_rate = 0.1;
+    double learning_rate = 0.003125;
     int tuple_index[8][4] = {
             { 0,  1,  2,  3},
             { 4,  5,  6,  7},
@@ -251,15 +251,15 @@ public:
     TDPlayer(const std::string &args = "") {
         num_tuple = 8;  tuple_len = 4;  num_tile = 15;
         int num_element = 1;
-        for(int i = 0; i < tuple_len; i++) num_element *= 15;
+        for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
         for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^4)
     }
 
     int get_tuple_index(const Board& s, int index) {
         int res = 0, base = 1;
         for(int i = 0; i < tuple_len; i++) {
-            base *= num_tile;
             res += s(tuple_index[index][i]) * base;
+            base *= num_tile;
         }
         return res;
     }
@@ -312,11 +312,16 @@ public:
         for(int i = 9; i < boards.size() - 2; i += 2) {
             learn_evaluation(boards[i], actions[i], rewards[i], boards[i + 1], boards[i + 2]);
         }
+
+        // update last board state (TD target = 0)
+        for(int i = 0; i < net.size(); i++) {
+            int prime_index = get_tuple_index(boards.back(), i);
+            net[i][prime_index] = learning_rate * (0 - net[i][prime_index]);
+        }
     }
 
     virtual Action take_action(const Board &state, const std::vector<Action> &actions) {
         int max_op = get_max_action(state);
         return Action::Slide(max_op);
     }
-
 };

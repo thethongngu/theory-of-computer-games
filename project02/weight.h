@@ -16,6 +16,7 @@ class weight {
 public:
 	weight() {}
 	weight(size_t len) : value(len) {}
+	weight(size_t len, float value) : value(len, value) {}
 	weight(weight&& f) : value(std::move(f.value)) {}
 	weight(const weight& f) = default;
 

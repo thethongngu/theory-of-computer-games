@@ -39,7 +39,7 @@ Board::Reward Board::slide_left() {
         for (int c = 0; c < 3; c++) {
             if (Board::can_merge(row[c], row[c + 1])) {
                 Cell new_tile = std::max(row[c], row[c + 1]) + 1;
-                set_score(get_score() - kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);
+                set_score(get_score() - kTileScore[row[c]] - kTileScore[row[c + 1]] + kTileScore[new_tile]);  // TODO: other reward system?
                 row[c] = new_tile;  row[c + 1] = 0;
             }
             if (row[c] == 0) {  // can slide
