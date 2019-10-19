@@ -248,11 +248,15 @@ public:
     };
 
 public:
-    TDPlayer(const std::string &args = "") {
+    TDPlayer(const std::string &args = "") : WeightAgent() {
         num_tuple = 8;  tuple_len = 4;  num_tile = 15;
         int num_element = 1;
         for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
         for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^4)
+    }
+
+    void checkpoint() {
+        save_weights("weights.txt");
     }
 
     int get_tuple_index(const Board& s, int index) {

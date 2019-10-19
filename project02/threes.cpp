@@ -61,20 +61,17 @@ int main(int argc, const char* argv[]) {
 	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
 
-	int c = 0;
+	int num_games = 0;
 	while (!stat.is_finished()) {
-	    c++;
-	    if (c == 854) {
-	        c = 854;
-	    }
+	    num_games++;
 		play.open_episode("~:" + evil.name());
 		evil.open_episode(play.name() + ":~");
 
 		stat.open_episode(play.name() + ":" + evil.name());
 		Episode& game = stat.back();
 		while (true) {
-		    debug(game.step());
-		    print(game.state());
+//		    debug(game.step());
+//		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
 			Action move = who.take_action(game.state(), game.actions(who.opponent_type()));
 			if (game.apply_action(move) != true) break;
@@ -84,6 +81,10 @@ int main(int argc, const char* argv[]) {
 		stat.close_episode(win.name());
 
 		play.td_training(game.states(), game.actions(), game.rewards());
+		if (num_games % 1000 == 0) {
+		    play.checkpoint();
+		    stat.summary();
+		}
 
 		play.close_episode(win.name());
 		evil.close_episode(win.name());
