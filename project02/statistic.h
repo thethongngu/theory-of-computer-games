@@ -83,8 +83,8 @@ public:
 			if (stat[t] == 0) continue;
 			unsigned accu = std::accumulate(std::begin(stat) + t, std::end(stat), 0);
 			std::cout << "\t" << Board::kTileValue[t]; // type
-			std::cout << "\t" << (accu * 100.0 / blk) << "%"; // win rate
-			std::cout << "\t" "(" << (stat[t] * 100.0 / blk) << "%" ")"; // percentage of ending
+			std::cout << "\t" << std::setprecision(5) << (accu * 100.0 / blk) << "%"; // win rate
+			std::cout << "\t" "(" << std::setprecision(5) << (stat[t] * 100.0 / blk) << "%" ")"; // percentage of ending
 			std::cout << std::endl;
 		}
 		std::cout << std::endl;

@@ -31,8 +31,8 @@ public:
     typedef int Reward;
 
 public:
-    Board() : tile(), attr(0), score{0} {}
-    Board(const Grid& b, Data v = 0) : tile(b), attr(v), score{0} {}
+    Board() : tile(), attr(0) {}
+    Board(const Grid& b, Data v = 0) : tile(b), attr(v) {}
     Board(const Board& b) = default;
     Board& operator =(const Board& b) = default;
 
@@ -61,9 +61,6 @@ public:
 public:
     static bool can_merge(Cell cell01, Cell cell02);
 
-    Reward get_score();
-    void set_score(Reward new_score);
-
     Reward place(unsigned pos, Cell tile_id);
     Reward slide(unsigned opcode);
     Reward slide_left();
@@ -83,7 +80,6 @@ public:
 
 private:
     Grid tile;
-    Reward score;
     Data attr;
 };
 

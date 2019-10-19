@@ -96,13 +96,6 @@ public:
             save_weights(meta["save"]);
     }
 
-protected:
-    virtual void init_weights(const std::string &info) {
-        net.emplace_back(65536); // create an empty weight table with size 65536
-        net.emplace_back(65536); // create an empty weight table with size 65536
-        // now net.size() == 2; net[0].size() == 65536; net[1].size() == 65536
-    }
-
     virtual void load_weights(const std::string &path) {
         std::ifstream in(path, std::ios::in | std::ios::binary);
         if (!in.is_open()) std::exit(-1);
@@ -120,6 +113,13 @@ protected:
         out.write(reinterpret_cast<char *>(&size), sizeof(size));
         for (weight &w : net) out << w;
         out.close();
+    }
+
+protected:
+    virtual void init_weights(const std::string &info) {
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        // now net.size() == 2; net[0].size() == 65536; net[1].size() == 65536
     }
 
 protected:
@@ -234,7 +234,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    double learning_rate = 0.003125;
+    double learning_rate = 0.0001;
     int tuple_index[8][4] = {
             { 0,  1,  2,  3},
             { 4,  5,  6,  7},
@@ -253,10 +253,6 @@ public:
         int num_element = 1;
         for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
         for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^4)
-    }
-
-    void checkpoint() {
-        save_weights("weights.txt");
     }
 
     int get_tuple_index(const Board& s, int index) {
@@ -281,12 +277,12 @@ public:
         for(int i = 0; i < net.size(); i++) {
             int prime_index = get_tuple_index(s_prime, i);
             int prime_next_index = get_tuple_index(s_prime_next, i);
-            net[i][prime_index] = learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
+            net[i][prime_index] = net[i][prime_index] + learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
         }
     }
 
     Board::Reward evaluation(const Board& s, const Action& a) {
-        Board s_prime(s);  // TODO: Does s_prime is a copy is s?
+        Board s_prime(s);
         Board::Reward r = a.apply(s_prime);
         return (r == -1) ? 0 : r + get_value_function(s_prime);
     }
@@ -320,7 +316,7 @@ public:
         // update last board state (TD target = 0)
         for(int i = 0; i < net.size(); i++) {
             int prime_index = get_tuple_index(boards.back(), i);
-            net[i][prime_index] = learning_rate * (0 - net[i][prime_index]);
+            net[i][prime_index] = net[i][prime_index] + learning_rate * (0 - net[i][prime_index]);
         }
     }
 

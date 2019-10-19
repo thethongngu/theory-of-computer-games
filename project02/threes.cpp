@@ -61,6 +61,8 @@ int main(int argc, const char* argv[]) {
 	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
 
+//	play.load_weights("weights.txt");
+
 	int num_games = 0;
 	while (!stat.is_finished()) {
 	    num_games++;
@@ -82,7 +84,7 @@ int main(int argc, const char* argv[]) {
 
 		play.td_training(game.states(), game.actions(), game.rewards());
 		if (num_games % 1000 == 0) {
-		    play.checkpoint();
+		    if (num_games % 100000) play.save_weights("weights.txt");
 		    stat.summary();
 		}
 
