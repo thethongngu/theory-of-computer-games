@@ -232,7 +232,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.5;
+    float learning_rate = 0.003125;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -324,10 +324,37 @@ public:
         }
     }
 
-    void td_training(const std::vector<Board>& boards, const std::vector<Action>& actions, const std::vector<Board::Reward>& rewards) {
+    void td_training(std::vector<Board>& boards, const std::vector<Action>& actions, std::vector<Board::Reward>& rewards) {
         for(int i = boards.size() - 3; i >= 9; i -= 2) {
 //        for(int i = 9; i < boards.size() - 2; i += 2) {
             learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+
+            // new round
+            boards[i].reflect_vertical();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+
+            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+            boards[i].reflect_vertical();
         }
     }
 

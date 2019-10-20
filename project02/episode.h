@@ -94,11 +94,11 @@ public:
 		return res;
 	}
 
-	const std::vector<Board>& states() {
+	std::vector<Board>& states() {
 	    return ep_boards;
 	}
 
-	const std::vector<Board::Reward>& rewards() {
+	std::vector<Board::Reward>& rewards() {
 	    return ep_scores;
 	}
 
