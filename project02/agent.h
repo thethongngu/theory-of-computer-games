@@ -232,20 +232,25 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.025;
-    int tuple_index[4][6] = {
-            { 0,  1,  2,  3,  4,  5},
-            { 6,  7,  8,  9, 10, 11},
-            { 5,  6,  7,  9, 10, 11},
-            { 9, 10, 11, 13, 14, 15},
+    float learning_rate = 0.1;
+    int tuple_index[8][4] = {
+            { 0,  1,  2,  3},
+            { 4,  5,  6,  7},
+            { 8,  9, 10, 11},
+            {12, 13, 14, 15},
+
+            { 0,  4,  8, 12},
+            { 1,  5,  9, 13},
+            { 2,  6, 10, 13},
+            { 3,  7, 11, 14},
     };
 
 public:
     TDPlayer(const std::string &args = "") : WeightAgent() {
-        num_tuple = 4;  tuple_len = 6;  num_tile = 15;
+        num_tuple = 8;  tuple_len = 4;  num_tile = 15;
         int num_element = 1;
         for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
-        for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^6)
+        for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network
     }
 
     int get_posval_index(const Board& s, int index) {
@@ -257,6 +262,12 @@ public:
         return res;
     }
 
+    Board::Reward compute_afterstate(Board& s, const Action& a) {
+        Board::Reward score01 = s.get_curr_score();
+        Board::Reward score02 = a.apply(s);
+        return score02 - score01;
+    }
+
     Board::Reward get_value_function(const Board& s) {
         int res = 0;
         for(int i = 0; i < net.size(); i++) {
@@ -266,60 +277,65 @@ public:
         return res;
     }
 
-    void update_value_function(Board::Reward r_next, const Board& s_prime_next, const Board& s_prime) {
-        for(int i = 0; i < net.size(); i++) {
-            int prime_index = get_posval_index(s_prime, i);
-            int prime_next_index = get_posval_index(s_prime_next, i);
-
-//            std::cout << "Before: " << net[i][prime_index] << std::endl;
-            net[i][prime_index] += learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
-//            std::cout << "After: " << net[i][prime_index] << std::endl;
-        }
-//        std::cout << std::endl;
-    }
-
     Board::Reward evaluation(const Board& s, const Action& a) {
         Board s_prime(s);
-        Board::Reward r = a.apply(s_prime);
-        return (r == -1) ? -1 : r + get_value_function(s_prime);
+        Board::Reward r = compute_afterstate(s_prime, a);
+        return r + get_value_function(s_prime);
     }
 
-    int get_max_action(const Board &state) {
-        int max_op = -1;
-        Board::Reward max_return = -1.0;
-
+    /**
+     * Return -1 if there is no available move.
+     * Otherwise return op (0, 1, 2, 3)
+     */
+    int get_max_op(const Board &s_double_prime) {
+        int max_op = -1, max_reward = 0;
         for(int op = 0; op < 4; op++) {
-            auto curr_return = evaluation(state, Action::Slide(op));
-            if (curr_return > max_return) {
-                max_return = curr_return;
+
+            Board tmp(s_double_prime);
+            Action::Slide a_prime(op);
+            if (a_prime.apply(tmp) == -1) continue;
+
+            Board::Reward curr_reward = evaluation(s_double_prime, a_prime);
+            if (max_op == -1) {
+                max_reward = curr_reward;
                 max_op = op;
+            } else if (max_reward < curr_reward) {
+                max_reward = curr_reward;
+                max_op  = op;
             }
         }
         return max_op;
     }
 
     void learn_evaluation(const Board& s, const Action& a, Board::Reward r, const Board& s_prime, const Board& s_double_prime) {
-        int max_op = get_max_action(s_double_prime);
-        Board s_prime_next(s_double_prime);
-        Board::Reward r_next = Action::Slide(max_op).apply(s_prime_next);
-        update_value_function(r_next, s_prime_next, s_prime);
+        int max_op = get_max_op(s_double_prime);
+
+        Board::Reward r_next = 0;
+        Board::Reward value_s_prime = 0;
+        if (max_op != -1) {    // terminal state
+            Board s_prime_next(s_double_prime);
+            r_next = compute_afterstate(s_prime_next, max_op);
+            for(int i = 0; i < net.size(); i++) {
+                int prime_index = get_posval_index(s_prime, i);
+                int prime_next_index = get_posval_index(s_prime_next, i);
+                net[i][prime_index] += learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
+            }
+        } else {
+            for(int i = 0; i < net.size(); i++) {
+                int prime_index = get_posval_index(s_prime, i);
+                net[i][prime_index] += learning_rate * (0 - net[i][prime_index]);
+            }
+        }
     }
 
     void td_training(const std::vector<Board>& boards, const std::vector<Action>& actions, const std::vector<Board::Reward>& rewards) {
         for(int i = 9; i < boards.size() - 2; i += 2) {
-            learn_evaluation(boards[i], actions[i], rewards[i], boards[i + 1], boards[i + 2]);
-        }
-//        std::cout << std::endl;
-
-        // update last board state (TD target = 0)
-        for(int i = 0; i < net.size(); i++) {
-            int posval_index = get_posval_index(boards[boards.size() - 2], i);
-            net[i][posval_index] += learning_rate * (0 - net[i][posval_index]);
+            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
         }
     }
 
-    virtual Action take_action(const Board &state, const std::vector<Action> &actions) {
-        int max_op = get_max_action(state);
+    virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
+        int max_op = get_max_op(board);
         return (max_op == -1) ? Action() : Action::Slide(max_op);
     }
 };

@@ -32,7 +32,7 @@ public:
 
 public:
     Board() : tile(), attr(0) {}
-    Board(const Grid& b, Data v = 0) : tile(b), attr(v) {}
+    Board(const Grid& b, Data v = 0, Reward r = 0) : tile(b), attr(v) {}
     Board(const Board& b) = default;
     Board& operator =(const Board& b) = default;
 
@@ -60,6 +60,7 @@ public:
 
 public:
     static bool can_merge(Cell cell01, Cell cell02);
+    Board::Reward get_curr_score();
 
     Reward place(unsigned pos, Cell tile_id);
     Reward slide(unsigned opcode);

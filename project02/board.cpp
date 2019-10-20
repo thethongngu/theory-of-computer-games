@@ -32,15 +32,19 @@ Board::Reward Board::slide(unsigned opcode) {
     }
 }
 
+Board::Reward Board::get_curr_score() {
+    int res = 0;
+    for(int i = 0; i < 16; i++) res += kTileScore[operator()(i)];
+    return res;
+}
+
 Board::Reward Board::slide_left() {
     Board prev = *this;
-    Board::Reward score = 1;
     for (int r = 0; r < 4; r++) {
         auto& row = tile[r];
         for (int c = 0; c < 3; c++) {
             if (Board::can_merge(row[c], row[c + 1])) {
                 Cell new_tile = std::max(row[c], row[c + 1]) + 1;
-                score += kTileScore[new_tile];
                 row[c] = new_tile;  row[c + 1] = 0;
             }
             if (row[c] == 0) {  // can slide
@@ -49,7 +53,7 @@ Board::Reward Board::slide_left() {
             }
         }
     }
-    return (*this != prev) ? score : -1;
+    return (*this != prev) ? get_curr_score() : -1;
 }
 
 Board::Reward Board::slide_right() {

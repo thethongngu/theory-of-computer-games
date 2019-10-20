@@ -34,12 +34,12 @@ public:
 		ep_close = { tag, millisec() };
 	}
 	bool apply_action(Action move) {
-		Board::Reward reward = move.apply(state());
-		if (reward == -1) return false;
-		ep_moves.emplace_back(move, reward, millisec() - ep_time);
+		Board::Reward score = move.apply(state());
+		if (score == -1) return false;
+		ep_moves.emplace_back(move, score, millisec() - ep_time);
 		ep_boards.push_back(state());
-		ep_rewards.push_back(reward);
-		ep_score += reward;
+		ep_scores.push_back(score);
+		ep_score += score;
 		return true;
 	}
 	Agent& take_turns(Agent& player, Agent& evil) {
@@ -99,7 +99,7 @@ public:
 	}
 
 	const std::vector<Board::Reward>& rewards() {
-	    return ep_rewards;
+	    return ep_scores;
 	}
 
 public:
@@ -189,7 +189,7 @@ private:
 	Board::Reward ep_score;
 	std::vector<move> ep_moves;
 	std::vector<Board> ep_boards;
-	std::vector<Board::Reward> ep_rewards;
+	std::vector<Board::Reward> ep_scores;
 	time_t ep_time;
 
 	meta ep_open;

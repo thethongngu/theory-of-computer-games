@@ -8,6 +8,9 @@
 #include "agent.h"
 #include "episode.h"
 
+#define debug(a) std::cout << #a << " = " << a << std::endl
+
+
 class Statistics {
 public:
 	/**
