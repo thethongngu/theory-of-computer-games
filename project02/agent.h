@@ -161,8 +161,7 @@ public:
                                               top({0, 1, 2, 3}),
                                               bottom({12, 13, 14, 15}),
                                               left({0, 4, 8, 12}),
-                                              right({3, 7, 11, 15}),
-                                              popup(1, 3) {}
+                                              right({3, 7, 11, 15}) {}
 
     virtual void close_episode(const std::string &flag = "") {
         bag.assign({1, 2, 3});
@@ -197,7 +196,6 @@ public:
 private:
     std::vector<int> space;
     std::vector<int> top, bottom, left, right;
-    std::uniform_int_distribution<int> popup;
     std::vector<int> bag;
 };
 
