@@ -234,25 +234,20 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.1;
-    int tuple_index[8][4] = {
-            { 0,  1,  2,  3},
-            { 4,  5,  6,  7},
-            { 8,  9, 10, 11},
-            {12, 13, 14, 15},
-
-            { 0,  4,  8, 12},
-            { 1,  5,  9, 13},
-            { 2,  6, 10, 13},
-            { 3,  7, 11, 14},
+    float learning_rate = 0.025;
+    int tuple_index[4][6] = {
+            { 0,  1,  2,  3,  4,  5},
+            { 6,  7,  8,  9, 10, 11},
+            { 5,  6,  7,  9, 10, 11},
+            { 9, 10, 11, 13, 14, 15},
     };
 
 public:
     TDPlayer(const std::string &args = "") : WeightAgent() {
-        num_tuple = 8;  tuple_len = 4;  num_tile = 15;
+        num_tuple = 4;  tuple_len = 6;  num_tile = 15;
         int num_element = 1;
         for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
-        for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^4)
+        for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network (15^6)
     }
 
     int get_posval_index(const Board& s, int index) {
