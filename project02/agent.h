@@ -232,7 +232,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.0025;
+    float learning_rate = 0.5;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -318,13 +318,15 @@ public:
         } else {
             for(int i = 0; i < net.size(); i++) {
                 int prime_index = get_posval_index(s_prime, i);
-                net[i][prime_index] += learning_rate * (0 - net[i][prime_index]);
+//                net[i][prime_index] += learning_rate * (0 - net[i][prime_index]);
+                net[i][prime_index] += 0;
             }
         }
     }
 
     void td_training(const std::vector<Board>& boards, const std::vector<Action>& actions, const std::vector<Board::Reward>& rewards) {
-        for(int i = 9; i < boards.size() - 2; i += 2) {
+        for(int i = boards.size() - 3; i >= 9; i -= 2) {
+//        for(int i = 9; i < boards.size() - 2; i += 2) {
             learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
         }
     }

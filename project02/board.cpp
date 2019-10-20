@@ -34,7 +34,9 @@ Board::Reward Board::slide(unsigned opcode) {
 
 Board::Reward Board::get_curr_score() {
     int res = 0;
-    for(int i = 0; i < 16; i++) res += kTileScore[operator()(i)];
+    for(int i = 0; i < 16; i++) {
+        res += kTileScore[operator()(i)];
+    }
     return res;
 }
 

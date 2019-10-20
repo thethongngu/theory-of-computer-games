@@ -54,12 +54,12 @@ public:
 		size_t stat[64] = { 0 };
 		size_t sop = 0, pop = 0, eop = 0;
 		time_t sdu = 0, pdu = 0, edu = 0;
-		Board::Reward sum = 0, max = 0;
+		long long sum = 0, max = 0;
 		auto it = data.end();
 		for (size_t i = 0; i < blk; i++) {
 			auto& ep = *(--it);
 			sum += ep.score();
-			max = std::max(ep.score(), max);
+			max = std::max((long long)ep.score(), max);
 			stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
 			sop += ep.step();
 			pop += ep.step(Action::Slide::type);
