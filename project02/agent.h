@@ -234,7 +234,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.4;
+    float learning_rate = 0.1;
     int tuple_index[8][4] = {
             { 0,  1,  2,  3},
             { 4,  5,  6,  7},
@@ -277,8 +277,12 @@ public:
         for(int i = 0; i < net.size(); i++) {
             int prime_index = get_posval_index(s_prime, i);
             int prime_next_index = get_posval_index(s_prime_next, i);
+
+//            std::cout << "Before: " << net[i][prime_index] << std::endl;
             net[i][prime_index] += learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
+//            std::cout << "After: " << net[i][prime_index] << std::endl;
         }
+//        std::cout << std::endl;
     }
 
     Board::Reward evaluation(const Board& s, const Action& a) {
@@ -288,8 +292,8 @@ public:
     }
 
     int get_max_action(const Board &state) {
-        int max_op = 0;
-        Board::Reward max_return = 0.0;
+        int max_op = -1;
+        Board::Reward max_return = -1.0;
 
         for(int op = 0; op < 4; op++) {
             auto curr_return = evaluation(state, Action::Slide(op));
@@ -312,6 +316,7 @@ public:
         for(int i = 9; i < boards.size() - 2; i += 2) {
             learn_evaluation(boards[i], actions[i], rewards[i], boards[i + 1], boards[i + 2]);
         }
+//        std::cout << std::endl;
 
         // update last board state (TD target = 0)
         for(int i = 0; i < net.size(); i++) {
@@ -322,6 +327,6 @@ public:
 
     virtual Action take_action(const Board &state, const std::vector<Action> &actions) {
         int max_op = get_max_action(state);
-        return Action::Slide(max_op);
+        return (max_op == -1) ? Action() : Action::Slide(max_op);
     }
 };
