@@ -7,10 +7,8 @@
  */
 
 #include <iostream>
-#include <fstream>
 #include <iterator>
 #include <string>
-#include "board.h"
 #include "action.h"
 #include "agent.h"
 #include "episode.h"
@@ -72,9 +70,6 @@ int main(int argc, const char* argv[]) {
 		stat.open_episode(play.name() + ":" + evil.name());
 		Episode& game = stat.back();
 		while (true) {
-//		    if (game.step() == 35) {
-//		        std::cout << "here" << std::endl;
-//		    }
 //		    debug(game.step());
 //		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
@@ -86,10 +81,6 @@ int main(int argc, const char* argv[]) {
 		stat.close_episode(win.name());
 
 		play.td_training(game.states(), game.actions(), game.rewards());
-		if (num_games % 1000 == 0) {
-		    if (num_games % 100000) play.save_weights("weights.txt");
-		    stat.summary();
-		}
 
 		play.close_episode(win.name());
 		evil.close_episode(win.name());
