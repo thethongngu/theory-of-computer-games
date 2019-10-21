@@ -10,6 +10,7 @@
 #include "action.h"
 #include "weight.h"
 #include <fstream>
+#include <chrono>
 
 class Agent {
 public:
@@ -161,7 +162,9 @@ public:
                                               top({0, 1, 2, 3}),
                                               bottom({12, 13, 14, 15}),
                                               left({0, 4, 8, 12}),
-                                              right({3, 7, 11, 15}) {}
+                                              right({3, 7, 11, 15}) {
+        engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    }
 
     virtual void close_episode(const std::string &flag = "") {
         bag.assign({1, 2, 3});
@@ -241,11 +244,14 @@ public:
     };
 
 public:
-    TDPlayer(const std::string &args = "") : WeightAgent() {
+    TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
         int num_element = 1;
         for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
-        for(int i = 0; i < num_tuple; i++) net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network
+        if (net.empty()) {
+            for (int i = 0; i < num_tuple; i++)
+                net.emplace_back(num_element, 0);  // create 8 tables for 4-tuple network
+        }
     }
 
     int get_posval_index(const Board& s, int index) {
@@ -257,16 +263,20 @@ public:
         return res;
     }
 
+    Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
+        return (after_action - before_action);
+    }
+
     Board::Reward compute_afterstate(Board& s, const Action& a) {
         Board::Reward score01 = s.get_curr_score();
         Board::Reward score02 = a.apply(s);
-        return score02 - score01;
+        return get_reward(score01, score02);
     }
 
     Board::Reward get_value_function(const Board& s) {
         int res = 0;
         for(int i = 0; i < net.size(); i++) {
-            int posval_index =get_posval_index(s, i);
+            int posval_index = get_posval_index(s, i);
             res += net[i][posval_index];
         }
         return res;
@@ -327,31 +337,34 @@ public:
     void td_training(std::vector<Board>& boards, const std::vector<Action>& actions, std::vector<Board::Reward>& rewards) {
         for(int i = boards.size() - 3; i >= 9; i -= 2) {
 //        for(int i = 9; i < boards.size() - 2; i += 2) {
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            Action a(actions[i]);
+            Board::Reward r = get_reward(rewards[i], rewards[i + 1]);
+
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
 
             // new round
             boards[i].reflect_vertical();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], actions[i],rewards[i + 1] - rewards[i],boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
 
             boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
             boards[i].reflect_vertical();
