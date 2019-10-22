@@ -28,7 +28,7 @@ public:
     typedef std::array<Cell, 4> Row;
     typedef std::array<Row, 4> Grid;
     typedef uint64_t Data;
-    typedef int Reward;
+    typedef long long Reward;
 
 public:
     Board() : tile(), attr(0) {}

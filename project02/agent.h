@@ -235,7 +235,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.000003125;
+    float learning_rate = 0.0025;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -254,7 +254,7 @@ public:
         }
     }
 
-    int get_posval_index(const Board& s, int index) {
+    int get_LUT_index(const Board& s, int index) {
         int res = 0, base = 1;
         for(int i = 0; i < tuple_len; i++) {
             res += s(tuple_index[index][i]) * base;
@@ -264,7 +264,7 @@ public:
     }
 
     Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
-        return (after_action - before_action);
+        return (after_action - before_action) + after_action;
     }
 
     Board::Reward compute_afterstate(Board& s, const Action& a) {
@@ -273,19 +273,26 @@ public:
         return get_reward(score01, score02);
     }
 
-    Board::Reward get_value_function(const Board& s) {
-        int res = 0;
+    float get_v(const Board& s) {
+        float res = 0;
         for(int i = 0; i < net.size(); i++) {
-            int posval_index = get_posval_index(s, i);
-            res += net[i][posval_index];
+            int LUT_id = get_LUT_index(s, i);
+            res += net[i][LUT_id];
         }
         return res;
+    }
+
+    void set_v(const Board& s, float value) {
+        for(int i = 0; i < net.size(); i++) {
+            int LUT_id = get_LUT_index(s, i);
+            net[i][LUT_id] += value;
+        }
     }
 
     Board::Reward evaluation(const Board& s, const Action& a) {
         Board s_prime(s);
         Board::Reward r = compute_afterstate(s_prime, a);
-        return r + get_value_function(s_prime);
+        return r + get_v(s_prime);
     }
 
     /**
@@ -293,14 +300,15 @@ public:
      * Otherwise return op (0, 1, 2, 3)
      */
     int get_max_op(const Board &s_double_prime) {
-        int max_op = -1, max_reward = 0;
-        for(int op = 0; op < 4; op++) {
+        int max_op = -1;
+        float max_reward = 0;
 
+        for(int op = 0; op < 4; op++) {
             Board tmp(s_double_prime);
             Action::Slide a_prime(op);
             if (a_prime.apply(tmp) == -1) continue;
 
-            Board::Reward curr_reward = evaluation(s_double_prime, a_prime);
+            float curr_reward = evaluation(s_double_prime, a_prime);
             if (max_op == -1) {
                 max_reward = curr_reward;
                 max_op = op;
@@ -312,62 +320,59 @@ public:
         return max_op;
     }
 
-    void learn_evaluation(const Board& s, const Action& a, Board::Reward r, const Board& s_prime, const Board& s_double_prime) {
-        int max_op = get_max_op(s_double_prime);
+    void learn_evaluation(const Board& s_prime, const Board& s_double_prime) {
 
-        Board::Reward r_next = 0;
-        Board::Reward value_s_prime = 0;
-        if (max_op != -1) {    // terminal state
+        //        std::cout << "s_prime: " << std::endl << s_prime << std::endl;
+        //        std::cout << "s_double_prime: " << std::endl << s_double_prime << std::endl;
+
+        int max_op = get_max_op(s_double_prime);
+        float value_s_prime = get_v(s_prime);
+        float update_value;
+
+        if (max_op != -1) {
             Board s_prime_next(s_double_prime);
-            r_next = compute_afterstate(s_prime_next, max_op);
-            for(int i = 0; i < net.size(); i++) {
-                int prime_index = get_posval_index(s_prime, i);
-                int prime_next_index = get_posval_index(s_prime_next, i);
-                net[i][prime_index] += learning_rate * (r_next + net[i][prime_next_index] - net[i][prime_index]);
-            }
-        } else {
-            for(int i = 0; i < net.size(); i++) {
-                int prime_index = get_posval_index(s_prime, i);
-//                net[i][prime_index] += learning_rate * (0 - net[i][prime_index]);
-                net[i][prime_index] += 0;
-            }
+            Board::Reward r_next = compute_afterstate(s_prime_next, max_op);
+            float value_s_prime_next = get_v(s_prime_next);
+            update_value = learning_rate * (r_next + value_s_prime_next - value_s_prime);
+        } else {   // terminal state
+            update_value = learning_rate * (0 - value_s_prime);
         }
+
+        set_v(s_prime, update_value);
     }
 
     void td_training(std::vector<Board>& boards, const std::vector<Action>& actions, std::vector<Board::Reward>& rewards) {
-        for(int i = boards.size() - 3; i >= 9; i -= 2) {
-//        for(int i = 9; i < boards.size() - 2; i += 2) {
-            Action a(actions[i]);
-            Board::Reward r = get_reward(rewards[i], rewards[i + 1]);
 
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
+        for(size_t i = boards.size() - 2; i >= 9; i -= 2) {
 
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
+            learn_evaluation(boards[i],boards[i + 1]);
 
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
-
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
-
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-
-            // new round
-            boards[i].reflect_vertical();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
-
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
-
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
-
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            learn_evaluation(boards[i], a, r,boards[i + 1],boards[i + 2]);
-
-            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-            boards[i].reflect_vertical();
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//
+//            // new round
+//            boards[i].reflect_vertical();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
+//
+//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
+//            boards[i].reflect_vertical();
         }
     }
 
