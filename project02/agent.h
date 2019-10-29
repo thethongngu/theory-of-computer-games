@@ -235,7 +235,7 @@ public:
     int tuple_len;
     int num_tile;
 
-    float learning_rate = 0.25;
+    float learning_rate = 0.025;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -264,7 +264,7 @@ public:
     }
 
     Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
-        return after_action;
+        return after_action + (after_action - before_action);
     }
 
     Board::Reward compute_afterstate(Board& s, const Action& a) {
@@ -335,7 +335,7 @@ public:
             float value_s_prime_next = get_v(s_prime_next);
             update_value = learning_rate * (r_next + value_s_prime_next - value_s_prime);
         } else {   // terminal state
-            update_value = learning_rate * (0 - value_s_prime);
+            update_value = learning_rate * (0 - float(100000.0) / value_s_prime);
         }
 
         set_v(s_prime, update_value);
