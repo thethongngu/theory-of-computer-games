@@ -245,7 +245,7 @@ private:
     std::vector<State> ep;
 
 
-    float learning_rate = 0.025;
+    float learning_rate = 0.003125;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -359,32 +359,34 @@ public:
 
             learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
 
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//
-//            // new round
-//            boards[i].reflect_vertical();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            learn_evaluation(boards[i], boards[i + 1],boards[i + 2]);
-//
-//            boards[i].rotate_right();  boards[i + 1].rotate_right();  boards[i + 2].rotate_right();
-//            boards[i].reflect_vertical();
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+
+            // new round
+            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+
+            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
+
+            ep.pop_back();
         }
     }
 
