@@ -359,29 +359,29 @@ public:
 
             learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
 
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-
-            // new round
-            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-
-            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//
+//            // new round
+//            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+//
+//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
+//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
 
 //            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
 //            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
