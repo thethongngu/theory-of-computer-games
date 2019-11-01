@@ -59,8 +59,6 @@ int main(int argc, const char* argv[]) {
 	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
 
-//	play.load_weights("weights.txt");
-
 	int num_games = 0;
 	while (!stat.is_finished()) {
 	    num_games++;
@@ -80,11 +78,11 @@ int main(int argc, const char* argv[]) {
 		Agent& win = game.last_turns(play, evil);
 		stat.close_episode(win.name());
 
-		play.td_training(game.states(), game.actions(), game.rewards());
-
 		play.close_episode(win.name());
 		evil.close_episode(win.name());
 	}
+
+	play.td_training();
 
 	if (summary) {
 		stat.summary();
