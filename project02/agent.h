@@ -236,8 +236,7 @@ private:
     int num_tile;
 
     struct State {
-        Board s_prime;
-        Board s_double_prime;
+        Board board;
         Action action;
         Board::Reward reward;
     };
@@ -270,21 +269,11 @@ public:
 
     int get_LUT_index(const Board& s, int index) {
         int res = 0, base = 1;
-        for(int i = 0; i < tuple_len; i++) {
+        for (int i = 0; i < tuple_len; i++) {
             res += s(tuple_index[index][i]) * base;
             base *= num_tile;
         }
         return res;
-    }
-
-    Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
-        return after_action - before_action;
-    }
-
-    Board::Reward compute_afterstate(Board& s, const Action::Slide& a) {
-        Board::Reward score01 = s.get_curr_score();
-        Board::Reward score02 = a.apply(s);
-        return get_reward(score01, score02);
     }
 
     float get_v(const Board& s) {
@@ -303,6 +292,16 @@ public:
         }
     }
 
+    Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
+        return after_action + (after_action - before_action);
+    }
+
+    Board::Reward compute_afterstate(Board& s, const Action::Slide& a) {
+        Board::Reward score01 = s.get_curr_score();
+        Board::Reward score02 = a.apply(s);
+        return get_reward(score01, score02);
+    }
+
     Board::Reward evaluation(const Board& s, const Action::Slide& a) {
         Board s_prime(s);
         Board::Reward r = compute_afterstate(s_prime, a);
@@ -313,7 +312,7 @@ public:
      * Return -1 if there is no available move.
      * Otherwise return op (0, 1, 2, 3)
      */
-    int get_max_op(const Board &s_double_prime) {
+    std::pair<int, Board::Reward> get_max_op(const Board &s_double_prime) {
         int max_op = -1;
         float max_reward = 0;
 
@@ -331,33 +330,28 @@ public:
                 max_op  = op;
             }
         }
-        return max_op;
+        return std::pair<int, Board::Reward>(max_op, max_reward);
     }
 
-    void learn_evaluation(const Board& s_prime, const Board& s_double_prime) {
+    void learn_evaluation(const Board& s_prime, Board::Reward r_prime, const Board& s_prime_next) {
 
         //        std::cout << "s_prime: " << std::endl << s_prime << std::endl;
         //        std::cout << "s_double_prime: " << std::endl << s_double_prime << std::endl;
 
-        int max_op = get_max_op(s_double_prime);
-        float update_value;
-
-        if (max_op == -1) {
-            update_value = learning_rate * (0 - get_v(s_prime));
-        } else {
-            Board s_prime_next(s_double_prime);
-            Board::Reward r_next = compute_afterstate(s_prime_next, Action::Slide(max_op));
-            update_value = learning_rate * (r_next + get_v(s_prime_next) - get_v(s_prime));
-        }
-
+        float update_value = learning_rate * (r_prime + get_v(s_prime_next) - get_v(s_prime));
         update_v(s_prime, update_value);
     }
 
     void td_training() {
 
-        while (!ep.empty()) {
+        // terminal state
+        float update_value = learning_rate * (0 - get_v(ep.back().board));
+        update_v(ep.back().board, update_value);
 
-            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+        // other states
+        int i = ep.size();
+        while (ep.size() > 1) {
+            learn_evaluation(ep[i - 2].board, ep[i - 2].reward, ep[i - 1].board);
 
 //            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
 //            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
@@ -391,16 +385,16 @@ public:
     }
 
     virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
-        int max_op = get_max_op(board);
-        if (!ep.empty()) ep.back().s_double_prime = board;
-        if (max_op == -1) return Action();
+        std::pair<int, Board::Reward> move = get_max_op(board);
+        if (move.first == -1) return Action();
 
+        // TODO: change from reward to evaluation
         Board tmp(board);
         Action::Slide max_action(max_op);
-        Board::Reward r = max_action.apply(tmp);
+        max_action.apply(tmp);
 
         State state;
-        state.s_prime = tmp;
+        state.board = tmp;
         state.reward = r;
         state.action = max_action;
         ep.push_back(state);
