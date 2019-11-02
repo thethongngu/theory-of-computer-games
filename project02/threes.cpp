@@ -72,7 +72,7 @@ int main(int argc, const char* argv[]) {
 //		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
 			Action move = who.take_action(game.state(), game.actions(who.opponent_type()));
-			if (game.apply_action(move) != true) break;
+			if (!game.apply_action(move)) break;
 			if (who.check_for_win(game.state())) break;
 		}
 		Agent& win = game.last_turns(play, evil);
