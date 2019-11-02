@@ -237,7 +237,6 @@ private:
 
     struct State {
         Board board;
-        Action action;
         Board::Reward reward;
     };
 
@@ -293,7 +292,7 @@ public:
     }
 
     Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
-        return after_action + (after_action - before_action);
+        return after_action - before_action;
     }
 
     Board::Reward compute_afterstate(Board& s, const Action::Slide& a) {
@@ -312,7 +311,7 @@ public:
      * Return -1 if there is no available move.
      * Otherwise return op (0, 1, 2, 3)
      */
-    std::pair<int, Board::Reward> get_max_op(const Board &s_double_prime) {
+    int get_max_op(const Board &s_double_prime) {
         int max_op = -1;
         float max_reward = 0;
 
@@ -330,7 +329,7 @@ public:
                 max_op  = op;
             }
         }
-        return std::pair<int, Board::Reward>(max_op, max_reward);
+        return max_op;
     }
 
     void learn_evaluation(const Board& s_prime, Board::Reward r_prime, const Board& s_prime_next) {
@@ -349,54 +348,53 @@ public:
         update_v(ep.back().board, update_value);
 
         // other states
-        int i = ep.size();
+
         while (ep.size() > 1) {
-            learn_evaluation(ep[i - 2].board, ep[i - 2].reward, ep[i - 1].board);
+            int last_id = ep.size() - 1;
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
 
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-//
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-//
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-//
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//
-//            // new round
-//            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-//
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-//
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
-//
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            learn_evaluation(ep.back().s_prime, ep.back().s_double_prime);
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
 
-//            ep.back().s_prime.rotate_right();  ep.back().s_double_prime.rotate_right();
-//            ep.back().s_prime.reflect_vertical();  ep.back().s_double_prime.reflect_vertical();
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+
+            // new round
+            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
 
             ep.pop_back();
         }
     }
 
     virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
-        std::pair<int, Board::Reward> move = get_max_op(board);
-        if (move.first == -1) return Action();
+        int max_op = get_max_op(board);
+        if (max_op == -1) return Action();
 
-        // TODO: change from reward to evaluation
         Board tmp(board);
         Action::Slide max_action(max_op);
-        max_action.apply(tmp);
+        Board::Reward r = compute_afterstate(tmp, max_action);
 
         State state;
         state.board = tmp;
         state.reward = r;
-        state.action = max_action;
         ep.push_back(state);
 
         return Action::Slide(max_op);

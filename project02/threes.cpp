@@ -84,8 +84,6 @@ int main(int argc, const char* argv[]) {
 		evil.close_episode(win.name());
 	}
 
-
-
 	if (summary) {
 		stat.summary();
 	}
