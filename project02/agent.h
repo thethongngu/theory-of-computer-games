@@ -356,32 +356,32 @@ public:
             int last_id = ep.size() - 1;
             learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
 
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//
-//            // new round
-//            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+
+            // new round
+            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+
+            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
 
             ep.pop_back();
         }
@@ -389,7 +389,6 @@ public:
 
     virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
         int max_op = get_max_op(board);
-        if (max_op == -1) return Action();
 
         Board afterstate(board);
         Action::Slide max_action(max_op);
@@ -400,6 +399,6 @@ public:
         state.reward = r;
         ep.push_back(state);
 
-        return Action::Slide(max_op);
+        return (max_op == -1) ? Action() : max_action;
     }
 };
