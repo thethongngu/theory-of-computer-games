@@ -12,6 +12,8 @@
 #include <fstream>
 #include <chrono>
 
+#define debug(a) std::cout << #a << " = " << a << std::endl
+
 class Agent {
 public:
     Agent(const std::string &args = "") {
@@ -297,7 +299,8 @@ public:
 
     Board::Reward compute_afterstate(Board& s, const Action::Slide& a) {
         Board::Reward score01 = s.get_curr_score();
-        Board::Reward score02 = a.apply(s);
+        a.apply(s);
+        Board::Reward score02 = s.get_curr_score();
         return get_reward(score01, score02);
     }
 
