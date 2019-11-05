@@ -245,7 +245,7 @@ private:
     std::vector<State> ep;
 
 
-    float learning_rate = 0.00025;
+    float learning_rate = 0.025;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -359,32 +359,32 @@ public:
             int last_id = ep.size() - 1;
             learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
 
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-
-            // new round
-            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-            ep[last_id - 1].board.rotate_right();      ep[last_id].board.rotate_right();
-            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//
+//            // new round
+//            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
+//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
+//
+//            ep[last_id - 1].board.rotate_right();      ep[last_id].board.rotate_right();
+//            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
 
             ep.pop_back();
         }
