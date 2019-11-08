@@ -299,39 +299,40 @@ public:
         }
     }
 
-    Board::Reward expectminimax_search(Node currNode, int d) {
+    Board::Reward expectminimax_search(Node* currNode, int d) {
+//        debug(currNode->board);
         if (d == 0) {
-            debug(currNode.board);
-            return get_v(currNode.board);
+            return get_v(currNode->board);
         } else {
             if (d % 2 == 1) {  // max node
                 Board::Reward max_value = -1000000000;
                 for(int op = 0; op < 4; op++) {
-                    Node nextNode = *(currNode.children[op]);
-                    nextNode.board = currNode.board;
-                    nextNode.last_op = op;
-                    int valid = Action::Slide(op).apply(nextNode.board);
+                    Node* nextNode = currNode->children[op];
+                    nextNode->board = currNode->board;
+                    nextNode->last_op = op;
+                    int valid = Action::Slide(op).apply(nextNode->board);
                     if (valid == -1) continue;
 
                     Board::Reward search_value = expectminimax_search(nextNode, d - 1);
                     max_value = std::max(max_value, search_value);
                 }
-                currNode.value = max_value;
+                currNode->value = max_value;
                 return max_value;
             } else {    // chance node
                 Board::Reward expect_value = 0;
                 for(int tile = 1; tile <= 3; tile++) {
                     for(int pos_id = 0; pos_id < 4; pos_id++) {
-                        Node nextNode = *(currNode.children[4 * (tile - 1) + pos_id]);
-                        int pos = place_pos[currNode.last_op][pos_id];
-                        int valid = nextNode.board.place(pos, tile);
+                        Node* nextNode = currNode->children[4 * (tile - 1) + pos_id];
+                        nextNode->board = currNode->board;
+                        int pos = place_pos[currNode->last_op][pos_id];
+                        int valid = nextNode->board.place(pos, tile);
                         if (valid == -1) continue;
 
                         Board::Reward search_value = expectminimax_search(nextNode, d - 1);
                         expect_value = expect_value + (1.0 / 12) * search_value;
                     }
                 }
-                currNode.value = expect_value;
+                currNode->value = expect_value;
                 return expect_value;
             }
         }
@@ -504,14 +505,12 @@ public:
 
         } else {  // playing mode
             root.board = board;
-            expectminimax_search(root, 3);
+            expectminimax_search(&root, 3);
 
             int max_op = -1;
-            double max_score = -1;
             for(int op = 0; op < num_player_action; op++) {
-                if (root.children[op]->value > max_score || max_score == -1) {
+                if (root.children[op]->value == root.value) {
                     max_op = op;
-                    max_score = root.children[op]->value;
                 }
             }
 
