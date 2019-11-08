@@ -78,7 +78,7 @@ int main(int argc, const char* argv[]) {
 		Agent& win = game.last_turns(play, evil);
 		stat.close_episode(win.name());
 
-        play.td_training();
+        if (play.play_mode == 0) play.td_training();
 
 		play.close_episode(win.name());
 		evil.close_episode(win.name());

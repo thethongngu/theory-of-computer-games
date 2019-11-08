@@ -6,11 +6,12 @@
 #include <map>
 #include <type_traits>
 #include <algorithm>
+#include <fstream>
+#include <chrono>
+
 #include "board.h"
 #include "action.h"
 #include "weight.h"
-#include <fstream>
-#include <chrono>
 
 #define debug(a) std::cout << #a << " = " << a << std::endl
 
@@ -245,7 +246,7 @@ private:
     std::vector<State> ep;
 
 
-    float learning_rate = 0.00025;
+    float learning_rate;
     int tuple_index[4][6] = {
             { 0,  1,  2,  3,  4,  5},
             { 4,  5,  6,  7,  8,  9},
@@ -253,15 +254,109 @@ private:
             { 9, 10, 11, 13, 14, 15},
     };
 
+    int num_player_action;
+    int num_evil_action;
+
+    struct Node {
+        double value;
+        Board board;
+        int last_op;
+        std::vector<Node*> children;
+
+        Node() {
+            value = 0;
+            last_op = -1;
+            board = Board();
+        }
+    };
+
+    Node root;
+
+    int place_pos[4][4] = {
+            {12, 13, 14, 15},
+            {0,  4,  8,  12},
+            {0,  1,  2,  3},
+            {3,  7,  11, 15}
+    };
+
+public:
+    void generate_tree(Node& currNode, int d) {
+        if (d == 0) {  // leaf
+        } else {
+            if (d % 2 == 1) {  // max node
+                for(int i = 0; i < num_player_action; i++) {
+                    Node* child = new Node();
+                    currNode.children.push_back(child);
+                    generate_tree(*child, d - 1);
+                }
+            } else {  // chance node
+                for(int i = 0; i < num_evil_action; i++) {
+                    Node* child = new Node();
+                    currNode.children.push_back(child);
+                    generate_tree(*child, d - 1);
+                }
+            }
+        }
+    }
+
+    Board::Reward expectminimax_search(Node currNode, int d) {
+        if (d == 0) {
+            debug(currNode.board);
+            return get_v(currNode.board);
+        } else {
+            if (d % 2 == 1) {  // max node
+                Board::Reward max_value = -1000000000;
+                for(int op = 0; op < 4; op++) {
+                    Node nextNode = *(currNode.children[op]);
+                    nextNode.board = currNode.board;
+                    nextNode.last_op = op;
+                    int valid = Action::Slide(op).apply(nextNode.board);
+                    if (valid == -1) continue;
+
+                    Board::Reward search_value = expectminimax_search(nextNode, d - 1);
+                    max_value = std::max(max_value, search_value);
+                }
+                currNode.value = max_value;
+                return max_value;
+            } else {    // chance node
+                Board::Reward expect_value = 0;
+                for(int tile = 1; tile <= 3; tile++) {
+                    for(int pos_id = 0; pos_id < 4; pos_id++) {
+                        Node nextNode = *(currNode.children[4 * (tile - 1) + pos_id]);
+                        int pos = place_pos[currNode.last_op][pos_id];
+                        int valid = nextNode.board.place(pos, tile);
+                        if (valid == -1) continue;
+
+                        Board::Reward search_value = expectminimax_search(nextNode, d - 1);
+                        expect_value = expect_value + (1.0 / 12) * search_value;
+                    }
+                }
+                currNode.value = expect_value;
+                return expect_value;
+            }
+        }
+    }
+
+    int play_mode;
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
+        num_player_action = 4;   num_evil_action = 12;
+        learning_rate = 0.00025;
+
+        if (meta.find("mode") != meta.end()) {
+            if (meta["mode"].value == "train") play_mode = 0;
+            else play_mode = 1;
+        }
+
         int num_element = 1;
         for(int i = 0; i < tuple_len; i++) num_element *= num_tile;
         if (net.empty()) {
             for (int i = 0; i < num_tuple; i++)
                 net.emplace_back(num_element, 0);  // create 4 tables for 6-tuple network
         }
+
+        generate_tree(root, 3);
     }
 
     virtual void open_episode(const std::string &flag = "") {
@@ -391,17 +486,38 @@ public:
     }
 
     virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
-        int max_op = get_max_op(board);
 
-        Board afterstate(board);
-        Action::Slide max_action(max_op);
-        Board::Reward r = compute_afterstate(afterstate, max_action);
+        if (play_mode == 0) {  // training mode
+            int max_op = get_max_op(board);
+            if (max_op == -1) return Action();
 
-        State state;
-        state.board = afterstate;
-        state.reward = r;
-        ep.push_back(state);
+            Board afterstate(board);
+            Action::Slide max_action(max_op);
+            Board::Reward r = compute_afterstate(afterstate, max_action);
 
-        return (max_op == -1) ? Action() : max_action;
+            State state;
+            state.board = afterstate;
+            state.reward = r;
+            ep.push_back(state);
+
+            return max_action;
+
+        } else {  // playing mode
+            root.board = board;
+            expectminimax_search(root, 3);
+
+            int max_op = -1;
+            double max_score = -1;
+            for(int op = 0; op < num_player_action; op++) {
+                if (root.children[op]->value > max_score || max_score == -1) {
+                    max_op = op;
+                    max_score = root.children[op]->value;
+                }
+            }
+
+            Board afterstate(board);
+            Action::Slide max_action(max_op);
+            return max_action.apply(afterstate) == -1 ? Action() : max_action;
+        }
     }
 };
