@@ -233,7 +233,7 @@ private:
 
 class TDPlayer : public WeightAgent {
 
-private:
+public:
     int num_tuple;
     int tuple_len;
     int num_tile;
@@ -256,6 +256,7 @@ private:
 
     int num_player_action;
     int num_evil_action;
+    int tree_depth;
 
     struct Node {
         double value;
@@ -279,70 +280,12 @@ private:
             {3,  7,  11, 15}
     };
 
-public:
-    void generate_tree(Node& currNode, int d) {
-        if (d == 0) {  // leaf
-        } else {
-            if (d % 2 == 1) {  // max node
-                for(int i = 0; i < num_player_action; i++) {
-                    Node* child = new Node();
-                    currNode.children.push_back(child);
-                    generate_tree(*child, d - 1);
-                }
-            } else {  // chance node
-                for(int i = 0; i < num_evil_action; i++) {
-                    Node* child = new Node();
-                    currNode.children.push_back(child);
-                    generate_tree(*child, d - 1);
-                }
-            }
-        }
-    }
-
-    Board::Reward expectminimax_search(Node* currNode, int d) {
-//        debug(currNode->board);
-        if (d == 0) {
-            return get_v(currNode->board);
-        } else {
-            if (d % 2 == 1) {  // max node
-                Board::Reward max_value = -1000000000;
-                for(int op = 0; op < 4; op++) {
-                    Node* nextNode = currNode->children[op];
-                    nextNode->board = currNode->board;
-                    nextNode->last_op = op;
-                    int valid = Action::Slide(op).apply(nextNode->board);
-                    if (valid == -1) continue;
-
-                    Board::Reward search_value = expectminimax_search(nextNode, d - 1);
-                    max_value = std::max(max_value, search_value);
-                }
-                currNode->value = max_value;
-                return max_value;
-            } else {    // chance node
-                Board::Reward expect_value = 0;
-                for(int tile = 1; tile <= 3; tile++) {
-                    for(int pos_id = 0; pos_id < 4; pos_id++) {
-                        Node* nextNode = currNode->children[4 * (tile - 1) + pos_id];
-                        nextNode->board = currNode->board;
-                        int pos = place_pos[currNode->last_op][pos_id];
-                        int valid = nextNode->board.place(pos, tile);
-                        if (valid == -1) continue;
-
-                        Board::Reward search_value = expectminimax_search(nextNode, d - 1);
-                        expect_value = expect_value + (1.0 / 12) * search_value;
-                    }
-                }
-                currNode->value = expect_value;
-                return expect_value;
-            }
-        }
-    }
-
     int play_mode;
+
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
-        num_player_action = 4;   num_evil_action = 12;
+        num_player_action = 4;   num_evil_action = 12;  tree_depth = 4;
         learning_rate = 0.00025;
 
         if (meta.find("mode") != meta.end()) {
@@ -357,7 +300,7 @@ public:
                 net.emplace_back(num_element, 0);  // create 4 tables for 6-tuple network
         }
 
-        generate_tree(root, 3);
+        generate_tree(root, tree_depth);
     }
 
     virtual void open_episode(const std::string &flag = "") {
@@ -410,7 +353,7 @@ public:
      * Return -1 if there is no available move.
      * Otherwise return op (0, 1, 2, 3)
      */
-    int get_max_op(const Board &board) {
+    std::pair<int, Board::Reward> get_best_move(const Board &board) {
         int max_op = -1;
         float max_reward = 0;
 
@@ -431,7 +374,7 @@ public:
                 max_op  = op;
             }
         }
-        return max_op;
+        return {max_op, max_reward};
     }
 
     void learn_evaluation(const Board& s_prime, Board::Reward r_prime, const Board& s_prime_next) {
@@ -486,10 +429,90 @@ public:
         }
     }
 
+    void generate_tree(Node& currNode, int d) {
+        if (d == 0) return;
+
+        if (d % 2 == 0) {  // max node
+            for(int i = 0; i < num_player_action; i++) {
+                Node* child = new Node();
+                currNode.children.push_back(child);
+                generate_tree(*child, d - 1);
+            }
+            return;
+        }
+
+        if (d % 2 == 1) {  // min node
+            for(int i = 0; i < num_evil_action; i++) {
+                Node* child = new Node();
+                currNode.children.push_back(child);
+                generate_tree(*child, d - 1);
+            }
+            return;
+        }
+    }
+
+    int expectminimax_search(Node* curr_node, int d) {
+ //       debug(curr_node->board);
+        if (d == 0) {  // leaf node (max node)
+            auto best_move = get_best_move(curr_node->board);
+            curr_node->value = best_move.second;
+            return best_move.first;
+        }
+
+        if (d % 2 == 0) {  //  max node
+
+            double curr_value = 0;
+            int curr_op = -1;
+
+            for(int op = 0; op < 4; op++) {
+
+                Node* next_node = curr_node->children[op];
+                next_node->board = curr_node->board;
+                next_node->last_op = op;
+                Action::Slide slide(op);
+                Board tmp(curr_node->board);
+
+                int valid = slide.apply(tmp);
+                if (valid == -1) continue;
+
+                Board::Reward r = compute_afterstate(next_node->board, slide);
+                expectminimax_search(next_node, d - 1);
+                if (next_node->value + r > curr_value || curr_op == -1) {
+                    curr_value = next_node->value + r;
+                    curr_op = op;
+                }
+            }
+
+            curr_node->value = curr_value;
+            return curr_op;
+        }
+
+        if (d % 2 == 1) {  // chance node
+            Board::Reward expect_value = 0;
+            for(int tile = 1; tile <= 3; tile++) {
+                for(int pos_id = 0; pos_id < 4; pos_id++) {
+
+                    Node* next_node = curr_node->children[4 * (tile - 1) + pos_id];
+                    next_node->board = curr_node->board;
+                    int pos = place_pos[curr_node->last_op][pos_id];
+
+                    int valid = next_node->board.place(pos, tile);
+                    if (valid == -1) continue;
+
+                    expectminimax_search(next_node, d - 1);
+                    expect_value = expect_value + (1.0 / 12) * next_node->value;
+                }
+            }
+
+            curr_node->value = expect_value;
+            return -1;
+        }
+    }
+
     virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
 
         if (play_mode == 0) {  // training mode
-            int max_op = get_max_op(board);
+            int max_op = get_best_move(board).first;
             if (max_op == -1) return Action();
 
             Board afterstate(board);
@@ -504,19 +527,14 @@ public:
             return max_action;
 
         } else {  // playing mode
-            root.board = board;
-            expectminimax_search(&root, 3);
 
-            int max_op = -1;
-            for(int op = 0; op < num_player_action; op++) {
-                if (root.children[op]->value == root.value) {
-                    max_op = op;
-                }
-            }
+            root.board = board;
+            int max_op = expectminimax_search(&root, tree_depth);
+            if (max_op == -1) return Action();
 
             Board afterstate(board);
             Action::Slide max_action(max_op);
-            return max_action.apply(afterstate) == -1 ? Action() : max_action;
+            return max_action;
         }
     }
 };
