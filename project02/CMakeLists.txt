@@ -12,4 +12,4 @@ add_executable(project02
         board.h
         episode.h
         statistic.h
-        weight.h board.cpp board.h)
+        weight.h board.cpp board.h expectminimax.cpp expectminimax.h)

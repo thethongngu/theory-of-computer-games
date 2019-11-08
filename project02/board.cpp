@@ -13,6 +13,7 @@ const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 3
  */
 Board::Reward Board::place(unsigned pos, Board::Cell tile_id) {
     if (pos >= 16) return -1;
+    if (operator()(pos) != 0) return -1;
     if (tile_id != 1 && tile_id != 2 && tile_id != 3) return -1;
     operator()(pos) = tile_id;
     return 0;
