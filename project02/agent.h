@@ -285,7 +285,7 @@ public:
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
-        num_player_action = 4;   num_evil_action = 12;  tree_depth = 4;
+        num_player_action = 4;   num_evil_action = 12;  tree_depth = 2;
         learning_rate = 0.00025;
 
         if (meta.find("mode") != meta.end()) {
@@ -488,7 +488,8 @@ public:
         }
 
         if (d % 2 == 1) {  // chance node
-            Board::Reward expect_value = 0;
+            double expect_value = 0.0;
+            int num_valid = 0;
             for(int tile = 1; tile <= 3; tile++) {
                 for(int pos_id = 0; pos_id < 4; pos_id++) {
 
@@ -500,11 +501,12 @@ public:
                     if (valid == -1) continue;
 
                     expectminimax_search(next_node, d - 1);
-                    expect_value = expect_value + (1.0 / 12) * next_node->value;
+                    expect_value = expect_value + next_node->value;
+                    num_valid++;
                 }
             }
 
-            curr_node->value = expect_value;
+            curr_node->value = expect_value / num_valid;
             return -1;
         }
     }
