@@ -58,6 +58,7 @@ int main(int argc, const char* argv[]) {
 
 	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
+	Board::precompute_left();
 
 	int num_games = 0;
 	while (!stat.is_finished()) {
@@ -68,8 +69,8 @@ int main(int argc, const char* argv[]) {
 		stat.open_episode(play.name() + ":" + evil.name());
 		Episode& game = stat.back();
 		while (true) {
-//		    debug(game.step());
-//		    print(game.state());
+		    debug(game.step());
+		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
 			Action move = who.take_action(game.state(), game.actions(who.opponent_type()));
 			if (!game.apply_action(move)) break;

@@ -6,6 +6,7 @@
 
 const Board::Reward Board::kTileScore[15] = {0, 0, 0, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441};
 const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
+std::map<unsigned long long, unsigned long long> Board::pre_left;
 
 /**
  * place a tile (index value) to the specific position (1-d form index)
@@ -42,20 +43,14 @@ Board::Reward Board::get_curr_score() {
 }
 
 Board::Reward Board::slide_left() {
+
     Board prev = *this;
-    for (int r = 0; r < 4; r++) {
-        auto& row = tile[r];
-        for (int c = 0; c < 3; c++) {
-            if (Board::can_merge(row[c], row[c + 1])) {
-                Cell new_tile = std::max(row[c], row[c + 1]) + 1;
-                row[c] = new_tile;  row[c + 1] = 0;
-            }
-            if (row[c] == 0) {  // can slide
-                row[c] = row[c + 1];
-                row[c + 1] = 0;
-            }
-        }
+    for(int i = 0; i < 4; i++) {
+        Row row = get_row(i);
+        Row new_row = pre_left[row];
+        set_row(i, new_row);
     }
+
     return (*this != prev) ? get_curr_score() : -1;
 }
 
@@ -79,25 +74,52 @@ Board::Reward Board::slide_down() {
 }
 
 void Board::transpose() {
-    for (int r = 0; r < 4; r++) {
-        for (int c = r + 1; c < 4; c++) {
-            std::swap(tile[r][c], tile[c][r]);
-        }
-    }
+    Board::Cell cell01, cell02;
+
+    cell01 = get_cell(1);  cell02 = get_cell(4);
+    set_cell(1, cell02);   set_cell(4, cell01);
+
+    cell01 = get_cell(2);  cell02 = get_cell(8);
+    set_cell(2, cell02);   set_cell(8, cell01);
+
+    cell01 = get_cell(3);  cell02 = get_cell(12);
+    set_cell(3, cell02);   set_cell(12, cell01);
+
+    cell01 = get_cell(6);  cell02 = get_cell(9);
+    set_cell(6, cell02);   set_cell(9, cell01);
+
+    cell01 = get_cell(7);  cell02 = get_cell(13);
+    set_cell(7, cell02);   set_cell(13, cell01);
+
+    cell01 = get_cell(11);  cell02 = get_cell(15);
+    set_cell(11, cell02);   set_cell(15, cell01);
 }
 
 void Board::reflect_horizontal() {
     for (int r = 0; r < 4; r++) {
-        std::swap(tile[r][0], tile[r][3]);
-        std::swap(tile[r][1], tile[r][2]);
+
+        Board::Cell cell00 = get_cell((r * 4) + 0);
+        Board::Cell cell01 = get_cell((r * 4) + 1);
+        Board::Cell cell02 = get_cell((r * 4) + 2);
+        Board::Cell cell03 = get_cell((r * 4) + 3);
+
+        set_cell((r * 4) + 0, cell03);
+        set_cell((r * 4) + 1, cell02);
+        set_cell((r * 4) + 2, cell01);
+        set_cell((r * 4) + 3, cell00);
     }
 }
 
 void Board::reflect_vertical() {
-    for (int c = 0; c < 4; c++) {
-        std::swap(tile[0][c], tile[3][c]);
-        std::swap(tile[1][c], tile[2][c]);
-    }
+    Board::Row row00 = get_row(0);
+    Board::Row row01 = get_row(1);
+    Board::Row row02 = get_row(2);
+    Board::Row row03 = get_row(3);
+
+    set_row(0, row03);
+    set_row(1, row02);
+    set_row(2, row01);
+    set_row(3, row00);
 }
 
 /**
@@ -155,6 +177,35 @@ void Board::set_row(unsigned i, Board::Row value) {
     unsigned long long remove_mask = 18446744073709551615ull - ((1 << (16 * (i + 1))) - 1) + ((1 << (16 * i)) - 1);
     unsigned long long add_mask = value << (i * 16);
     tile = (tile & remove_mask) | add_mask;
+}
+
+void Board::precompute_left() {
+
+    for(int a0 = 0; a0 < 15; a0++) {
+        for(int a1 = 0; a1 < 15; a1++) {
+            for(int a2 = 0; a2 < 15; a2++) {
+                for(int a3 = 0; a3 < 15; a3++) {
+
+                    int row[4] = {a0, a1, a2, a3};
+                    unsigned long long from = row[0] + (row[1] << 4) + (row[2] << 8) + (row[3] << 8);
+
+                    for (int c = 0; c < 3; c++) {
+                        if (Board::can_merge(row[c], row[c + 1])) {
+                            Cell new_tile = std::max(row[c], row[c + 1]) + 1;
+                            row[c] = new_tile;  row[c + 1] = 0;
+                        }
+                        if (row[c] == 0) {  // can slide
+                            row[c] = row[c + 1];
+                            row[c + 1] = 0;
+                        }
+                    }
+
+                    unsigned long long to = row[0] + (row[1] << 4) + (row[2] << 8) + (row[3] << 8);
+                    Board::pre_left[from] = to;
+                }
+            }
+        }
+    }
 }
 
 
