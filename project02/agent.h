@@ -192,7 +192,7 @@ public:
         std::shuffle(tiles->begin(), tiles->end(), engine);
 
         for (auto it = tiles->begin(); it < tiles->end(); it++) {
-            if (board(*it) != 0) continue;
+            if (board.get_cell(*it) != 0) continue;
             Board::Cell tile = bag.back();   bag.pop_back();
             return Action::Place(*it, tile);
         }
@@ -310,7 +310,7 @@ public:
     int get_LUT_index(const Board& s, int index) {
         int res = 0, base = 1;
         for (int i = 0; i < tuple_len; i++) {
-            res += s(tuple_index[index][i]) * base;
+            res += int(s.get_cell(tuple_index[index][i])) * base;
             base *= num_tile;
         }
         return res;

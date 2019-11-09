@@ -13,9 +13,9 @@ const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 3
  */
 Board::Reward Board::place(unsigned pos, Board::Cell tile_id) {
     if (pos >= 16) return -1;
-    if (operator()(pos) != 0) return -1;
+    if (get_cell(pos) != 0) return -1;
     if (tile_id != 1 && tile_id != 2 && tile_id != 3) return -1;
-    operator()(pos) = tile_id;
+    set_cell(pos, tile_id);
     return 0;
 }
 
@@ -36,7 +36,7 @@ Board::Reward Board::slide(unsigned opcode) {
 Board::Reward Board::get_curr_score() {
     int res = 0;
     for(int i = 0; i < 16; i++) {
-        res += kTileScore[operator()(i)];
+        res += kTileScore[get_cell(i)];
     }
     return res;
 }
@@ -118,10 +118,11 @@ void Board::rotate_left() { transpose(); reflect_vertical(); } // counterclockwi
 void Board::reverse() { reflect_horizontal(); reflect_vertical(); }
 
 std::ostream& operator <<(std::ostream& out, const Board& b) {
+    out << std::endl;
     out << "+------------------------+" << std::endl;
-    for (auto& row : b.tile) {
+    for (int i = 0; i < 3; i++) {
         out << "|" << std::dec;
-        for (auto t : row) out << std::setw(6) << (Board::kTileValue[t]);
+        for (int t = i * 4; t < (i + 1) * 4; t++) out << std::setw(6) << (Board::kTileValue[t]);
         out << "|" << std::endl;
     }
     out << "+------------------------+" << std::endl;
@@ -135,4 +136,30 @@ bool Board::can_merge(Board::Cell cell01, Board::Cell cell02) {
 
     return false;
 }
+
+Board::Cell Board::get_cell(unsigned i) const {
+    return (tile >> (i * 4)) & 0b1111;
+}
+
+void Board::set_cell(unsigned i, Board::Cell value) {
+    unsigned long long remove_mask = 18446744073709551615ull - ((1 << (4 * i)) - 1) + ((1 << (4 * (i - 1))) - 1);
+    unsigned long long add_mask = value << (i * 4);
+    tile = (tile & remove_mask) | add_mask;
+}
+
+Board::Row Board::get_row(unsigned i) const {
+    return (tile >> (i * 16) & 0xffff);
+}
+
+void Board::set_row(unsigned i, Board::Row value) {
+    unsigned long long remove_mask = 18446744073709551615ull - ((1 << (16 * (i + 1))) - 1) + ((1 << (16 * i)) - 1);
+    unsigned long long add_mask = value << (i * 16);
+    tile = (tile & remove_mask) | add_mask;
+}
+
+
+
+
+
+
 

@@ -60,7 +60,11 @@ public:
 			auto& ep = *(--it);
 			sum += ep.score();
 			max = std::max((long long)ep.score(), max);
-			stat[*std::max_element(&(ep.state()(0)), &(ep.state()(16)))]++;
+
+			Board::Cell max_tile = 0;
+			for(unsigned int j = 0; j < 16; j++) max_tile = std::max(max_tile, ep.state().get_cell(j));
+			stat[max_tile]++;
+
 			sop += ep.step();
 			pop += ep.step(Action::Slide::type);
 			eop += ep.step(Action::Place::type);

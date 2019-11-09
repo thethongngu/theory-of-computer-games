@@ -25,8 +25,8 @@
 class Board {
 public:
     typedef uint32_t Cell;
-    typedef std::array<Cell, 4> Row;
-    typedef std::array<Row, 4> Grid;
+    typedef unsigned int Row;
+    typedef unsigned long long Grid;
     typedef uint64_t Data;
     typedef long long Reward;
 
@@ -39,10 +39,10 @@ public:
     explicit operator Grid&() { return tile; }
     explicit operator const Grid&() const { return tile; }
 
-    Row& operator [](unsigned i) { return tile[i]; }
-    const Row& operator [](unsigned i) const { return tile[i]; }
-    Cell& operator ()(unsigned i) { return tile[i / 4][i % 4]; }
-    const Cell& operator ()(unsigned i) const { return tile[i / 4][i % 4]; }
+    Row get_row(unsigned i) const;
+    void set_row(unsigned i, Row value);
+    Cell get_cell(unsigned i) const;
+    void set_cell(unsigned i, Cell value);
 
     Data info() const { return attr; }
     Data info(Data dat) { Data old = attr; attr = dat; return old; }
