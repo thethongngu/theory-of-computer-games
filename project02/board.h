@@ -26,7 +26,7 @@
 class Board {
 public:
     typedef uint32_t Cell;
-    typedef unsigned int Row;
+    typedef unsigned long long Row;
     typedef unsigned long long Grid;
     typedef uint64_t Data;
     typedef long long Reward;
