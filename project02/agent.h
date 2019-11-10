@@ -300,7 +300,7 @@ public:
                 net.emplace_back(num_element, 0);  // create 4 tables for 6-tuple network
         }
 
-        generate_tree(root, tree_depth);
+        if (play_mode == 1) generate_tree(root, tree_depth);
     }
 
     virtual void open_episode(const std::string &flag = "") {
@@ -378,10 +378,6 @@ public:
     }
 
     void learn_evaluation(const Board& s_prime, Board::Reward r_prime, const Board& s_prime_next) {
-
-        //        std::cout << "s_prime: " << std::endl << s_prime << std::endl;
-        //        std::cout << "s_double_prime: " << std::endl << s_double_prime << std::endl;
-
         float update_value = learning_rate * (r_prime + get_v(s_prime_next) - get_v(s_prime));
         update_v(s_prime, update_value);
     }
