@@ -62,10 +62,10 @@ public:
 		switch (who) {
 		case Action::Place::type:
             for(int i = 0; i < 9 && i < ep_moves.size(); i++) time += ep_moves[i].time;  // 9 first steps (0-8)
-            for(int i = 10; i < ep_moves.size(); i++) time += ep_moves[i].time;
+            for(int i = 10; i < ep_moves.size(); i += 2) time += ep_moves[i].time;
             break;
 		case Action::Slide::type:
-            for(int i = 9; i < ep_moves.size(); i++) time += ep_moves[i].time;  // start from 9
+            for(int i = 9; i < ep_moves.size(); i += 2) time += ep_moves[i].time;  // start from 9
 			break;
 		default:
 			time = ep_close.when - ep_open.when;
@@ -79,10 +79,10 @@ public:
 		switch (action_type) {
             case Action::Place::type:
                 for(int i = 0; i < 9 && i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);  // 9 first steps (0-8)
-                for(int i = 10; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);
+                for(int i = 10; i < ep_moves.size(); i += 2) res.push_back(ep_moves[i].action);
                 break;
             case Action::Slide::type:
-                for(int i = 9; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);  // start from 9
+                for(int i = 9; i < ep_moves.size(); i += 2) res.push_back(ep_moves[i].action);  // start from 9
                 break;
             default:
                 for(int i = 0; i < ep_moves.size(); i++) res.push_back(ep_moves[i].action);
