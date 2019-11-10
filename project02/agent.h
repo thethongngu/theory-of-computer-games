@@ -284,6 +284,7 @@ public:
     };
 
     int play_mode;
+    int tup01[11390625];
 
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
@@ -321,7 +322,7 @@ public:
 
     float get_v(const Board& s) {
         float res = 0;
-        for(int i = 0; i < net.size(); i++) {
+        for(int i = 0; i < num_tuple; i++) {
             int LUT_id = get_LUT_index(s, i);
             res += net[i][LUT_id];
         }
@@ -329,7 +330,7 @@ public:
     }
 
     void update_v(const Board& s, float value) {
-        for(int i = 0; i < net.size(); i++) {
+        for(int i = 0; i < num_tuple; i++) {
             int LUT_id = get_LUT_index(s, i);
             net[i][LUT_id] += value;
         }

@@ -190,6 +190,10 @@ void Board::precompute_left() {
     }
 }
 
+Board::Grid Board::get_tile() const {
+    return tile;
+}
+
 
 
 
