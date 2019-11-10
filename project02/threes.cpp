@@ -60,13 +60,17 @@ int main(int argc, const char* argv[]) {
 	RandomEnv evil(evil_args);
 	Board::precompute_left();
 
-	Board tmp;
-	tmp.set_cell(0, 3); tmp.set_cell(1, 2); tmp.set_cell(6, 3); tmp.set_cell(7, 1);
-    tmp.set_cell(8, 3); tmp.set_cell(11, 1); tmp.set_cell(13, 2); tmp.set_cell(14, 1); tmp.set_cell(15, 2);
-    debug(tmp);
-
-    Action::Slide(2).apply(tmp);
-    debug(tmp);
+//	Board tmp;
+//	tmp.set_cell(0, 3); tmp.set_cell(1, 0); tmp.set_cell(2, 1); tmp.set_cell(3, 1);  debug(tmp);
+//    tmp.set_cell(4, 3); tmp.set_cell(5, 2); tmp.set_cell(6, 3); tmp.set_cell(7, 2);  debug(tmp);
+//    tmp.set_cell(8, 0); tmp.set_cell(9, 0); tmp.set_cell(10, 0); tmp.set_cell(11, 1);  debug(tmp);
+//    tmp.set_cell(12, 0); tmp.set_cell(13, 0); tmp.set_cell(14, 3);  debug(tmp);
+//    tmp.set_cell(15, 2);  debug(tmp);
+//
+//    debug(tmp);
+//
+//    Action::Slide(1).apply(tmp);
+//    debug(tmp);
 
 
 	int num_games = 0;
@@ -78,8 +82,8 @@ int main(int argc, const char* argv[]) {
 		stat.open_episode(play.name() + ":" + evil.name());
 		Episode& game = stat.back();
 		while (true) {
-		    debug(game.step());
-		    print(game.state());
+//		    debug(game.step());
+//		    print(game.state());
 			Agent& who = game.take_turns(play, evil);
 			Action move = who.take_action(game.state(), game.actions(who.opponent_type()));
 			if (!game.apply_action(move)) break;
