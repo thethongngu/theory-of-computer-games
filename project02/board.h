@@ -65,7 +65,7 @@ public:
 
 public:
     static bool can_merge(Cell cell01, Cell cell02);
-    Board::Reward get_curr_score();
+    Board::Reward get_curr_score() const;
 
     Reward place(unsigned pos, Cell tile_id);
     Reward slide(unsigned opcode);

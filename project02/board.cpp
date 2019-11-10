@@ -36,7 +36,7 @@ Board::Reward Board::slide(unsigned opcode) {
     }
 }
 
-Board::Reward Board::get_curr_score() {
+Board::Reward Board::get_curr_score() const {
     return board_score;
 }
 

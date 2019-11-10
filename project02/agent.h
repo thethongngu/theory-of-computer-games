@@ -337,10 +337,10 @@ public:
     }
 
     Board::Reward compute_afterstate(Board& s, const Action::Slide& a) {
-        Board::Reward score01 = s.get_curr_score();
+        Board::Reward before = s.get_curr_score();
         a.apply(s);
-        Board::Reward score02 = s.get_curr_score();
-        return get_reward(score01, score02);
+        Board::Reward after = s.get_curr_score();
+        return get_reward(before, after);
     }
 
     Board::Reward evaluation(const Board& s, const Action::Slide& a) {
@@ -353,19 +353,19 @@ public:
      * Return -1 if there is no available move.
      * Otherwise return op (0, 1, 2, 3)
      */
-    std::pair<int, Board::Reward> get_best_move(const Board &board) {
+    std::pair<int, Board::Reward> get_best_move(const Board &before) {
         int max_op = -1;
         float max_reward = 0;
 
         for(int op = 0; op < 4; op++) {
 
             // check if this action is valid
-            Board tmp(board);
+            Board after(before);
             Action::Slide a(op);
-            if (a.apply(tmp) == -1) continue;
+            if (a.apply(after) == -1) continue;
 
-            // if valid, get the evaluation of 'board' after taking action 'a'
-            float curr_reward = evaluation(board, a);
+            // if valid, get the evaluation of 'before' after taking action 'a'
+            float curr_reward = get_reward(before.get_curr_score(), after.get_curr_score()) + get_v(after);
             if (max_op == -1) {
                 max_reward = curr_reward;
                 max_op = op;
@@ -530,7 +530,6 @@ public:
             int max_op = expectminimax_search(&root, tree_depth);
             if (max_op == -1) return Action();
 
-            Board afterstate(board);
             Action::Slide max_action(max_op);
             return max_action;
         }
