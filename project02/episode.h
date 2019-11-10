@@ -69,10 +69,6 @@ public:
                 sum += ep_moves[i].time;  // start from 9
 //                debug(ep_moves[i].time);
             }
-//            debug(sum);
-//            debug(step(Action::Slide::type));
-//            debug(step(Action::Place::type));
-//            debug(time(Action::Place::type));
 			break;
 		default:
             sum = ep_close.when - ep_open.when;

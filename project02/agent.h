@@ -288,7 +288,7 @@ public:
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
-        num_player_action = 4;   num_evil_action = 12;  tree_depth = 0;
+        num_player_action = 4;   num_evil_action = 12;  tree_depth = 2;
         learning_rate = 0.00025;
 
         if (meta.find("mode") != meta.end()) {
@@ -424,7 +424,6 @@ public:
         }
 
         if (d % 2 == 0) {  //  max node
-
             double curr_value = 0;
             int curr_op = -1;
 
@@ -453,6 +452,7 @@ public:
         if (d % 2 == 1) {  // chance node
             double expect_value = 0.0;
             int num_valid = 0;
+
             for(int tile = 1; tile <= 3; tile++) {
                 for(int pos_id = 0; pos_id < 4; pos_id++) {
 
