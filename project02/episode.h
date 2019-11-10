@@ -82,7 +82,7 @@ public:
 	}
 
 	Action last_action() const {
-	    return ep_moves.back().action;
+	    return !ep_moves.empty() ? ep_moves.back().action : Action();
 	}
 
 	std::vector<Action> actions(unsigned action_type = -1u) const {
