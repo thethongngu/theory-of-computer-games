@@ -32,7 +32,7 @@ public:
 
     virtual void close_episode(const std::string &flag = "") {}
 
-    virtual Action take_action(const Board &board, const std::vector<Action> &opponent_actions) { return Action(); }
+    virtual Action take_action(const Board &board, const Action &opponent_action) { return Action(); }
 
     virtual bool check_for_win(const Board &b) { return false; }
 
@@ -167,6 +167,7 @@ public:
                                               left({0, 4, 8, 12}),
                                               right({3, 7, 11, 15}) {
         engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
+        num_moves = 0;
     }
 
     virtual void close_episode(const std::string &flag = "") {
@@ -177,19 +178,20 @@ public:
         return Action::Slide::type;
     }
 
-    Action take_action(const Board &board, const std::vector<Action> &opponent_actions) override {
+    virtual Action take_action(const Board &board, const Action &opponent_action) override {
 
-        // Choose tiles to generate
         std::vector<int> *tiles = &space;
-        if (opponent_actions.empty()) { tiles = &space; }  // first 9-moves
-        else if (opponent_actions.back().event() == 0) { tiles = &bottom; }  // up
-        else if (opponent_actions.back().event() == 1) { tiles = &left;  }   // right
-        else if (opponent_actions.back().event() == 2) { tiles = &top;  }    // down
-        else if (opponent_actions.back().event() == 3) { tiles = &right;  }  // left
+        if (num_moves < 9) { tiles = &space; }  // first 9-moves
+        else if (opponent_action.event() == 0) { tiles = &bottom; }  // up
+        else if (opponent_action.event() == 1) { tiles = &left;  }   // right
+        else if (opponent_action.event() == 2) { tiles = &top;  }    // down
+        else if (opponent_action.event() == 3) { tiles = &right;  }  // left
 
         if (bag.empty()) bag.assign({1, 2, 3});
         std::shuffle(bag.begin(), bag.end(), engine);
         std::shuffle(tiles->begin(), tiles->end(), engine);
+
+        num_moves++;
 
         for (auto it = tiles->begin(); it < tiles->end(); it++) {
             if (board.get_cell(*it) != 0) continue;
@@ -203,6 +205,7 @@ private:
     std::vector<int> space;
     std::vector<int> top, bottom, left, right;
     std::vector<int> bag;
+    int num_moves;
 };
 
 /**
@@ -218,10 +221,10 @@ public:
         return Action::Place::type;
     }
 
-    virtual Action take_action(const Board &before, const std::vector<Action> &actions) {
+    virtual Action take_action(const Board &board, const Action &opponent_action) {
         std::shuffle(opcode.begin(), opcode.end(), engine);
         for (int op : opcode) {
-            Board::Reward reward = Board(before).slide(op);
+            Board::Reward reward = Board(board).slide(op);
             if (reward != -1) return Action::Slide(op);
         }
         return Action();
@@ -285,7 +288,7 @@ public:
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
-        num_player_action = 4;   num_evil_action = 12;  tree_depth = 2;
+        num_player_action = 4;   num_evil_action = 12;  tree_depth = 0;
         learning_rate = 0.00025;
 
         if (meta.find("mode") != meta.end()) {
@@ -383,38 +386,9 @@ public:
         update_v(ep.back().board, update_value);
 
         // other states
-
         while (ep.size() > 1) {
             int last_id = ep.size() - 1;
             learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//
-//            // new round
-//            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();  ep[last_id].board.rotate_right();
-//            learn_evaluation(ep[last_id - 1].board, ep[last_id].reward, ep[last_id].board);
-//
-//            ep[last_id - 1].board.rotate_right();      ep[last_id].board.rotate_right();
-//            ep[last_id - 1].board.reflect_vertical();  ep[last_id].board.reflect_vertical();
-
             ep.pop_back();
         }
     }
@@ -500,7 +474,7 @@ public:
         }
     }
 
-    virtual Action take_action(const Board &board, const std::vector<Action> &actions) {
+    virtual Action take_action(const Board &board, const Action &opponent_action) {
 
         if (play_mode == 0) {  // training mode
             int max_op = get_best_move(board).first;

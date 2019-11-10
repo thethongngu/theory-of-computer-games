@@ -41,7 +41,7 @@ public:
 	}
 	Agent& take_turns(Agent& player, Agent& evil) {
 		ep_time = millisec();
-		return (std::max(step() + 1, size_t(9)) % 2) ? evil : player;
+		if (ep_moves.size() < 9 || ep_moves.size() % 2 == 0) return evil; else return player;
 	}
 	Agent& last_turns(Agent& play, Agent& evil) {
 		return take_turns(evil, play);
@@ -51,27 +51,38 @@ public:
 	size_t step(unsigned action_type = -1u) const {
 		int size = ep_moves.size(); // 'int' is important for handling 0
 		switch (action_type) {
-		case Action::Slide::type: return (size - 8) / 2;
-		case Action::Place::type: return size - (size - 8) / 2;
+		case Action::Slide::type: return (size - 8) / 2 + 1;
+		case Action::Place::type: return size - (size - 8) / 2 + 1;
 		default:                  return size;
 		}
 	}
 
 	time_t time(unsigned who = -1u) const {
-		time_t time = 0;
+		time_t sum = 0;
 		switch (who) {
 		case Action::Place::type:
-            for(int i = 0; i < 9 && i < ep_moves.size(); i++) time += ep_moves[i].time;  // 9 first steps (0-8)
-            for(int i = 10; i < ep_moves.size(); i += 2) time += ep_moves[i].time;
+            for(int i = 0; i < 9 && i < ep_moves.size(); i++) sum += ep_moves[i].time;  // 9 first steps (0-8)
+            for(int i = 10; i < ep_moves.size(); i += 2) sum += ep_moves[i].time;
             break;
 		case Action::Slide::type:
-            for(int i = 9; i < ep_moves.size(); i += 2) time += ep_moves[i].time;  // start from 9
+            for(int i = 9; i < ep_moves.size(); i += 2) {
+                sum += ep_moves[i].time;  // start from 9
+//                debug(ep_moves[i].time);
+            }
+//            debug(sum);
+//            debug(step(Action::Slide::type));
+//            debug(step(Action::Place::type));
+//            debug(time(Action::Place::type));
 			break;
 		default:
-			time = ep_close.when - ep_open.when;
+            sum = ep_close.when - ep_open.when;
 			break;
 		}
-		return time;
+		return sum;
+	}
+
+	Action last_action() const {
+	    return ep_moves.back().action;
 	}
 
 	std::vector<Action> actions(unsigned action_type = -1u) const {
