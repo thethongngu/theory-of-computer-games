@@ -7,6 +7,7 @@
 const Board::Reward Board::kTileScore[15] = {0, 0, 0, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441};
 const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
 std::map<unsigned long long, unsigned long long> Board::pre_left;
+std::map<unsigned long long, unsigned long long> Board::pre_score;
 
 /**
  * place a tile (index value) to the specific position (1-d form index)
@@ -17,6 +18,7 @@ Board::Reward Board::place(unsigned pos, Board::Cell tile_id) {
     if (get_cell(pos) != 0) return -1;
     if (tile_id != 1 && tile_id != 2 && tile_id != 3) return -1;
     set_cell(pos, tile_id);
+    board_score += kTileScore[tile_id];
     return 0;
 }
 
@@ -35,11 +37,7 @@ Board::Reward Board::slide(unsigned opcode) {
 }
 
 Board::Reward Board::get_curr_score() {
-    int res = 0;
-    for(int i = 0; i < 16; i++) {
-        res += kTileScore[get_cell(i)];
-    }
-    return res;
+    return board_score;
 }
 
 Board::Reward Board::slide_left() {
@@ -47,11 +45,16 @@ Board::Reward Board::slide_left() {
 //    debug(*this);
 
     Board prev = *this;
+    board_score = 0;
+
     for(int i = 0; i < 4; i++) {
         Row row = get_row(i);
         row = ((row & 0xf000ull) >> 12ull) | ((row & 0x0f00ull) >> 4ull) |
                 ((row & 0x00f0ull) << 4ull) | ((row & 0x000full) << 12ull);
+
         Row new_row = pre_left[row];
+        board_score += pre_score[new_row];
+
         new_row = ((new_row & 0xf000ull) >> 12ull) | ((new_row & 0x0f00ull) >> 4ull) |
                   ((new_row & 0x00f0ull) << 4ull) | ((new_row & 0x000full) << 12ull);
         set_row(i, new_row);
@@ -59,7 +62,7 @@ Board::Reward Board::slide_left() {
 
 //    debug(*this);
 
-    return (*this != prev) ? get_curr_score() : -1;
+    return (*this != prev) ? board_score : -1;
 }
 
 Board::Reward Board::slide_right() {
@@ -69,11 +72,12 @@ Board::Reward Board::slide_right() {
     return slide_score;
 }
 Board::Reward Board::slide_up() {
-    rotate_right();
-    Reward slide_score = slide_right();
-    rotate_left();
+    transpose();
+    Reward slide_score = slide_left();
+    transpose();
     return slide_score;
 }
+
 Board::Reward Board::slide_down() {
     rotate_right();
     Reward slide_score = slide_left();
@@ -221,9 +225,12 @@ void Board::precompute_left() {
                             row[c + 1] = 0;
                         }
                     }
+                    long long score = 0;
+                    for (unsigned int cell : row) score += Board::kTileScore[cell];
 
                     unsigned long long to = row[3] + (row[2] << 4ull) + (row[1] << 8ull) + (row[0] << 12ull);
                     Board::pre_left[from] = to;
+                    Board::pre_score[to] = score;
                 }
             }
         }

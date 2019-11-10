@@ -32,8 +32,8 @@ public:
     typedef long long Reward;
 
 public:
-    Board() : tile(), attr(0) {}
-    Board(const Grid& b, Data v = 0, Reward r = 0) : tile(b), attr(v) {}
+    Board() : tile(), attr(0) { board_score = 0; }
+    Board(const Grid& b, Data v = 0, Reward r = 0) : tile(b), attr(v) { board_score = 0; }
     Board(const Board& b) = default;
     Board& operator =(const Board& b) = default;
 
@@ -51,6 +51,7 @@ public:
     static const Cell kTileValue[15];
     static const Reward kTileScore[15];
     static std::map<unsigned long long, unsigned long long> pre_left;
+    static std::map<unsigned long long, unsigned long long> pre_score;
 
     static void precompute_left();
 
@@ -84,6 +85,7 @@ public:
     friend std::ostream& operator <<(std::ostream& out, const Board& b);
 
 private:
+    long long board_score;
     Grid tile;
     Data attr;
 };

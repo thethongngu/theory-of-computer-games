@@ -285,7 +285,7 @@ public:
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
-        num_player_action = 4;   num_evil_action = 12;  tree_depth = 2;
+        num_player_action = 4;   num_evil_action = 12;  tree_depth = 0;
         learning_rate = 0.00025;
 
         if (meta.find("mode") != meta.end()) {
