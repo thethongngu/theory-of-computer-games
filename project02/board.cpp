@@ -44,16 +44,20 @@ Board::Reward Board::get_curr_score() {
 
 Board::Reward Board::slide_left() {
 
-//    debug(*this);
+    debug(*this);
 
     Board prev = *this;
     for(int i = 0; i < 4; i++) {
         Row row = get_row(i);
+        row = ((row & 0xf000ull) >> 12ull) | ((row & 0x0f00ull) >> 4ull) |
+                ((row & 0x00f0ull) << 4ull) | ((row & 0x000full) << 12ull);
         Row new_row = pre_left[row];
+        new_row = ((new_row & 0xf000ull) >> 12ull) | ((new_row & 0x0f00ull) >> 4ull) |
+                  ((new_row & 0x00f0ull) << 4ull) | ((new_row & 0x000full) << 12ull);
         set_row(i, new_row);
     }
 
-//    debug(*this);
+    debug(*this);
 
     return (*this != prev) ? get_curr_score() : -1;
 }
@@ -80,7 +84,7 @@ Board::Reward Board::slide_down() {
 void Board::transpose() {
     Board::Cell cell01, cell02;
 
-//    debug(*this);
+    debug(*this);
 
     cell01 = get_cell(1);  cell02 = get_cell(4);
     set_cell(1, cell02);   set_cell(4, cell01);
@@ -100,12 +104,12 @@ void Board::transpose() {
     cell01 = get_cell(11);  cell02 = get_cell(14);
     set_cell(11, cell02);   set_cell(14, cell01);
 
-//    debug(*this);
+    debug(*this);
 }
 
 void Board::reflect_horizontal() {
 
-//    debug(*this);
+    debug(*this);
     for (int r = 0; r < 4; r++) {
 
         Board::Cell cell00 = get_cell((r * 4) + 0);
@@ -118,12 +122,12 @@ void Board::reflect_horizontal() {
         set_cell((r * 4) + 2, cell01);
         set_cell((r * 4) + 3, cell00);
     }
-//    debug(*this);
+    debug(*this);
 }
 
 void Board::reflect_vertical() {
 
-//    debug(*this);
+    debug(*this);
     Board::Row row00 = get_row(0);
     Board::Row row01 = get_row(1);
     Board::Row row02 = get_row(2);
@@ -133,7 +137,7 @@ void Board::reflect_vertical() {
     set_row(1, row02);
     set_row(2, row01);
     set_row(3, row00);
-//    debug(*this);
+    debug(*this);
 }
 
 /**
@@ -172,27 +176,24 @@ bool Board::can_merge(Board::Cell cell01, Board::Cell cell02) {
 
 }
 
-Board::Cell Board::get_cell(unsigned i) const {
+Board::Cell Board::get_cell(unsigned long long i) const {
     return (tile >> (i * 4)) & 0b1111ull;
 }
 
-void Board::set_cell(unsigned i, Board::Cell value) {
+void Board::set_cell(unsigned long long i, Board::Cell value) {
     unsigned long long remove_mask = 18446744073709551615ull - ((1ull << (4 * (i + 1))) - 1) + ((1ull << (4 * i)) - 1);
     unsigned long long add_mask = (unsigned long long)value << (i * 4);
     tile = (tile & remove_mask) | add_mask;
 }
 
-Board::Row Board::get_row(unsigned i) const {
-    unsigned long long row = (tile >> (i * 16ull)) & 0xffffull;
-    return ((row & 0xf000ull) >> 12ull) | ((row & 0x0f00ull) >> 4ull) |
-           ((row & 0x00f0ull) << 4ull) | ((row & 0x000full) << 12ull);
+Board::Row Board::get_row(unsigned long long i) const {
+    return (tile >> (i * 16ull)) & 0xffffull;
 }
 
-void Board::set_row(unsigned i, Board::Row value) {
-    unsigned long long reflect = ((value & 0xf000ull) >> 12ull) | ((value & 0x0f00ull) >> 4ull) |
-                                 ((value & 0x00f0ull) << 4ull) | ((value & 0x000full) << 12ull);
+void Board::set_row(unsigned long long i, Board::Row value) {
+    unsigned long long reflect = value;
 
-    unsigned long long remove_mask = 18446744073709551615ull - ((1ull << (16 * (i + 1))) - 1) + ((1ull << (16 * i)) - 1);
+    unsigned long long remove_mask = 18446744073709551615ull - ((1ull << (16ull * (i + 1))) - 1) + ((1ull << (16ull * i)) - 1);
     unsigned long long add_mask = reflect << (i * 16);
     tile = (tile & remove_mask) | add_mask;
 }

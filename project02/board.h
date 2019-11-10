@@ -40,10 +40,10 @@ public:
     explicit operator Grid&() { return tile; }
     explicit operator const Grid&() const { return tile; }
 
-    Row get_row(unsigned i) const;
-    void set_row(unsigned i, Row value);
-    Cell get_cell(unsigned i) const;
-    void set_cell(unsigned i, Cell value);
+    Row get_row(unsigned long long i) const;
+    void set_row(unsigned long long i, Row value);
+    Cell get_cell(unsigned long long i) const;
+    void set_cell(unsigned long long i, Cell value);
 
     Data info() const { return attr; }
     Data info(Data dat) { Data old = attr; attr = dat; return old; }
