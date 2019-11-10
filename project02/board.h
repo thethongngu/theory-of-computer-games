@@ -50,8 +50,8 @@ public:
 
     static const Cell kTileValue[15];
     static const Reward kTileScore[15];
-    static std::map<unsigned long long, unsigned long long> pre_left;
-    static std::map<unsigned long long, unsigned long long> pre_score;
+    static unsigned int pre_left[66000];
+    static unsigned int pre_score[66000];
 
     static void precompute_left();
 

@@ -6,8 +6,8 @@
 
 const Board::Reward Board::kTileScore[15] = {0, 0, 0, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049, 177147, 531441};
 const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
-std::map<unsigned long long, unsigned long long> Board::pre_left;
-std::map<unsigned long long, unsigned long long> Board::pre_score;
+unsigned int Board::pre_left[66000];
+unsigned int Board::pre_score[66000];
 
 /**
  * place a tile (index value) to the specific position (1-d form index)
