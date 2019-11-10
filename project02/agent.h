@@ -343,12 +343,6 @@ public:
         return get_reward(before, after);
     }
 
-    Board::Reward evaluation(const Board& s, const Action::Slide& a) {
-        Board s_prime(s);
-        Board::Reward r = compute_afterstate(s_prime, a);
-        return r + get_v(s_prime);
-    }
-
     /**
      * Return -1 if there is no available move.
      * Otherwise return op (0, 1, 2, 3)
@@ -466,12 +460,11 @@ public:
                 next_node->board = curr_node->board;
                 next_node->last_op = op;
                 Action::Slide slide(op);
-                Board tmp(curr_node->board);
 
-                int valid = slide.apply(tmp);
+                int valid = slide.apply(next_node->board);
                 if (valid == -1) continue;
 
-                Board::Reward r = compute_afterstate(next_node->board, slide);
+                Board::Reward r = get_reward(curr_node->board.get_curr_score(), next_node->board.get_curr_score());
                 expectminimax_search(next_node, d - 1);
                 if (next_node->value + r > curr_value || curr_op == -1) {
                     curr_value = next_node->value + r;
