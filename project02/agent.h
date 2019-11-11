@@ -331,15 +331,15 @@ public:
         unsigned int id = 0;
         auto t = s.get_tile();
 
-//        debug(s);
+       // debug(s);
 
         id = t & 0xffffffull; // debug(id);  debug(Board::pre_id[id]);
         res += net[0][Board::pre_id[id]];
-        id = (t >> 16ull) & 0xffffffull;   //debug(id);  debug(Board::pre_id[id]);
+        id = (t >> 16ull) & 0xffffffull;  // debug(id);  debug(Board::pre_id[id]);
         res += net[1][Board::pre_id[id]];
-        id = ((t >> 20ull) & 0xfffull) | ((t >> 24ull) & 0xfff000ull); //  debug(id);  debug(Board::pre_id[id]);
+        id = ((t >> 20ull) & 0xfffull) | ((t >> 24ull) & 0xfff000ull);  // debug(id);  debug(Board::pre_id[id]);
         res += net[2][Board::pre_id[id]];
-        id = ((t >> 36ull) & 0xfffull) | ((t >> 44ull) & 0xfff000ull);  // debug(id);  debug(Board::pre_id[id]);
+        id = ((t >> 36ull) & 0xfffull) | ((t >> 40ull) & 0xfff000ull);  // debug(id);  debug(Board::pre_id[id]);
         res += net[3][Board::pre_id[id]];
 
         return res;
