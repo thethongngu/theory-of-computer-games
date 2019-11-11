@@ -8,6 +8,7 @@ const Board::Reward Board::kTileScore[15] = {0, 0, 0, 3, 9, 27, 81, 243, 729, 21
 const Board::Cell Board::kTileValue[15] = {0, 1, 2, 3, 6, 12, 24, 48, 96, 192, 384, 768, 1536, 3072, 6144};
 unsigned int Board::pre_left[66000];
 unsigned int Board::pre_score[66000];
+unsigned int Board::pre_id[33554431];
 
 /**
  * place a tile (index value) to the specific position (1-d form index)
@@ -184,6 +185,27 @@ void Board::precompute_left() {
                     unsigned long long to = row[3] + (row[2] << 4ull) + (row[1] << 8ull) + (row[0] << 12ull);
                     Board::pre_left[from] = to;
                     Board::pre_score[to] = score;
+                }
+            }
+        }
+    }
+}
+
+void Board::precompute_index() {
+
+    unsigned int b0 = 1, b1 = 15, b2 = 225, b3 = 3375, b4 = 50625, b5 = 759375;
+    for(unsigned int a0 = 0; a0 < 14; a0++) {
+        for (unsigned int a1 = 0; a1 < 14; a1++) {
+            for (unsigned int a2 = 0; a2 < 14; a2++) {
+                for (unsigned int a3 = 0; a3 < 14; a3++) {
+                    for (unsigned int a4 = 0; a4 < 14; a4++) {
+                        for (unsigned int a5 = 0; a5 < 14; a5++) {
+
+                            unsigned int res = a0 * b0 + a1 * b1 + a2 * b2 + a3 * b3 + a4 * b4 + a5 * b5;
+                            unsigned int id = (a5 << 20u) | (a4 << 16u) | (a3 << 12u) | (a2 << 8u) | (a1 << 4u) | a0;
+                            pre_id[id] = res;
+                        }
+                    }
                 }
             }
         }

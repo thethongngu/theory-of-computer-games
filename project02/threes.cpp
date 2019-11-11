@@ -59,6 +59,7 @@ int main(int argc, const char* argv[]) {
 	TDPlayer play(play_args);
 	RandomEnv evil(evil_args);
 	Board::precompute_left();
+	Board::precompute_index();
 
 	int num_games = 0;
 	while (!stat.is_finished()) {

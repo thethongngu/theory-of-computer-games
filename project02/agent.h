@@ -284,7 +284,7 @@ public:
     };
 
     int play_mode;
-    int tup01[11390625];
+    std::map<unsigned long long, int> v_map;
 
 public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
@@ -321,11 +321,27 @@ public:
     }
 
     float get_v(const Board& s) {
+//        float res = 0;
+//        for(int i = 0; i < num_tuple; i++) {
+//            int LUT_id = get_LUT_index(s, i);
+//            res += net[i][LUT_id];
+//        }
+//        return res;
         float res = 0;
-        for(int i = 0; i < num_tuple; i++) {
-            int LUT_id = get_LUT_index(s, i);
-            res += net[i][LUT_id];
-        }
+        unsigned int id = 0;
+        auto t = s.get_tile();
+
+//        debug(s);
+
+        id = t & 0xffffffull; // debug(id);  debug(Board::pre_id[id]);
+        res += net[0][Board::pre_id[id]];
+        id = (t >> 16ull) & 0xffffffull;   //debug(id);  debug(Board::pre_id[id]);
+        res += net[1][Board::pre_id[id]];
+        id = ((t >> 20ull) & 0xfffull) | ((t >> 24ull) & 0xfff000ull); //  debug(id);  debug(Board::pre_id[id]);
+        res += net[2][Board::pre_id[id]];
+        id = ((t >> 36ull) & 0xfffull) | ((t >> 44ull) & 0xfff000ull);  // debug(id);  debug(Board::pre_id[id]);
+        res += net[3][Board::pre_id[id]];
+
         return res;
     }
 

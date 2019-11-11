@@ -52,8 +52,10 @@ public:
     static const Reward kTileScore[15];
     static unsigned int pre_left[66000];
     static unsigned int pre_score[66000];
+    static unsigned int pre_id[33554431];
 
     static void precompute_left();
+    static void precompute_index();
 
 public:
     bool operator ==(const Board& b) const { return tile == b.tile; }
