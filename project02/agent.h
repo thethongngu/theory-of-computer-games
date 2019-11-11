@@ -290,7 +290,7 @@ public:
     TDPlayer(const std::string &args = "") : WeightAgent(args) {
         num_tuple = 4;  tuple_len = 6;  num_tile = 15;
         num_player_action = 4;   num_evil_action = 12;  tree_depth = 2;
-        learning_rate = 0.00025;
+        learning_rate = 0.025;
 
         if (meta.find("mode") != meta.end()) {
             if (meta["mode"].value == "train") play_mode = 0;
@@ -339,10 +339,18 @@ public:
     }
 
     void update_v(const Board& s, float value) {
-        for(int i = 0; i < num_tuple; i++) {
-            int LUT_id = get_LUT_index(s, i);
-            net[i][LUT_id] += value;
-        }
+
+        unsigned int id = 0;
+        auto t = s.get_tile();
+
+        id = t & 0xffffffull;
+        net[0][Board::pre_id[id]] += value;
+        id = (t >> 16ull) & 0xffffffull;
+        net[1][Board::pre_id[id]] += value;
+        id = ((t >> 20ull) & 0xfffull) | ((t >> 24ull) & 0xfff000ull);
+        net[2][Board::pre_id[id]] += value;
+        id = ((t >> 36ull) & 0xfffull) | ((t >> 40ull) & 0xfff000ull);
+        net[3][Board::pre_id[id]] += value;
     }
 
     Board::Reward get_reward(Board::Reward before_action, Board::Reward after_action) {
