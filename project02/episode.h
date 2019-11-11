@@ -67,7 +67,6 @@ public:
 		case Action::Slide::type:
             for(int i = 9; i < ep_moves.size(); i += 2) {
                 sum += ep_moves[i].time;  // start from 9
-//                debug(ep_moves[i].time);
             }
 			break;
 		default:
