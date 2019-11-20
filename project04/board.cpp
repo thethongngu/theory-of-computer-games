@@ -14,7 +14,7 @@ Board::Board() {
     for(int i = 0; i < NUM_CELL; i++) board[i] = 0;
 }
 
-std::vector<Board::Cell>& Board::get_liberties(unsigned pos, Board::Color color) {
+std::vector<Board::Cell> Board::get_liberties(unsigned pos, Board::Color color) {
     std::vector<Board::Cell> res;
     std::queue<Board::Cell> q;
     bool checked[NUM_CELL];
