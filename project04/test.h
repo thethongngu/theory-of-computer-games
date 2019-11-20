@@ -6,11 +6,12 @@
 #define PROJECT04_TEST_H
 
 
-class test {
+class Test {
 
 public:
-    int test01();
-
+    static int test01();
+    static int test02();
+    static int test03();
 };
 
 

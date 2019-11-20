@@ -12,8 +12,8 @@ class Coordinator {
 public:
     Coordinator();
 
-    static void preprocess(char* raw_command, char* new_command);
-    void run(char* raw_command);
+    static std::string preprocess(const std::string& raw_command);
+    void run(const std::string& command);
 };
 
 
