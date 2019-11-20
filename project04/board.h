@@ -23,10 +23,11 @@ public:
     Board();
 
     /** Return a vector of Cell that is liberty when placing stone with color at pos **/
-    std::vector<Cell> get_liberties(unsigned pos, Board::Color color);
+    std::vector<Cell>& get_liberties(unsigned pos, Board::Color color);
 
-    bool is_capture(unsigned pos, Board::Color color);
-    bool is_suicide(unsigned pos, Board::Color color);
+    static Color get_oppenent_color(Color color);
+    bool is_capturing(unsigned pos, Color color);
+    bool is_suiciding(unsigned pos, Color color);
 
     /** Return -1 if move is not valid, **/
     int place(unsigned pos, Color color);
