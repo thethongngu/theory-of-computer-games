@@ -20,6 +20,7 @@ private:
 public:
     static int BLACK;
     static int WHITE;
+    static int NONE;
 
 public:
     Board();

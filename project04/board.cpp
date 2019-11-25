@@ -8,11 +8,12 @@
 
 int Board::BOARD_SIZE = 9;
 int Board::NUM_CELL = 81;
+int Board::NONE = 0;
 int Board::BLACK = 1;
 int Board::WHITE = 2;
 
 Board::Board() {
-    for(int i = 0; i < NUM_CELL; i++) board[i] = 0;
+    for (int i = 0; i < NUM_CELL; i++) board[i] = 0;
 }
 
 std::vector<Board::Cell> Board::get_liberties(unsigned pos, Board::Color color) {
@@ -21,19 +22,20 @@ std::vector<Board::Cell> Board::get_liberties(unsigned pos, Board::Color color) 
     bool checked[NUM_CELL];
     int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
 
-    for(int i = 0; i < NUM_CELL; i++) checked[i] = false;
+    for (int i = 0; i < NUM_CELL; i++) checked[i] = false;
 
     q.push(pos);
     checked[pos] = true;
     while (!q.empty()) {
-        Board::Cell cell = q.front();  q.pop();
+        Board::Cell cell = q.front();
+        q.pop();
         for (int offset : d) {
             Cell new_cell = cell + offset;
             if (new_cell < 0 || new_cell >= NUM_CELL || checked[new_cell]) continue;
             if (board[new_cell] == color) {
                 checked[new_cell] = true;
                 q.push(new_cell);
-            } else if (board[new_cell] == 0) {
+            } else if (board[new_cell] == NONE) {
                 checked[new_cell] = true;
                 res.push_back(new_cell);
             }
@@ -47,9 +49,9 @@ bool Board::is_capturing(int pos, Board::Color color) {
     auto other_color = get_opponent_color(color);
     int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
 
-    for(int offset: d) {
+    for (int offset: d) {
         auto adj_cell = pos + offset;
-        if (adj_cell < 0 || adj_cell >= NUM_CELL) continue;
+        if (adj_cell < 0 || adj_cell >= NUM_CELL || board[adj_cell] == NONE) continue;
         if (board[adj_cell] != other_color) continue;
         if (get_liberties(adj_cell, other_color).empty()) return true;
     }
@@ -75,7 +77,9 @@ int Board::place(int x, int y, Board::Color color) {
 }
 
 Board::Color Board::get_opponent_color(Board::Color color) {
-    return color == WHITE ? BLACK : WHITE;
+    if (color == WHITE) return BLACK;
+    if (color == BLACK) return WHITE;
+    return NONE;
 }
 
 int Board::get_boardsize() {
@@ -88,11 +92,11 @@ void Board::set_boardsize(int new_size) {
 }
 
 void Board::clear_board() {
-    for(int i = 0; i < NUM_CELL; i++) board[i] = 0;
+    for (int i = 0; i < NUM_CELL; i++) board[i] = 0;
 }
 
 void Board::print() {
-    for(int i = 0; i < NUM_CELL; i++) {
+    for (int i = 0; i < NUM_CELL; i++) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl;
         if (board[i] == BLACK) std::cout << "●";
         else if (board[i] == WHITE) std::cout << "○";
