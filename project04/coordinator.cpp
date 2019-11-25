@@ -8,8 +8,6 @@
 #include <sstream>
 #include <iterator>
 
-#define print(a) std::cout << a << std::endl
-
 std::array<std::string, 11> Coordinator::known_commands = {
         "protocol_version", "name", "version", "known_command", "list_commands", "quit", "boardsize", "clear_board",
         "komi", "play", "genmove"
@@ -127,6 +125,7 @@ void Coordinator::start() {
         std::cout << "Input: ";
         getline(std::cin, raw_command);
         run(raw_command);
+        board.print();
     }
 }
 
@@ -147,5 +146,5 @@ bool Coordinator::move(const std::vector<std::string> &args) {
     token = Helper::to_lowercase(args[1]);
     int row = token[0] - 'a';
     int col = token[1] - '1';
-    return board.place(row, col, color) == -1;
+    return board.place(row, col, color) != -1;
 }
