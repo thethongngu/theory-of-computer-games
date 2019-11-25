@@ -14,6 +14,19 @@
 class Coordinator {
 public:
     static std::array<std::string, 11> known_commands;
+
+    struct Command {
+        unsigned id;
+        std::string command;
+        std::vector<std::string> arguments;
+
+        Command() {
+            id = -1;
+            command = "";
+            arguments.clear();
+        }
+    };
+
 public:
     Coordinator();
 
@@ -21,12 +34,13 @@ public:
 
     static std::string preprocess(const std::string& raw_command);
     void run(const std::string& command);
-    static std::vector<std::string> parse_command(const std::string& command);
+    static Command parse_command(const std::string& command);
 
-    static bool is_known_command(const std::vector<std::string>& tokens);
-    static void update_boardsize(const std::vector<std::string>& tokens);
+    static void response(bool is_success, Command &command, const std::string &mess);
+    static bool is_known_command(const std::string &head);
+    static bool update_boardsize(const std::vector<std::string>& args);
     void clear_board();
-    void move(const std::vector<std::string>& tokens);
+    bool move(const std::vector<std::string>& args);
 
 private:
     bool is_stop;

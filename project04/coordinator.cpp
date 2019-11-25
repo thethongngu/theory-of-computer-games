@@ -5,12 +5,14 @@
 #include "coordinator.h"
 #include "helper.h"
 #include <iostream>
+#include <sstream>
+#include <iterator>
 
 #define print(a) std::cout << a << std::endl
 
-static std::array<std::string, 11> known_command = {
-        "protocol_version", "name", "version", "known_command" ,"list_commands"
-        ,"quit", "boardsize", "clear_board", "komi", "play", "genmove"
+std::array<std::string, 11> Coordinator::known_commands = {
+        "protocol_version", "name", "version", "known_command", "list_commands", "quit", "boardsize", "clear_board",
+        "komi", "play", "genmove"
 };
 
 Coordinator::Coordinator() {
@@ -18,11 +20,11 @@ Coordinator::Coordinator() {
 }
 
 
-std::string Coordinator::preprocess(const std::string& raw_command) {
+std::string Coordinator::preprocess(const std::string &raw_command) {
 
     std::string res;
     bool in_comment = false;
-    for(int code : raw_command) {
+    for (int code : raw_command) {
         if (code < 32 && code != 9 && code != 10) continue;  // control char not HT or LF
 
         if (code == 35) in_comment = true;   // # char
@@ -36,69 +38,114 @@ std::string Coordinator::preprocess(const std::string& raw_command) {
     return res;
 }
 
-std::vector<std::string> Coordinator::parse_command(const std::string &command) {
-    return std::vector<std::string>();
+Coordinator::Command Coordinator::parse_command(const std::string &command) {
+    std::istringstream iss(command);
+    std::vector<std::string> tokens(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
+
+    Command res;
+    unsigned id = Helper::get_int(tokens[0]);
+    if (id >= 0) {
+        res.id = id;
+        res.command = tokens[1];
+        res.arguments.assign(tokens.begin() + 2, tokens.end());
+    } else {
+        res.command = tokens[0];
+        res.arguments.assign(tokens.begin() + 1, tokens.end());
+    }
+    return res;
 }
 
-bool Coordinator::is_known_command(const std::vector<std::string>& tokens) {
-    for(const auto & command : known_commands)
-        if (command == tokens[1]) return true;
+void Coordinator::response(bool is_success, Coordinator::Command &command, const std::string &mess) {
+    if (is_success) std::cout << "=" else std::cout << "?";
+    if (command.id != -1) std::cout << command.id << " ";
+    if (!mess.empty()) std::cout << " " << mess;
+    std::cout << "\n\n";
+}
+
+bool Coordinator::is_known_command(const std::string &head) {
+    for (const auto &command : known_commands)
+        if (command == head) return true;
     return false;
 }
 
-void Coordinator::run(const std::string& raw_command) {
-    auto command = preprocess(raw_command);
-    auto tokens = parse_command(command);
-    if (tokens[0] == "protocol_version") {
-        print("2");
-    } else if (tokens[0] == "name") {
-        print("0860843");
-    } else if (tokens[0] == "version") {
-        print("0");
-    } else if (tokens[0] == "known_command") {
-        print(is_known_command(tokens));
-    } else if (tokens[0] == "list_commands") {
-        for(const auto& x: known_commands) print(x);
-    } else if (tokens[0] == "quit") {
-        is_stop = true;
-    } else if (tokens[0] == "boardsize") {
-        update_boardsize(tokens);
-    } else if (tokens[0] == "clear_board") {
-        clear_board();
-    } else if (tokens[0] == "play") {
-        move(tokens);
-    } else if (tokens[0] == "genmove") {
+void Coordinator::run(const std::string &raw_command) {
+    auto command_string = preprocess(raw_command);
+    Command command = parse_command(command_string);
+    auto head = command.command;
+    auto args = command.arguments;
 
+    if (head == "protocol_version") {
+        response(true, command, "2");
+
+    } else if (head == "name") {
+        response(true, command, "0860832");
+
+    } else if (head == "version") {
+        response(true, command, "0.0");
+
+    } else if (head == "known_command") {
+        std::string res = is_known_command(head) ? "true" : "false";
+        response(true, command, res);
+
+    } else if (head == "list_commands") {
+        std::string res;
+        for (const auto &x: known_commands) {
+            res.append(x);  res.append("\n");
+        }
+        response(true, command, res);
+
+    } else if (head == "quit") {
+        is_stop = true;
+        response(true, command, "");
+
+    } else if (head == "boardsize") {
+        bool res = update_boardsize(args);
+        response(res, command, res ? "" : "unacceptable size");
+
+    } else if (head == "clear_board") {
+        clear_board();
+        response(true, command, "");
+
+    } else if (head == "play") {
+        bool can_move = move(args);
+        response(can_move, command, can_move ? "" : "illegal move");
+
+    } else if (head == "genmove") {
+
+
+    } else {
+        response(false, command, "unknown command");
     }
 }
 
 void Coordinator::start() {
-    while (!is_stop) {
+    Board::Color curr_turn = Board::BLACK;
+    std::string raw_command;
 
+    while (!is_stop) {
+        std::cout << "Input: ";
+        getline(std::cin, raw_command);
+        run(raw_command);
+        curr_turn = Board::get_oppenent_color(curr_turn);
     }
 }
 
-void Coordinator::update_boardsize(const std::vector<std::string> &tokens) {
-    if (tokens[1] != "9") {
-        print("unacceptable size");
-        return;
-    }
+bool Coordinator::update_boardsize(const std::vector<std::string> &args) {
+    return args[0] == "9";
 }
 
 void Coordinator::clear_board() {
     board.clear_board();
 }
 
-void Coordinator::move(const std::vector<std::string>& tokens) {
+bool Coordinator::move(const std::vector<std::string> &args) {
     std::string token;
 
-    token = Helper::to_lowercase(tokens[1]);
-    auto color = (token[0] == 'b') ? Board::BLACK: Board::WHITE;
+    token = Helper::to_lowercase(args[0]);
+    auto color = (token[0] == 'b') ? Board::BLACK : Board::WHITE;
 
-    token = Helper::to_lowercase(tokens[2]);
+    token = Helper::to_lowercase(args[1]);
     int row = token[0] - 'a';
     int col = token[1] - '1';
-    if (board.place(row, col, color) == -1) {
-        print("illegal move");
-    }
+    return board.place(row, col, color) == -1;
 }
