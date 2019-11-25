@@ -43,28 +43,30 @@ Coordinator::Command Coordinator::parse_command(const std::string &command) {
     std::vector<std::string> tokens(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
 
     Command res;
-    unsigned id = Helper::get_int(tokens[0]);
+    if (tokens.size() == 0) return res;  // NOLINT(readability-container-size-empty)
+
+    int id = Helper::get_int(tokens[0]);
     if (id >= 0) {
         res.id = id;
-        res.command = tokens[1];
-        res.arguments.assign(tokens.begin() + 2, tokens.end());
+        if (tokens.size() > 1) res.command = tokens[1];
+        if (tokens.size() > 2) res.arguments.assign(tokens.begin() + 2, tokens.end());
     } else {
         res.command = tokens[0];
-        res.arguments.assign(tokens.begin() + 1, tokens.end());
+        if (tokens.size() > 1) res.arguments.assign(tokens.begin() + 1, tokens.end());
     }
     return res;
 }
 
 void Coordinator::response(bool is_success, Coordinator::Command &command, const std::string &mess) {
-    if (is_success) std::cout << "=" else std::cout << "?";
-    if (command.id != -1) std::cout << command.id << " ";
+    if (is_success) std::cout << "="; else std::cout << "?";
+    if (command.id != -1) std::cout << command.id;
     if (!mess.empty()) std::cout << " " << mess;
     std::cout << "\n\n";
 }
 
-bool Coordinator::is_known_command(const std::string &head) {
+bool Coordinator::is_known_command(const std::string &c) {
     for (const auto &command : known_commands)
-        if (command == head) return true;
+        if (command == c) return true;
     return false;
 }
 
@@ -84,7 +86,7 @@ void Coordinator::run(const std::string &raw_command) {
         response(true, command, "0.0");
 
     } else if (head == "known_command") {
-        std::string res = is_known_command(head) ? "true" : "false";
+        std::string res = is_known_command(args[0]) ? "true" : "false";
         response(true, command, res);
 
     } else if (head == "list_commands") {
@@ -119,14 +121,12 @@ void Coordinator::run(const std::string &raw_command) {
 }
 
 void Coordinator::start() {
-    Board::Color curr_turn = Board::BLACK;
     std::string raw_command;
 
     while (!is_stop) {
         std::cout << "Input: ";
         getline(std::cin, raw_command);
         run(raw_command);
-        curr_turn = Board::get_oppenent_color(curr_turn);
     }
 }
 

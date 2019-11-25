@@ -33,7 +33,7 @@ public:
     /** Return a vector of Cell that is liberty when placing stone with color at pos **/
     std::vector<Cell> get_liberties(unsigned pos, Board::Color color);
 
-    static Color get_oppenent_color(Color color);
+    static Color get_opponent_color(Color color);
 
     /** Is capturing opponent if place stone with 'color' at 'pos' **/
     bool is_capturing(unsigned pos, Color color);

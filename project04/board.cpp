@@ -43,7 +43,7 @@ std::vector<Board::Cell> Board::get_liberties(unsigned pos, Board::Color color) 
 }
 
 bool Board::is_capturing(unsigned pos, Board::Color color) {
-    auto other_color = get_oppenent_color(color);
+    auto other_color = get_opponent_color(color);
     int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
 
     for(int offset: d) {
@@ -72,7 +72,7 @@ int Board::place(unsigned x, unsigned y, Board::Color color) {
     place(x * BOARD_SIZE + y, color);
 }
 
-Board::Color Board::get_oppenent_color(Board::Color color) {
+Board::Color Board::get_opponent_color(Board::Color color) {
     return 1 - color;
 }
 

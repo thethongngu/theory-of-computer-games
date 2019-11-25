@@ -9,7 +9,7 @@
 class Helper {
 public:
     static std::string to_lowercase(const std::string& s);
-    static unsigned get_int(const std::string& s);
+    static int get_int(const std::string& s);
 };
 
 
