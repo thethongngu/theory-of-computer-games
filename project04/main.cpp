@@ -1,12 +1,9 @@
 #include <iostream>
-#include <cassert>
 #include "coordinator.h"
-#include "test.h"
+#include "test/test_coordinator.h"
 
 int main() {
-    assert(Test::test01());
-    assert(Test::test02());
-    assert(Test::test03());
+    CoordinatorTest::run_tests();
 
     Coordinator coordinator;
     coordinator.start();

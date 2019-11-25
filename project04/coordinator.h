@@ -25,6 +25,10 @@ public:
             command = "";
             arguments.clear();
         }
+
+        Command(int _id, const std::string &_command, const std::string &_arg) {
+            id = _id, command = _command, arguments.push_back(_arg);
+        }
     };
 
 public:
