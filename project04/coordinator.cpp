@@ -75,49 +75,56 @@ void Coordinator::run(const std::string &raw_command) {
     Command command = parse_command(command_string);
     auto head = command.command;
     auto args = command.arguments;
+    command_history.push_back(command);
 
     if (head == "protocol_version") {
-        std::cout << get_response(true, command, "2");
+        response_history.push_back(get_response(true, command, "2"));
 
     } else if (head == "name") {
-        std::cout << get_response(true, command, "0860832");
+        response_history.push_back(get_response(true, command, "0860832"));
 
     } else if (head == "version") {
-        std::cout << get_response(true, command, "0.0");
+        response_history.push_back(get_response(true, command, "0.0"));
 
     } else if (head == "known_command") {
         std::string res = is_known_command(args[0]) ? "true" : "false";
-        std::cout << get_response(true, command, res);
+        response_history.push_back(get_response(true, command, res));
 
     } else if (head == "list_commands") {
         std::string res;
         for (const auto &x: known_commands) {
             res.append(x);  res.append("\n");
         }
-        std::cout << get_response(true, command, res);
+        response_history.push_back(get_response(true, command, res));
 
     } else if (head == "quit") {
         is_stop = true;
-        std::cout << get_response(true, command, "");
+        response_history.push_back(get_response(true, command, ""));
+        auto move_his = get_move_commands(true);
+        for(auto &move: move_his) {
+            Helper::print(move.get_string());
+        }
 
     } else if (head == "boardsize") {
         bool res = update_boardsize(args);
-        std::cout << get_response(res, command, res ? "" : "unacceptable size");
+        response_history.push_back(get_response(res, command, res ? "" : "unacceptable size"));
 
     } else if (head == "clear_board") {
         clear_board();
-        std::cout << get_response(true, command, "");
+        response_history.push_back(get_response(true, command, ""));
 
     } else if (head == "play") {
         bool can_move = move(args);
-        std::cout << get_response(can_move, command, can_move ? "" : "illegal move");
+        response_history.push_back(get_response(can_move, command, can_move ? "" : "illegal move"));
 
     } else if (head == "genmove") {
 
 
     } else {
-        std::cout << get_response(false, command, "unknown command");
+        response_history.push_back(get_response(false, command, "unknown command"));
     }
+
+    std::cout << response_history.back();
 }
 
 void Coordinator::start() {
@@ -151,4 +158,21 @@ bool Coordinator::move(const std::vector<std::string> &args) {
     int col = token[0] - 'a';
     return board.place(row, col, color) != -1;
 
+}
+
+std::vector<Coordinator::Command> Coordinator::get_move_commands(bool only_valid) {
+    std::vector<Command> res;
+
+    for (size_t i = 0; i < command_history.size(); i++) {
+        auto com = command_history[i];
+        if (com.command != "genmove" && com.command != "play") continue;
+        if (!only_valid) res.push_back(com);
+        else if (is_valid_response(response_history[i])) res.push_back(com);
+    }
+
+    return res;
+}
+
+bool Coordinator::is_valid_response(const std::string &s) {
+    return s[0] == '=';
 }
