@@ -120,20 +120,26 @@ void Board::print() {
 }
 
 std::vector<Board::Cell> Board::get_adj_cells(Board::Cell pos) {
-    int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
-    if (pos == 0) return {1, 9};
-    if (pos == 8) return {7, 17};
-    if (pos == 72) return {63, 73};
-    if (pos == 80) return {71, 79};
+    if (pos == 0)
+        return {1, BOARD_SIZE};
+    if (pos == BOARD_SIZE)
+        return {BOARD_SIZE - 2, BOARD_SIZE + BOARD_SIZE - 1};
+    if (pos == BOARD_SIZE * (BOARD_SIZE - 1))
+        return {BOARD_SIZE * (BOARD_SIZE - 2), BOARD_SIZE * (BOARD_SIZE - 1) + 1};
+    if (pos == BOARD_SIZE * BOARD_SIZE - 1)
+        return {BOARD_SIZE * (BOARD_SIZE - 1) - 1, BOARD_SIZE * BOARD_SIZE - 2};
 
-    if (pos > 0 && pos < 8) return {pos - 1, pos + BOARD_SIZE, pos + 1};
-    if (pos > 72 && pos < 80) return {pos - 1, pos - BOARD_SIZE, pos + 1};
-    if (pos > 0 && pos < 72 && pos % BOARD_SIZE == 0)
+    if (pos > 0 && pos < BOARD_SIZE - 1)
+        return {pos - 1, pos + BOARD_SIZE, pos + 1};
+    if (pos > BOARD_SIZE * (BOARD_SIZE - 1) && pos < BOARD_SIZE * BOARD_SIZE - 1)
+        return {pos - 1, pos - BOARD_SIZE, pos + 1};
+    if (pos > 0 && pos < BOARD_SIZE * (BOARD_SIZE - 1) && pos % BOARD_SIZE == 0)
         return {pos - BOARD_SIZE, pos + 1, pos + BOARD_SIZE};
-    if (pos > 8 && pos < 80 && pos % BOARD_SIZE == BOARD_SIZE - 1)
+    if (pos > 8 && pos < BOARD_SIZE * BOARD_SIZE - 1 && pos % BOARD_SIZE == BOARD_SIZE - 1)
         return {pos - BOARD_SIZE, pos - 1, pos + BOARD_SIZE};
 
-    if (pos > 9 && pos < 71) return {pos - BOARD_SIZE, pos + 1, pos + BOARD_SIZE, pos - 1};
+    if (pos > BOARD_SIZE && pos < BOARD_SIZE * (BOARD_SIZE - 1) - 1)
+        return {pos - BOARD_SIZE, pos + 1, pos + BOARD_SIZE, pos - 1};
 
     return {};
 }

@@ -51,7 +51,7 @@ public:
     void run(const std::string& command);
     void clear_board();
     bool move(const std::vector<std::string>& args);
-    std::vector<Command> get_move_commands(bool only_valid);
+    std::vector<std::pair<Command, std::string> > get_all_moves(bool only_valid);
 
 private:
     bool is_stop;

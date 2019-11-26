@@ -100,9 +100,14 @@ void Coordinator::run(const std::string &raw_command) {
     } else if (head == "quit") {
         is_stop = true;
         response_history.push_back(get_response(true, command, ""));
-        auto move_his = get_move_commands(true);
-        for(auto &move: move_his) {
-            Helper::print(move.get_string());
+        auto move_his = get_all_moves(true);
+        for(auto &turn: move_his) {
+            auto move = turn.first;
+            printf("{%s, %s, %s}\n", move.command.c_str(), move.arguments[0].c_str(), move.arguments[1].c_str());
+        }
+        for(auto &turn: move_his) {
+            auto res = turn.second;
+            printf("%s", res.c_str());
         }
 
     } else if (head == "boardsize") {
@@ -160,14 +165,14 @@ bool Coordinator::move(const std::vector<std::string> &args) {
 
 }
 
-std::vector<Coordinator::Command> Coordinator::get_move_commands(bool only_valid) {
-    std::vector<Command> res;
+std::vector<std::pair<Coordinator::Command, std::string> > Coordinator::get_all_moves(bool only_valid) {
+    std::vector<std::pair<Command, std::string> > res;
 
     for (size_t i = 0; i < command_history.size(); i++) {
         auto com = command_history[i];
         if (com.command != "genmove" && com.command != "play") continue;
-        if (!only_valid) res.push_back(com);
-        else if (is_valid_response(response_history[i])) res.push_back(com);
+        if (!only_valid) res.emplace_back(com, response_history[i]);
+        else if (is_valid_response(response_history[i])) res.emplace_back(com, response_history[i]);
     }
 
     return res;
