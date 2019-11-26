@@ -40,7 +40,7 @@ public:
     void run(const std::string& command);
     static Command parse_command(const std::string& command);
 
-    static void response(bool is_success, Command &command, const std::string &mess);
+    static std::string get_response(bool is_success, Command &command, const std::string &mess);
     static bool is_known_command(const std::string &head);
     static bool update_boardsize(const std::vector<std::string>& args);
     void clear_board();

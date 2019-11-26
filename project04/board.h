@@ -23,30 +23,20 @@ public:
     static int NONE;
 
 public:
+    static Color get_opponent_color(Color color);
+    static std::vector<Cell> get_adj_cells(Cell pos);
+
     Board();
 
+    void print();
+    void clear_board();
     int get_boardsize();
-
     void set_boardsize(int new_size);
 
-    void clear_board();
-
-    void print();
-
-    /** Return a vector of Cell that is liberty when placing stone with color at pos **/
-    std::vector<Cell> get_liberties(unsigned pos, Board::Color color);
-
-    static Color get_opponent_color(Color color);
-
-    /** Is capturing opponent if place stone with 'color' at 'pos' **/
-    bool is_capturing(int pos, Color color);
-
-    /** Is suiciding if place stone with 'color' at 'pos' **/
-    bool is_suiciding(int pos, Color color);
-
-    /** Return -1 if move is not valid, **/
-    int place(int pos, Color color);
-
+    std::vector<Cell> get_liberties(Cell pos, Board::Color color, Cell checking_pos);
+    bool is_capturing(Cell pos, Color color);
+    bool is_suiciding(Cell pos, Color color);
+    int place(Cell pos, Color color);
     int place(int x, int y, Color color);
 
 private:

@@ -5,6 +5,7 @@
 #include <queue>
 #include <iostream>
 #include "board.h"
+#include "helper.h"
 
 int Board::BOARD_SIZE = 9;
 int Board::NUM_CELL = 81;
@@ -16,23 +17,29 @@ Board::Board() {
     for (int i = 0; i < NUM_CELL; i++) board[i] = 0;
 }
 
-std::vector<Board::Cell> Board::get_liberties(unsigned pos, Board::Color color) {
+std::vector<Board::Cell> Board::get_liberties(Cell pos, Board::Color color, Cell checking_pos) {
+
     std::vector<Board::Cell> res;
     std::queue<Board::Cell> q;
     bool checked[NUM_CELL];
-    int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
+
+    board[pos] = color;
+    if (board[checking_pos] == NONE) {
+        Helper::print("Warning: checking liberties of empty cell regions");
+    }
 
     for (int i = 0; i < NUM_CELL; i++) checked[i] = false;
+    q.push(checking_pos);
+    checked[checking_pos] = true;
+    Color checking_color = board[checking_pos];
 
-    q.push(pos);
-    checked[pos] = true;
     while (!q.empty()) {
         Board::Cell cell = q.front();
         q.pop();
-        for (int offset : d) {
-            Cell new_cell = cell + offset;
-            if (new_cell < 0 || new_cell >= NUM_CELL || checked[new_cell]) continue;
-            if (board[new_cell] == color) {
+        auto adj_cells = get_adj_cells(cell);
+        for (Cell new_cell : adj_cells) {
+            if (checked[new_cell]) continue;
+            if (board[new_cell] == checking_color) {
                 checked[new_cell] = true;
                 q.push(new_cell);
             } else if (board[new_cell] == NONE) {
@@ -42,29 +49,34 @@ std::vector<Board::Cell> Board::get_liberties(unsigned pos, Board::Color color) 
         }
     }
 
+    board[pos] = NONE;
+
     return res;
 }
 
-bool Board::is_capturing(int pos, Board::Color color) {
+bool Board::is_capturing(Cell pos, Board::Color color) {
     auto other_color = get_opponent_color(color);
-    int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
+    auto adj_cells = get_adj_cells(pos);
 
-    for (int offset: d) {
-        auto adj_cell = pos + offset;
-        if (adj_cell < 0 || adj_cell >= NUM_CELL || board[adj_cell] == NONE) continue;
+    for (Cell adj_cell: adj_cells) {
         if (board[adj_cell] != other_color) continue;
-        if (get_liberties(adj_cell, other_color).empty()) return true;
+        if (get_liberties(pos, color, adj_cell).empty()) {
+            Helper::print("Capture position: " + std::to_string(adj_cell));
+            return true;
+        }
     }
 
     return false;
 }
 
-bool Board::is_suiciding(int pos, Board::Color color) {
-    auto liberties = get_liberties(pos, color);
+bool Board::is_suiciding(Cell pos, Board::Color color) {
+    auto liberties = get_liberties(pos, color, pos);
+    if (liberties.empty()) Helper::print("Suicide at: " + std::to_string(pos));
     return liberties.empty();
 }
 
-int Board::place(int pos, Color color) {
+int Board::place(Cell pos, Color color) {
+    if (pos < 0 || pos >= NUM_CELL) return -1;
     if (board[pos] != 0) return -1;
     if (is_capturing(pos, color)) return -1;
     if (is_suiciding(pos, color)) return -1;
@@ -73,7 +85,7 @@ int Board::place(int pos, Color color) {
 }
 
 int Board::place(int x, int y, Board::Color color) {
-    place(x * BOARD_SIZE + y, color);
+    return place(x * BOARD_SIZE + y, color);
 }
 
 Board::Color Board::get_opponent_color(Board::Color color) {
@@ -96,11 +108,32 @@ void Board::clear_board() {
 }
 
 void Board::print() {
+    std::cout << " ";
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char)(i + 'a');
     for (int i = 0; i < NUM_CELL; i++) {
-        if (i % BOARD_SIZE == 0) std::cout << std::endl;
-        if (board[i] == BLACK) std::cout << "●";
-        else if (board[i] == WHITE) std::cout << "○";
-        else std::cout << "+";
+        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
+        if (board[i] == BLACK) std::cout << " ●";
+        else if (board[i] == WHITE) std::cout << " ○";
+        else std::cout << " +";
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
+}
+
+std::vector<Board::Cell> Board::get_adj_cells(Board::Cell pos) {
+    int d[4] = {-BOARD_SIZE, 1, +BOARD_SIZE, -1};
+    if (pos == 0) return {1, 9};
+    if (pos == 8) return {7, 17};
+    if (pos == 72) return {63, 73};
+    if (pos == 80) return {71, 79};
+
+    if (pos > 0 && pos < 8) return {pos - 1, pos + BOARD_SIZE, pos + 1};
+    if (pos > 72 && pos < 80) return {pos - 1, pos - BOARD_SIZE, pos + 1};
+    if (pos > 0 && pos < 72 && pos % BOARD_SIZE == 0)
+        return {pos - BOARD_SIZE, pos + 1, pos + BOARD_SIZE};
+    if (pos > 8 && pos < 80 && pos % BOARD_SIZE == BOARD_SIZE - 1)
+        return {pos - BOARD_SIZE, pos - 1, pos + BOARD_SIZE};
+
+    if (pos > 9 && pos < 71) return {pos - BOARD_SIZE, pos + 1, pos + BOARD_SIZE, pos - 1};
+
+    return {};
 }

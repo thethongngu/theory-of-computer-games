@@ -8,36 +8,36 @@
 #include "../coordinator.h"
 
 int CoordinatorTest::preprocess01() {
-    std::string a = "test test";
+    std::string a = "production production";
     a.append(1, (char) 13);
-    a.append("  test ");
+    a.append("  production ");
     a.append(1, (char) 9);
     a.append(1, (char) 13);
     a.append(1, (char) 3);
-    a.append("test");
+    a.append("production");
     auto command = Coordinator::preprocess(a);
-    return command == "test test  test  test";
+    return command == "production production  production  production";
 }
 
 int CoordinatorTest::preprocess02() {
-    std::string a = "test # test 33 ";
+    std::string a = "production # production 33 ";
     a.append(1, (char) 13);
     a.append(1, (char) 9);
     a.append(1, (char) 13);
     a.append(1, (char) 3);
     auto command = Coordinator::preprocess(a);
-    return command == "test ";
+    return command == "production ";
 }
 
 int CoordinatorTest::preprocess03() {
-    std::string a = "test # test 33 ";
+    std::string a = "production # production 33 ";
     a.append(1, (char) 10);
     a.append(1, (char) 9);
     a.append(1, (char) 13);
     a.append(1, (char) 3);
     a.append("aaa");
     auto command = Coordinator::preprocess(a);
-    return command == "test \n aaa";
+    return command == "production \n aaa";
 }
 
 int CoordinatorTest::preprocess04() {

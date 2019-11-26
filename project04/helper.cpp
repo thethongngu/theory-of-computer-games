@@ -4,7 +4,10 @@
 
 #include <string>
 #include <cstdlib>
+#include <iostream>
 #include "helper.h"
+
+bool Helper::production = true;
 
 std::string Helper::to_lowercase(const std::string& s) {
     std::string res;
@@ -22,4 +25,8 @@ std::string Helper::to_lowercase(const std::string& s) {
 int Helper::get_int(const std::string &s) {
     if (s.find_first_not_of("01234566789") != std::string::npos) return -1;
     return strtol(s.c_str(), nullptr, 0);
+}
+
+void Helper::print(const std::string &s) {
+    if (!production) std::cout << s << std::endl;
 }

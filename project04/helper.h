@@ -8,8 +8,11 @@
 
 class Helper {
 public:
+    static bool production;
+
     static std::string to_lowercase(const std::string& s);
     static int get_int(const std::string& s);
+    static void print(const std::string& s);
 };
 
 
