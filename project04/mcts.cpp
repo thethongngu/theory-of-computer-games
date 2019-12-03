@@ -80,9 +80,9 @@ void MCTS::run() {
     backpropagate(leaf, end_value);
 }
 
-Node *MCTS::find_child_with_move(Node *node, Board curr_board, Board::Cell pos, Board::Color color) {
+Node *MCTS::find_child_with_board(Node *node, Board curr_board) {
     for (auto &child : node->children) {
-        if (child->color == color && child->pos == pos)
+        if (child->board.equal(curr_board))
             return child;
     }
 

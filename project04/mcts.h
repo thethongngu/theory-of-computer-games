@@ -24,12 +24,14 @@ public:
 
     void run();
 
-    static Node *find_child_with_move(Node *node, Board curr_board, Board::Cell pos, Board::Color color);
+    static Node *find_child_with_board(Node *node, Board curr_board);
 
     static void free_all_children(Node *node);
 
-private:
     Node *root;
+
+private:
+
     int tree_depth;
 };
 

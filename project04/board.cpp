@@ -160,3 +160,9 @@ int Board::get_random_empty_cell() {  // TODO: can improve this?
     int pos = Helper::get_random_number(81);
     while (board[pos] == NONE) return pos;
 }
+
+bool Board::equal(Board other_board) {
+    for(int pos = 0; pos < NUM_CELL; pos++)
+        if (other_board.board[pos] != board[pos]) return false;
+    return true;
+}

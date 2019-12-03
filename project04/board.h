@@ -34,7 +34,7 @@ public:
     int get_boardsize();
     void set_boardsize(int new_size);
 
-
+    bool equal(Board other_board);
     bool is_terminated();
     std::vector<Cell> get_liberties(Cell pos, Board::Color color, Cell checking_pos);
     bool is_capturing(Cell pos, Color color);
