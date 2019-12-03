@@ -9,12 +9,16 @@
 #include <string>
 #include <vector>
 #include "board.h"
+#include "mcts.h"
 
 class Agent {
 public:
     Agent();
 
-    std::string make_move(Board::Color color);
+    std::string make_move(Board curr_board, Board::Color color);
+
+private:
+    MCTS tree;
 };
 
 

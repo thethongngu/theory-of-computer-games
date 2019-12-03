@@ -8,6 +8,6 @@ Agent::Agent() {
 
 }
 
-std::string Agent::make_move(Board::Color color) {
-    
+std::string Agent::make_move(Board curr_board, Board::Color color) {
+    tree.set_root(curr_board);
 }

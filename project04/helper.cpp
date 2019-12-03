@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdlib>
 #include <iostream>
+#include <random>
 #include "helper.h"
 
 bool Helper::production = true;
@@ -29,4 +30,8 @@ int Helper::get_int(const std::string &s) {
 
 void Helper::print(const std::string &s) {
     if (!production) std::cout << s << std::endl;
+}
+
+int Helper::get_random_number(int module) {
+    return dist(generator) % module;
 }

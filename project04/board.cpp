@@ -13,8 +13,11 @@ int Board::NONE = 0;
 int Board::BLACK = 1;
 int Board::WHITE = 2;
 
+
+
 Board::Board() {
     for (int i = 0; i < NUM_CELL; i++) board[i] = 0;
+    num_empty_cell = NUM_CELL;
 }
 
 std::vector<Board::Cell> Board::get_liberties(Cell pos, Board::Color color, Cell checking_pos) {
@@ -75,12 +78,17 @@ bool Board::is_suiciding(Cell pos, Board::Color color) {
     return liberties.empty();
 }
 
+/**
+ * Place a stone in location 'pos' with 'color' on the board
+ * @return 1 if success, -1 if fail
+ */
 int Board::place(Cell pos, Color color) {
     if (pos < 0 || pos >= NUM_CELL) return -1;
     if (board[pos] != 0) return -1;
     if (is_capturing(pos, color)) return -1;
     if (is_suiciding(pos, color)) return -1;
     board[pos] = color;
+    num_empty_cell--;
     return 1;
 }
 
@@ -109,7 +117,7 @@ void Board::clear_board() {
 
 void Board::print() {
     std::cout << " ";
-    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char)(i + 'a');
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
     for (int i = 0; i < NUM_CELL; i++) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
         if (board[i] == BLACK) std::cout << " ●";
@@ -142,4 +150,13 @@ std::vector<Board::Cell> Board::get_adj_cells(Board::Cell pos) {
         return {pos - BOARD_SIZE, pos + 1, pos + BOARD_SIZE, pos - 1};
 
     return {};
+}
+
+bool Board::is_terminated() {
+    return num_empty_cell == 0;
+}
+
+int Board::get_random_empty_cell() {  // TODO: can improve this?
+    int pos = Helper::get_random_number(81);
+    while (board[pos] == NONE) return pos;
 }

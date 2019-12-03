@@ -117,7 +117,7 @@ void Coordinator::run(const std::string &raw_command) {
     } else if (head == "genmove") {
         // TODO: assume that args always true because the protocol don't specify this
         auto color = parse_color(args[0]);
-        auto output = ai.make_move(color);
+        auto output = ai.make_move(board, color);
         response_history.push_back(get_response(output != "resign", command, output));
 
     } else {
