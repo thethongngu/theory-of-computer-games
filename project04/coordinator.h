@@ -9,6 +9,7 @@
 #include <vector>
 #include <array>
 #include "board.h"
+#include "agent.h"
 
 
 class Coordinator {
@@ -46,6 +47,8 @@ public:
     static bool is_known_command(const std::string &head);
     static bool update_boardsize(const std::vector<std::string>& args);
     static bool is_valid_response(const std::string &s);
+    static Board::Color parse_color(const std::string& arg);
+    static std::pair<int, int> parse_pos(const std::string& arg);
 
     void start();
     void run(const std::string& command);
@@ -56,6 +59,7 @@ public:
 private:
     bool is_stop;
     Board board;
+    Agent ai;
     std::vector<Command> command_history;
     std::vector<std::string> response_history;
 };

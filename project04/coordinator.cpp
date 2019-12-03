@@ -15,6 +15,7 @@ std::array<std::string, 11> Coordinator::known_commands = {
 
 Coordinator::Coordinator() {
     is_stop = false;
+    ai = Agent();
 }
 
 
@@ -100,15 +101,6 @@ void Coordinator::run(const std::string &raw_command) {
     } else if (head == "quit") {
         is_stop = true;
         response_history.push_back(get_response(true, command, ""));
-        auto move_his = get_all_moves(true);
-        for(auto &turn: move_his) {
-            auto move = turn.first;
-            printf("{%s, %s, %s}\n", move.command.c_str(), move.arguments[0].c_str(), move.arguments[1].c_str());
-        }
-        for(auto &turn: move_his) {
-            auto res = turn.second;
-            printf("%s", res.c_str());
-        }
 
     } else if (head == "boardsize") {
         bool res = update_boardsize(args);
@@ -123,7 +115,10 @@ void Coordinator::run(const std::string &raw_command) {
         response_history.push_back(get_response(can_move, command, can_move ? "" : "illegal move"));
 
     } else if (head == "genmove") {
-
+        // TODO: assume that args always true because the protocol don't specify this
+        auto color = parse_color(args[0]);
+        auto output = ai.make_move(color);
+        response_history.push_back(get_response(output != "resign", command, output));
 
     } else {
         response_history.push_back(get_response(false, command, "unknown command"));
@@ -151,18 +146,23 @@ void Coordinator::clear_board() {
     board.clear_board();
 }
 
-bool Coordinator::move(const std::vector<std::string> &args) {
-    if (args.size() < 2) return false;
-    std::string token;
+Board::Color Coordinator::parse_color(const std::string& arg) {
+    auto token = Helper::to_lowercase(arg);
+    return (token[0] == 'b') ? Board::BLACK : Board::WHITE;
+}
 
-    token = Helper::to_lowercase(args[0]);
-    auto color = (token[0] == 'b') ? Board::BLACK : Board::WHITE;
-
-    token = Helper::to_lowercase(args[1]);
+std::pair<int, int> Coordinator::parse_pos(const std::string& arg) {
+    auto token = Helper::to_lowercase(arg);
     int row = token[1] - '1';
     int col = token[0] - 'a';
-    return board.place(row, col, color) != -1;
+    return {row, col};
+}
 
+bool Coordinator::move(const std::vector<std::string> &args) {
+    if (args.size() < 2) return false;
+    auto color = parse_color(args[0]);
+    auto pos = parse_pos(args[1]);
+    return board.place(pos.first, pos.second, color) != -1;
 }
 
 std::vector<std::pair<Coordinator::Command, std::string> > Coordinator::get_all_moves(bool only_valid) {
