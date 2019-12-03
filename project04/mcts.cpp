@@ -95,6 +95,10 @@ void MCTS::free_all_children(Node *node) {
     }
 }
 
-void MCTS::set_root(Board curr_board) {
+void MCTS::set_board_root(Board curr_board) {
     root->board = curr_board;
+}
+
+MCTS::MCTS() {
+    tree_depth = 1;
 }

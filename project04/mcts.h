@@ -10,9 +10,11 @@
 
 class MCTS {
 public:
+    MCTS();
+
     MCTS(Board _board, int _depth);
 
-    void set_root(Board curr_board);
+    void set_board_root(Board curr_board);
 
     Node *select();
 

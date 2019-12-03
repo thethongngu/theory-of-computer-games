@@ -19,6 +19,8 @@ public:
 
 private:
     MCTS tree;
+
+    void init_tree(const Board &curr_board);
 };
 
 
