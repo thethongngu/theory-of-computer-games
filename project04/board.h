@@ -25,30 +25,42 @@ public:
 
 public:
     static Color get_opponent_color(Color color);
+
     static std::vector<Cell> get_adj_cells(Cell pos);
 
     Board();
 
+    Board operator=(const Board &other_board);
+
     void print();
+
     void clear_board();
+
     int get_boardsize();
+
     void set_boardsize(int new_size);
 
     bool equal(Board other_board);
+
     bool is_terminated();
+
     std::vector<Cell> get_liberties(Cell pos, Board::Color color, Cell checking_pos);
+
     bool is_capturing(Cell pos, Color color);
+
     bool is_suiciding(Cell pos, Color color);
+
     int place(Cell pos, Color color);
+
     int place(int x, int y, Color color);
+
     Cell get_random_empty_cell();
 
     int num_empty_cell;
-
+    std::vector<Cell> empty_random_cells;
 
 private:
     Cell board[81]{};
-    std::vector<Cell> empty_random_cells;
 };
 
 

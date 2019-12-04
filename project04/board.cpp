@@ -5,6 +5,7 @@
 #include <queue>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 #include "board.h"
 #include "helper.h"
 
@@ -20,9 +21,24 @@ Board::Board() {
         board[i] = 0;
         empty_random_cells.push_back(i);
     }
-    shuffle(empty_random_cells.begin(), empty_random_cells.end(), Helper::get_random_number(NUM_CELL));
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    shuffle(empty_random_cells.begin(), empty_random_cells.end(), std::default_random_engine(seed));
 
     num_empty_cell = NUM_CELL;
+}
+
+Board Board::operator=(const Board &other_board) {
+    for (int i = 0; i < NUM_CELL; i++) board[i] = other_board.board[i];
+    this->empty_random_cells.clear();
+    for (int i = 0; i < other_board.empty_random_cells.size(); i++) {
+        std::cout << other_board.empty_random_cells[i] << std::endl;
+        this->empty_random_cells.push_back(other_board.empty_random_cells[i]);
+    }
+
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    shuffle(empty_random_cells.begin(), empty_random_cells.end(), std::default_random_engine(seed));
+
+    num_empty_cell = other_board.num_empty_cell;
 }
 
 std::vector<Board::Cell> Board::get_liberties(Cell pos, Board::Color color, Cell checking_pos) {
