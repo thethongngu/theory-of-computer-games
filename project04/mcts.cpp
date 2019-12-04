@@ -6,6 +6,7 @@
 
 MCTS::MCTS(Board _board, int _depth) {
     root = new Node(_board);
+    root->parent = root;
     tree_depth = _depth;
 }
 
@@ -95,8 +96,9 @@ void MCTS::free_all_children(Node *node) {
     }
 }
 
-void MCTS::set_board_root(Board curr_board) {
+void MCTS::set_root(Board curr_board, Board::Color color) {
     root->board = curr_board;
+    root->color = color;
 }
 
 MCTS::MCTS() {

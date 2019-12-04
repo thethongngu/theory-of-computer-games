@@ -15,12 +15,12 @@ class Agent {
 public:
     Agent();
 
-    std::string make_move(Board curr_board, Board::Color color);
+    int make_move(Board curr_board, Board::Color color);
 
 private:
     MCTS tree;
 
-    void init_tree(const Board &curr_board);
+    void init_tree(const Board &curr_board, Board::Color color);
 };
 
 

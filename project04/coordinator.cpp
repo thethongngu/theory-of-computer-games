@@ -56,6 +56,9 @@ Coordinator::Command Coordinator::parse_command(const std::string &command) {
     return res;
 }
 
+/**
+ * Generate a response message
+ */
 std::string Coordinator::get_response(bool is_success, Coordinator::Command &command, const std::string &mess) {
     std::string res;
     if (is_success) res.append("="); else res.append("?");
@@ -117,8 +120,8 @@ void Coordinator::run(const std::string &raw_command) {
     } else if (head == "genmove") {
         // TODO: assume that args always true because the protocol don't specify this
         auto color = parse_color(args[0]);
-        auto output = ai.make_move(board, color);
-        response_history.push_back(get_response(output != "resign", command, output));
+        int pos = ai.make_move(board, color);
+        response_history.push_back(get_response(pos != -1, command, pos != -1 ? "" : "resign"));
 
     } else {
         response_history.push_back(get_response(false, command, "unknown command"));

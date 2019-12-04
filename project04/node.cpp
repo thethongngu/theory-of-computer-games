@@ -26,7 +26,7 @@ Node *Node::get_best_uct_child() {
         }
     }
 
-    return curr_child[rand() % curr_child.size()];
+    return (curr_child.empty()) ? nullptr : curr_child[rand() % curr_child.size()];
 }
 
 /**

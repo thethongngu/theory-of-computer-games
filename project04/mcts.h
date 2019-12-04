@@ -14,7 +14,7 @@ public:
 
     MCTS(Board _board, int _depth);
 
-    void set_board_root(Board curr_board);
+    void set_root(Board curr_board, Board::Color color);
 
     Node *select();
 
