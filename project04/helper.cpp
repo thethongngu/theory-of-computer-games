@@ -10,6 +10,10 @@
 
 bool Helper::production = true;
 
+std::random_device Helper::rand_dev;
+std::mt19937 Helper::generator(rand_dev());
+std::uniform_int_distribution<int> Helper::dist(0, 100);
+
 std::string Helper::to_lowercase(const std::string& s) {
     std::string res;
     for(auto x: s) {
@@ -33,5 +37,5 @@ void Helper::print(const std::string &s) {
 }
 
 int Helper::get_random_number(int module) {
-    return dist(generator) % module;
+    return Helper::dist(Helper::generator) % module;
 }
