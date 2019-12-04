@@ -37,7 +37,7 @@ Node *MCTS::expand(Node *node) {
     Board::Cell random_empty_cell = node->board.get_random_empty_cell();
     Board curr_board = node->board;   // TODO: assignment is deep copy or not?
 
-    Node *child = new Node(curr_board, curr_color, random_empty_cell, node);
+    Node *child = new Node(curr_board, random_empty_cell, curr_color, node);
     node->children.push_back(child);
     child->parent = node;
 

@@ -41,13 +41,14 @@ public:
     bool is_suiciding(Cell pos, Color color);
     int place(Cell pos, Color color);
     int place(int x, int y, Color color);
-    int get_random_empty_cell();
+    Cell get_random_empty_cell();
 
     int num_empty_cell;
 
+
 private:
     Cell board[81]{};
-
+    std::vector<Cell> empty_random_cells;
 };
 
 

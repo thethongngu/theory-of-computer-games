@@ -4,6 +4,7 @@
 
 #include <queue>
 #include <iostream>
+#include <algorithm>
 #include "board.h"
 #include "helper.h"
 
@@ -14,9 +15,13 @@ int Board::BLACK = 1;
 int Board::WHITE = 2;
 
 
-
 Board::Board() {
-    for (int i = 0; i < NUM_CELL; i++) board[i] = 0;
+    for (int i = 0; i < NUM_CELL; i++) {
+        board[i] = 0;
+        empty_random_cells.push_back(i);
+    }
+    shuffle(empty_random_cells.begin(), empty_random_cells.end(), Helper::get_random_number(NUM_CELL));
+
     num_empty_cell = NUM_CELL;
 }
 
@@ -156,13 +161,16 @@ bool Board::is_terminated() {
     return num_empty_cell == 0;
 }
 
-int Board::get_random_empty_cell() {  // TODO: can improve this?
-    int pos = Helper::get_random_number(81);
-    while (board[pos] == NONE) return pos;
+/**
+ * @return -1 if there is no empty cell, otherwise the position of the Cell
+ */
+Board::Cell Board::get_random_empty_cell() {  // TODO: can improve this?
+    while (!empty_random_cells.empty() && board[empty_random_cells.back()] != NONE) empty_random_cells.pop_back();
+    return (empty_random_cells.empty()) ? -1 : empty_random_cells.back();
 }
 
 bool Board::equal(Board other_board) {
-    for(int pos = 0; pos < NUM_CELL; pos++)
+    for (int pos = 0; pos < NUM_CELL; pos++)
         if (other_board.board[pos] != board[pos]) return false;
     return true;
 }
