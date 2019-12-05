@@ -42,11 +42,25 @@ const int WHITE = 2;
  * 64 * 2 + 32 * 2 = 192 bit per a region/board
  *
  */
+
+void get_adj_cells(int pos, std::vector<int> &res) {
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
+
+    int d[4] = {-BOARD_SIZE, +1, +BOARD_SIZE, -1};
+
+    for (int i = 0; i < 4; i++) {
+        int new_pos = pos + d[i];
+        if (new_pos >= 0 && new_pos <= NUM_CELL - 1) res.push_back(new_pos);
+    }
+}
+
 struct Region {
     ull first_seg;
     ui second_seg;
     ull first_flag;
     ui second_flag;
+
+    int num_liberties;
 };
 
 struct Board {
@@ -68,21 +82,11 @@ void init_board(Board &board) {
 void init_region(Region &region) {
     region.first_seg = region.first_flag = 0;
     region.second_seg = region.second_flag = 0;
+    region.num_liberties = 0;
 }
 
-void get_adj_cells(int pos, std::vector<int> &res) {
-    assert(pos >= 0 && pos <= NUM_CELL - 1);
-
-    int d[4] = {-BOARD_SIZE, +1, +BOARD_SIZE, -1};
-
-    for (int i = 0; i < 4; i++) {
-        int new_pos = pos + d[i];
-        if (new_pos >= 0 && new_pos <= NUM_CELL - 1) res.push_back(new_pos);
-    }
-}
-
-int get_region_id_by_cell(const Board &tmp, int pos) {
-    return tmp.cell_to_region[pos];
+int get_region_id_by_cell(const Board &board, int pos) {
+    return board.cell_to_region[pos];
 }
 
 bool compare_region(Region ra, Region rb) {
@@ -181,11 +185,26 @@ int get_board_cell(const Board &board, int pos) {
     }
 }
 
+int get_region_liberties(const Board &board, int region_id) {
+    return board.regions[region_id].num_liberties;
+}
+
+/**
+ * Merge regions
+ *  - Update cell information of second region into first region
+ *  - Update mapping of cell from second region to first region
+ *  - Remove second region from board information
+ *
+ * @param fr_id id of the first region
+ * @param sr_id id of the second region
+ * @param board the board that contains two regions
+ */
 void merge_region(int fr_id, int sr_id, Board &board) {
-    // one cell can not in 2 different regions
+
     Region &fr = board.regions[fr_id];
     Region &sr = board.regions[sr_id];
 
+    // one cell can not in 2 different regions
     assert((fr.first_flag & sr.first_flag) != 0);
     assert((fr.second_flag & sr.second_flag) != 0);
 
@@ -209,6 +228,41 @@ void merge_region(int fr_id, int sr_id, Board &board) {
 }
 
 /**
+ * Update region info of board 'tmp' when make a move
+ * with position 'pos' and 'color'
+ */
+void update_region_info(Board &tmp, int pos, int color) {// update region information
+    std::vector<int> adjs;
+    get_adj_cells(pos, adjs);
+    int pos_region_id = get_region_id_by_cell(tmp, pos);
+
+    // check whether regions in 4 direction are the same
+    for (int &adj : adjs) {
+        if (get_board_cell(tmp, adj) != color) continue;
+        int adj_region_id = get_region_id_by_cell(tmp, adj);
+        if (pos_region_id == adj_region_id) continue;
+        // TODO: update number of liberties when merge two regions together
+        merge_region(pos_region_id, adj_region_id, tmp);
+    }
+}
+
+void update_board_info(Board &tmp, int pos, int color) {
+    if (color == BLACK) add_black_to_bit(tmp, pos);
+    else add_white_to_bit(tmp, pos);
+}
+
+bool is_suicide(const Board &board, int pos) {
+    int region_id = get_region_id_by_cell(board, pos);
+    return get_region_liberties(board, region_id);
+}
+
+bool is_capture(const Board &board, int pos) {
+//    std::vector<int> adjs;
+//    get_adj_cells(pos, adjs);
+
+}
+
+/**
  * Set a cell of board require:
  *  - Empty cell
  *  - No suicide
@@ -225,23 +279,14 @@ int set_board_cell(Board &board, int pos, int color) {
     if (get_board_cell(board, pos) != NONE) return -1;
 
     Board tmp = board;  // copy value
-    if (color == BLACK) add_black_to_bit(tmp, pos);
-    else add_white_to_bit(tmp, pos);
+    update_board_info(tmp, pos, color);
+    update_region_info(tmp, pos, color);
 
-    // update region information
-    std::vector<int> adjs;
-    get_adj_cells(pos, adjs);
-    int pos_region_id = get_region_id_by_cell(tmp, pos);
+    if (is_suicide(tmp, pos)) return -1;
+    if (is_capture(tmp, pos)) return -1;
 
-    // check whether regions in 4 direction are the same
-    for (int &adj : adjs) {
-        if (get_board_cell(tmp, adj) != color) continue;
-        int adj_region_id = get_region_id_by_cell(tmp, adj);
-        if (pos_region_id == adj_region_id) continue;
-        merge_region(pos_region_id, adj_region_id, tmp);
-    }
-
-
+    board = tmp;
+    return 1;
 }
 
 /** ----------------- Coordinator ----------------------- */
