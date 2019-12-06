@@ -41,6 +41,12 @@ const int WHITE = 2;
  *
  */
 
+ull count_on_bit(ull i) {
+    i = i - ((i >> 1) & 0x5555555555555555UL);
+    i = (i & 0x3333333333333333UL) + ((i >> 2) & 0x3333333333333333UL);
+    return (((i + (i >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56;
+}
+
 void get_adj_cells(int pos, std::vector<int> &res) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
 
@@ -142,7 +148,7 @@ void add_while_bit_board(Board &board, int i) {
  */
 void add_bit_region(Region &region, int pos, int color) {
     assert(color == BLACK || color == WHITE);
-    assert(pos >= 0 && pos <= 80);
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
 
     if (color == BLACK) add_black_bit_region(region, pos);
     else add_white_bit_region(region, pos);
@@ -154,7 +160,7 @@ void add_bit_region(Region &region, int pos, int color) {
  */
 void add_bit_board(Board &board, int pos, int color) {
     assert(color == BLACK || color == WHITE);
-    assert(pos >= 0 && pos <= 80);
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
 
     if (color == BLACK) add_black_bit_board(board, pos);
     else add_while_bit_board(board, pos);
@@ -229,7 +235,7 @@ int get_board_cell(const Board &board, int pos) {
  */
 void add_liberty_region(Region &region, const Board &board, const std::vector<int> &adj_cells) {
     for (int adj : adj_cells) {
-        assert(adj >= 0 && adj <= 80);
+        assert(pos >= 0 && pos <= NUM_CELL - 1);
         if (get_board_cell(board, adj) != NONE) continue;
         if (adj < 64) region.first_lib |= (1 << adj);
         else region.second_lib |= (1 << adj);
@@ -262,7 +268,7 @@ void add_region_to_board(Region region, Board &board, int color) {
  * @param sr_id id of the second region
  * @param board the board that contains two regions
  */
-void merge_region(int fr_id, int sr_id, Board &board) {
+void merge_region(int fr_id, int sr_id, Board &board, int color) {
 
     Region &fr = board.regions[fr_id];
     Region &sr = board.regions[sr_id];
@@ -276,18 +282,20 @@ void merge_region(int fr_id, int sr_id, Board &board) {
     fr.second_seg |= sr.second_seg;
     fr.first_flag |= sr.first_flag;
     fr.second_flag |= sr.second_flag;
+    fr.first_lib |= sr.first_lib;
+    fr.second_lib |= sr.second_lib;
 
     // update mapping cell to region
     // for each cell in second region, change mapping to first region
-    for (int i = 0; i < 81; i++) {
+    for (int i = 0; i < NUM_CELL; i++) {
+        int fr_color = get_region_cell(fr, i);
         int sr_color = get_region_cell(sr, i);
-        // TODO: how to assert color of two region similar?
-        if (sr_color == NONE) continue;
+
+        assert(fr_color != WHITE);
+        assert(sr_color != WHITE);
+        if (sr_color != color) continue;
         board.cell_to_region[i] = fr_id;
     }
-
-    // remove the second regions out of board state
-    board.regions.erase(board.regions.begin() + sr_id);
 }
 
 /**
@@ -300,7 +308,7 @@ void merge_region(int fr_id, int sr_id, Board &board) {
 void update_board_info(Board &board, int pos, int color) {
 
     assert(color == BLACK || color == WHITE);
-    assert(pos >= 0 && pos <= 80);
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
 
     add_bit_board(board, pos, color);
 
@@ -323,11 +331,11 @@ void update_board_info(Board &board, int pos, int color) {
 
     } else {  // merging region
 
-        for(int &adj: adj_cells) {
+        for (int &adj: adj_cells) {
             if (get_board_cell(board, adj) != color) continue;
             int next_id = get_region_id_by_cell(board, adj);
             if (pivot_id == next_id) continue;
-            merge_region(pivot_id, next_id, board);
+            merge_region(pivot_id, next_id, board, color);
         }
     }
 
@@ -335,15 +343,30 @@ void update_board_info(Board &board, int pos, int color) {
     add_liberty_region(board.regions[pivot_id], board, adj_cells);
 }
 
+int get_num_liberties(const Board &board, int region_id) {
+    return count_on_bit(board.regions[region_id].first_lib) +
+           count_on_bit(board.regions[region_id].second_lib);
+}
+
 bool is_suicide(const Board &board, int pos) {
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
+
     int region_id = get_region_id_by_cell(board, pos);
-    return get_region_liberties(board, region_id);
+    return get_num_liberties(board, region_id);
 }
 
 bool is_capture(const Board &board, int pos) {
-//    std::vector<int> adjs;
-//    get_adj_cells(pos, adjs);
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
 
+    std::vector<int> adj_cells;
+    get_adj_cells(pos, adj_cells);
+
+    for(int adj: adj_cells) {
+        int region_id = get_region_id_by_cell(board, adj);
+        if (get_num_liberties(board, region_id) == 0) return true;
+    }
+
+    return false;
 }
 
 /**
