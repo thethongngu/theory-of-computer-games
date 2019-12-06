@@ -45,9 +45,9 @@ const int WHITE = 2;
  */
 
 ull count_on_bit(ull i) {
-    i = i - ((i >> 1) & 0x5555555555555555UL);
-    i = (i & 0x3333333333333333UL) + ((i >> 2) & 0x3333333333333333UL);
-    return (((i + (i >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56;
+    i = i - ((i >> 1ULL) & 0x5555555555555555ULL);
+    i = (i & 0x3333333333333333ULL) + ((i >> 2ULL) & 0x3333333333333333ULL);
+    return (((i + (i >> 4ULL)) & 0xF0F0F0F0F0F0F0FULL) * 0x101010101010101ULL) >> 56;
 }
 
 void get_adj_cells(int pos, std::vector<int> &res) {
@@ -88,7 +88,7 @@ struct Board {
 void reset_board(Board &board) {
     board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
     board.regions.clear();
-    for(int i = 0; i < NUM_CELL; i++) board.cell_to_region[i] = 0;
+    for(int & cell : board.cell_to_region) cell = -1;
 }
 
 /**
@@ -98,11 +98,11 @@ void reset_board(Board &board) {
 void add_black_bit_region(Region &region, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
-        region.first_seg &= ~(1 << i);
-        region.first_flag |= (1 << i);
+        region.first_seg &= ~(1ULL << i);
+        region.first_flag |= (1ULL << i);
     } else {
-        region.second_seg &= ~(1 << i);
-        region.second_flag |= (1 << i);
+        region.second_seg &= ~(1ULL << i);
+        region.second_flag |= (1ULL << i);
     }
 }
 
@@ -113,11 +113,11 @@ void add_black_bit_region(Region &region, int i) {
 void add_white_bit_region(Region &region, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
-        region.first_seg |= (1 << i);
-        region.first_flag |= (1 << i);
+        region.first_seg |= (1ULL << i);
+        region.first_flag |= (1ULL << i);
     } else {
-        region.second_seg |= (1 << i);
-        region.second_flag |= (1 << i);
+        region.second_seg |= (1ULL << i);
+        region.second_flag |= (1ULL << i);
     }
 }
 
@@ -128,11 +128,11 @@ void add_white_bit_region(Region &region, int i) {
 void add_black_bit_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
-        board.first_seg &= ~(1 << i);
-        board.first_flag |= (1 << i);
+        board.first_seg &= ~(1ULL << i);
+        board.first_flag |= (1ULL << i);
     } else {
-        board.second_seg &= ~(1 << i);
-        board.second_flag |= (1 << i);
+        board.second_seg &= ~(1ULL << i);
+        board.second_flag |= (1ULL << i);
     }
 }
 
@@ -143,11 +143,11 @@ void add_black_bit_board(Board &board, int i) {
 void add_while_bit_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
-        board.first_seg |= (1 << i);
-        board.first_flag |= (1 << i);
+        board.first_seg |= (1ULL << i);
+        board.first_flag |= (1ULL << i);
     } else {
-        board.second_seg |= (1 << i);
-        board.second_flag |= (1 << i);
+        board.second_seg |= (1ULL << i);
+        board.second_flag |= (1ULL << i);
     }
 }
 
@@ -186,11 +186,11 @@ int get_region_id_by_cell(const Board &board, int pos) {
 void remove_cell_on_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
-        board.first_seg &= ~(1 << i);
-        board.first_flag &= ~(1 << i);
+        board.first_seg &= ~(1ULL << i);
+        board.first_flag &= ~(1ULL << i);
     } else {
-        board.second_seg &= ~(1 << i);
-        board.second_flag &= ~(1 << i);
+        board.second_seg &= ~(1ULL << i);
+        board.second_flag &= ~(1ULL << i);
     }
 }
 
@@ -200,17 +200,17 @@ void remove_cell_on_board(Board &board, int i) {
 int get_region_cell(const Region &region, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
     if (pos < 64) {
-        int is_empty = ~((region.first_flag & (1 << pos)) >> pos);
-        if (is_empty) return NONE;
+        int is_filled = (region.first_flag & (1ULL << pos)) >> pos;
+        if (!is_filled) return NONE;
 
-        int bit = (region.first_seg & (1 << pos)) >> pos;
+        int bit = (region.first_seg & (1ULL << pos)) >> pos;
         return (bit) ? WHITE : BLACK;
 
     } else {
-        int is_empty = ~((region.second_flag & (1 << pos)) >> pos);
-        if (is_empty) return NONE;
+        int is_filled = (region.second_flag & (1ULL << pos)) >> pos;
+        if (!is_filled) return NONE;
 
-        int bit = (region.second_seg & (1 << pos)) >> pos;
+        int bit = (region.second_seg & (1ULL << pos)) >> pos;
         return (bit) ? WHITE : BLACK;
     }
 }
@@ -221,17 +221,17 @@ int get_region_cell(const Region &region, int pos) {
 int get_board_cell(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
     if (pos < 64) {
-        int is_empty = ~((board.first_flag & (1 << pos)) >> pos);
-        if (is_empty) return NONE;
+        int is_filled = (board.first_flag & (1ULL << pos)) >> pos;
+        if (!is_filled) return NONE;
 
-        int bit = (board.first_seg & (1 << pos)) >> pos;
+        int bit = (board.first_seg & (1ULL << pos)) >> pos;
         return (bit) ? WHITE : BLACK;
 
     } else {
-        int is_empty = ~((board.second_flag & (1 << pos)) >> pos);
-        if (is_empty) return NONE;
+        int is_filled = (board.second_flag & (1ULL << pos)) >> pos;
+        if (!is_filled) return NONE;
 
-        int bit = (board.second_seg & (1 << pos)) >> pos;
+        int bit = (board.second_seg & (1ULL << pos)) >> pos;
         return (bit) ? WHITE : BLACK;
     }
 }
@@ -346,22 +346,23 @@ void update_board_info(Board &board, int pos, int color) {
             if (pivot_id == next_id) continue;
             merge_region(pivot_id, next_id, board, color);
         }
-    }
 
-    add_bit_region(board.regions[pivot_id], pos, color);
-    add_liberty_region(board.regions[pivot_id], board, adj_cells);
+        add_bit_region(board.regions[pivot_id], pos, color);
+        add_liberty_region(board.regions[pivot_id], board, adj_cells);
+    }
 }
 
-int get_num_liberties(const Board &board, int region_id) {
-    return count_on_bit(board.regions[region_id].first_lib) +
-           count_on_bit(board.regions[region_id].second_lib);
+ull get_num_liberties(const Board &board, int region_id) {
+    assert(region_id >= 0);
+    ull res = count_on_bit(board.regions[region_id].first_lib) + count_on_bit(board.regions[region_id].second_lib);
+    return res;
 }
 
 bool is_suicide(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
 
     int region_id = get_region_id_by_cell(board, pos);
-    return get_num_liberties(board, region_id);
+    return get_num_liberties(board, region_id) == 0;
 }
 
 bool is_capture(const Board &board, int pos) {
@@ -371,6 +372,7 @@ bool is_capture(const Board &board, int pos) {
     get_adj_cells(pos, adj_cells);
 
     for (int adj: adj_cells) {
+        if (get_board_cell(board, adj) == NONE) continue;
         int region_id = get_region_id_by_cell(board, adj);
         if (get_num_liberties(board, region_id) == 0) return true;
     }
@@ -402,6 +404,18 @@ int set_board_cell(Board &board, int pos, int color) {
 
     board = tmp;
     return 1;
+}
+
+void print_board(const Board &board) {
+    std::cout << " ";
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < NUM_CELL; i++) {
+        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
+        if (get_board_cell(board, i) == BLACK) std::cout << " ●";
+        else if (get_board_cell(board, i) == WHITE) std::cout << " ○";
+        else std::cout << " +";
+    }
+    std::cout << std::endl << std::endl;
 }
 
 /** ----------------- Node ------------------------- */
@@ -569,7 +583,7 @@ void exec_command(const std::string &raw_command) {
 
     } else if (head == "play") {
         bool can_move = make_move_by_input(mainboard, args);
-        response = get_response(can_move, command, can_move ? "" : "illegal make_move_by_input");
+        response = get_response(can_move, command, can_move ? "" : "illegal move");
 
     } else if (head == "genmove") {
         // TODO: assume that args always true because the protocol don't specify this
@@ -594,6 +608,7 @@ int main() {
     while (!is_quit) {
         getline(std::cin, raw_command);
         exec_command(raw_command);
+        print_board(mainboard);
     }
 
     return 0;
