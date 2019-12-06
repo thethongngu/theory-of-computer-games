@@ -5,7 +5,7 @@
 #define ull unsigned long long
 #define ui  unsigned int
 
-/** ----------------- Board ----------------------- */
+/** ----------------- Board & Region ----------------------- */
 const int BOARD_SIZE = 9;
 const int NUM_CELL = BOARD_SIZE * BOARD_SIZE;
 
@@ -39,8 +39,6 @@ const int WHITE = 2;
  *  - 0: empty
  *  - 1: not empty
  *
- * 64 * 2 + 32 * 2 = 192 bit per a region/board
- *
  */
 
 void get_adj_cells(int pos, std::vector<int> &res) {
@@ -55,46 +53,49 @@ void get_adj_cells(int pos, std::vector<int> &res) {
 }
 
 struct Region {
-    ull first_seg;
-    ui second_seg;
-    ull first_flag;
-    ui second_flag;
 
-    int num_liberties;
+    // region info
+    ull first_seg = 0;
+    ui second_seg = 0;
+    ull first_flag = 0;
+    ui second_flag = 0;
+
+    // liberty info
+    ull first_lib = 0;
+    ui second_lib = 0;
+
 };
 
 struct Board {
-    ull first_seg;
-    ui second_seg;
-    ull first_flag;
-    ui second_flag;
+    ull first_seg = 0;
+    ui second_seg = 0;
+    ull first_flag = 0;
+    ui second_flag = 0;
 
     std::vector<Region> regions;
     int cell_to_region[NUM_CELL];
 };
 
-void init_board(Board &board) {
-    board.first_seg = board.first_flag = 0;
-    board.second_seg = board.second_flag = 0;
-    board.regions.clear();
+/**
+ * - Change the segment to BLACK (0)
+ * - Change the flag to 1
+ */
+void add_black_bit_region(Region &region, int i) {
+    assert(i >= 0 && i <= NUM_CELL - 1);
+    if (i < 64) {
+        region.first_seg &= ~(1 << i);
+        region.first_flag |= (1 << i);
+    } else {
+        region.second_seg &= ~(1 << i);
+        region.second_flag |= (1 << i);
+    }
 }
 
-void init_region(Region &region) {
-    region.first_seg = region.first_flag = 0;
-    region.second_seg = region.second_flag = 0;
-    region.num_liberties = 0;
-}
-
-int get_region_id_by_cell(const Board &board, int pos) {
-    return board.cell_to_region[pos];
-}
-
-bool compare_region(Region ra, Region rb) {
-    return ra.first_flag == rb.first_flag && ra.second_flag == rb.second_flag &&
-           ra.first_seg == rb.first_seg && ra.second_seg == rb.second_seg;
-}
-
-void on_bit_region(Region &region, int i) {
+/**
+ * - Change the segment to WHITE (1)
+ * - Change the flag to 1
+ */
+void add_white_bit_region(Region &region, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
         region.first_seg |= (1 << i);
@@ -105,18 +106,11 @@ void on_bit_region(Region &region, int i) {
     }
 }
 
-void off_bit_region(Region &region, int i) {
-    assert(i >= 0 && i <= NUM_CELL - 1);
-    if (i < 64) {
-        region.first_seg &= ~(1 << i);
-        region.first_flag &= ~(1 << i);
-    } else {
-        region.second_seg &= ~(1 << i);
-        region.second_flag &= ~(1 << i);
-    }
-}
-
-void add_black_to_bit(Board &board, int i) {
+/**
+ * - Change the segment to BLACK (0)
+ * - Change the flag to 1
+ */
+void add_black_bit_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
         board.first_seg &= ~(1 << i);
@@ -127,7 +121,11 @@ void add_black_to_bit(Board &board, int i) {
     }
 }
 
-void add_white_to_bit(Board &board, int i) {
+/**
+ * - Change the segment to BLACK (0)
+ * - Change the flag to 1
+ */
+void add_while_bit_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
         board.first_seg |= (1 << i);
@@ -138,6 +136,38 @@ void add_white_to_bit(Board &board, int i) {
     }
 }
 
+/**
+ * - Change the segment to corresponding color
+ * - Change the flag to 1
+ */
+void add_bit_region(Region &region, int pos, int color) {
+    assert(color == BLACK || color == WHITE);
+    assert(pos >= 0 && pos <= 80);
+
+    if (color == BLACK) add_black_bit_region(region, pos);
+    else add_white_bit_region(region, pos);
+}
+
+/**
+ * - Change the segment to corresponding color
+ * - Change the flag to 1
+ */
+void add_bit_board(Board &board, int pos, int color) {
+    assert(color == BLACK || color == WHITE);
+    assert(pos >= 0 && pos <= 80);
+
+    if (color == BLACK) add_black_bit_board(board, pos);
+    else add_while_bit_board(board, pos);
+}
+
+int get_region_id_by_cell(const Board &board, int pos) {
+    return board.cell_to_region[pos];
+}
+
+/**
+ * - Change the segment to 0
+ * - Change the flag to 0
+ */
 void remove_cell_on_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
     if (i < 64) {
@@ -149,6 +179,9 @@ void remove_cell_on_board(Board &board, int i) {
     }
 }
 
+/**
+ * Return color at the position of a Region
+ */
 int get_region_cell(const Region &region, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
     if (pos < 64) {
@@ -167,6 +200,9 @@ int get_region_cell(const Region &region, int pos) {
     }
 }
 
+/**
+ * Return color at the position of a Board
+ */
 int get_board_cell(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
     if (pos < 64) {
@@ -185,8 +221,35 @@ int get_board_cell(const Board &board, int pos) {
     }
 }
 
-int get_region_liberties(const Board &board, int region_id) {
-    return board.regions[region_id].num_liberties;
+/**
+ * Check and add new liberties in list of adj_cells to region
+ * @param region
+ * @param board
+ * @param adj_cells
+ */
+void add_liberty_region(Region &region, const Board &board, const std::vector<int> &adj_cells) {
+    for (int adj : adj_cells) {
+        assert(adj >= 0 && adj <= 80);
+        if (get_board_cell(board, adj) != NONE) continue;
+        if (adj < 64) region.first_lib |= (1 << adj);
+        else region.second_lib |= (1 << adj);
+    }
+}
+
+/**
+ * - Add new region to list of regions
+ * - Update cell information of board which is inside the region
+ */
+void add_region_to_board(Region region, Board &board, int color) {
+
+    board.regions.push_back(region);
+    int region_id = board.regions.size() - 1;
+
+    for (int pos = 0; pos < NUM_CELL; pos++) {
+        int cell_color = get_region_cell(region, pos);
+        if (cell_color == color)
+            board.cell_to_region[pos] = region_id;
+    }
 }
 
 /**
@@ -216,7 +279,7 @@ void merge_region(int fr_id, int sr_id, Board &board) {
 
     // update mapping cell to region
     // for each cell in second region, change mapping to first region
-    for(int i = 0; i < 81; i++) {
+    for (int i = 0; i < 81; i++) {
         int sr_color = get_region_cell(sr, i);
         // TODO: how to assert color of two region similar?
         if (sr_color == NONE) continue;
@@ -228,27 +291,48 @@ void merge_region(int fr_id, int sr_id, Board &board) {
 }
 
 /**
- * Update region info of board 'tmp' when make a move
- * with position 'pos' and 'color'
+ * - Update board state (turn on bit in board)
+ * - Update regions state
+ *      - Update new cell in region
+ *      - Update mapping from cell to region
+ *      - Update liberties in region
  */
-void update_region_info(Board &tmp, int pos, int color) {// update region information
-    std::vector<int> adjs;
-    get_adj_cells(pos, adjs);
-    int pos_region_id = get_region_id_by_cell(tmp, pos);
+void update_board_info(Board &board, int pos, int color) {
 
-    // check whether regions in 4 direction are the same
-    for (int &adj : adjs) {
-        if (get_board_cell(tmp, adj) != color) continue;
-        int adj_region_id = get_region_id_by_cell(tmp, adj);
-        if (pos_region_id == adj_region_id) continue;
-        // TODO: update number of liberties when merge two regions together
-        merge_region(pos_region_id, adj_region_id, tmp);
+    assert(color == BLACK || color == WHITE);
+    assert(pos >= 0 && pos <= 80);
+
+    add_bit_board(board, pos, color);
+
+    std::vector<int> adj_cells;
+    int pivot_id = -1;
+
+    // get pivot region for merging other into
+    get_adj_cells(pos, adj_cells);
+    for (int &adj: adj_cells) {
+        if (get_board_cell(board, adj) != color) continue;
+        pivot_id = get_region_id_by_cell(board, adj);
+        break;
     }
-}
 
-void update_board_info(Board &tmp, int pos, int color) {
-    if (color == BLACK) add_black_to_bit(tmp, pos);
-    else add_white_to_bit(tmp, pos);
+    if (pivot_id == -1) {  // no merging region, new region
+        Region region;
+        add_bit_region(region, pos, color);
+        add_liberty_region(region, board, adj_cells);
+        add_region_to_board(region, board, color);
+
+    } else {  // merging region
+
+        for(int &adj: adj_cells) {
+            if (get_board_cell(board, adj) != color) continue;
+            int next_id = get_region_id_by_cell(board, adj);
+            if (pivot_id == next_id) continue;
+            merge_region(pivot_id, next_id, board);
+        }
+    }
+
+    add_bit_region(board.regions[pivot_id], pos, color);
+    add_liberty_region(board.regions[pivot_id], board, adj_cells);
 }
 
 bool is_suicide(const Board &board, int pos) {
@@ -280,7 +364,6 @@ int set_board_cell(Board &board, int pos, int color) {
 
     Board tmp = board;  // copy value
     update_board_info(tmp, pos, color);
-    update_region_info(tmp, pos, color);
 
     if (is_suicide(tmp, pos)) return -1;
     if (is_capture(tmp, pos)) return -1;
