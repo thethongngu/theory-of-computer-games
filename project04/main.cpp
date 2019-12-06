@@ -242,13 +242,15 @@ int get_board_cell(const Board &board, int pos) {
  * @param board
  * @param adj_cells
  */
-void add_liberty_region(Region &region, const Board &board, const std::vector<int> &adj_cells) {
+void update_liberty_region(Region &region, const Board &board, int pos, const std::vector<int> &adj_cells) {
     for (int adj : adj_cells) {
         assert(adj >= 0 && adj <= NUM_CELL - 1);
         if (get_board_cell(board, adj) != NONE) continue;
         if (adj < 64) region.first_lib |= (1 << adj);
         else region.second_lib |= (1 << adj);
     }
+    if (pos < 64) region.first_lib &= ~(1ULL << pos);
+    else region.second_lib &= ~(1ULL << pos);
 }
 
 /**
@@ -335,7 +337,7 @@ void update_board_info(Board &board, int pos, int color) {
     if (pivot_id == -1) {  // no merging region, new region
         Region region;
         add_bit_region(region, pos, color);
-        add_liberty_region(region, board, adj_cells);
+        update_liberty_region(region, board, pos, adj_cells);
         add_region_to_board(region, board, color);
 
     } else {  // merging region
@@ -348,7 +350,7 @@ void update_board_info(Board &board, int pos, int color) {
         }
 
         add_bit_region(board.regions[pivot_id], pos, color);
-        add_liberty_region(board.regions[pivot_id], board, adj_cells);
+        update_liberty_region(board.regions[pivot_id], board, pos, adj_cells);
     }
 }
 
