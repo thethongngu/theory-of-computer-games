@@ -30,8 +30,6 @@ public:
 
     Board();
 
-    Board operator=(const Board &other_board);
-
     void print();
 
     void clear_board();

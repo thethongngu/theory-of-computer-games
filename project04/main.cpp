@@ -411,8 +411,8 @@ void print_board(const Board &board) {
     for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
     for (int i = 0; i < NUM_CELL; i++) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
-        if (get_board_cell(board, i) == BLACK) std::cout << " ●";
-        else if (get_board_cell(board, i) == WHITE) std::cout << " ○";
+        if (get_board_cell(board, i) == BLACK) std::cout << " ○";
+        else if (get_board_cell(board, i) == WHITE) std::cout << " ●";
         else std::cout << " +";
     }
     std::cout << std::endl << std::endl;
