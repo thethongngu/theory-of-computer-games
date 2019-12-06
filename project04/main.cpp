@@ -54,11 +54,21 @@ void get_adj_cells(int pos, std::vector<int> &res) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
 
     int d[4] = {-BOARD_SIZE, +1, +BOARD_SIZE, -1};
+    res.clear();
 
     for (int i = 0; i < 4; i++) {
         int new_pos = pos + d[i];
-        if (new_pos >= 0 && new_pos <= NUM_CELL - 1) res.push_back(new_pos);
+        if (new_pos >= 0 && new_pos <= NUM_CELL - 1) {
+            if (pos % BOARD_SIZE == 0 && d[i] == -1) continue;
+            if (pos % (BOARD_SIZE - 1) == 0 && d[i] == 1) continue;
+            res.push_back(new_pos);
+        }
     }
+}
+
+int get_oppo_color(int color) {
+    assert(color != NONE);
+    return (color == BLACK) ? WHITE : BLACK;
 }
 
 struct Region {
@@ -88,7 +98,7 @@ struct Board {
 void reset_board(Board &board) {
     board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
     board.regions.clear();
-    for(int & cell : board.cell_to_region) cell = -1;
+    for (int &cell : board.cell_to_region) cell = -1;
 }
 
 /**
@@ -237,12 +247,14 @@ int get_board_cell(const Board &board, int pos) {
 }
 
 /**
- * Check and add new liberties in list of adj_cells to region
+ * - Check adj_cell whether a new liberty
+ * - Remove the liberty in 'pos'
+ *
  * @param region
  * @param board
  * @param adj_cells
  */
-void update_liberty_region(Region &region, const Board &board, int pos, const std::vector<int> &adj_cells) {
+void update_my_region_liberty(Region &region, const Board &board, int pos, const std::vector<int> &adj_cells) {
     for (int adj : adj_cells) {
         assert(adj >= 0 && adj <= NUM_CELL - 1);
         if (get_board_cell(board, adj) != NONE) continue;
@@ -253,20 +265,31 @@ void update_liberty_region(Region &region, const Board &board, int pos, const st
     else region.second_lib &= ~(1ULL << pos);
 }
 
+void update_your_region_liberty(Board &board, int oppo_color, int pos, std::vector<int> adj_cells) {
+    for (int adj : adj_cells) {
+        if (get_board_cell(board, adj) != oppo_color) continue;
+        int region_id = get_region_id_by_cell(board, adj);
+        if (adj < 64) board.regions[region_id].first_lib &= ~(1ULL << pos);
+        else board.regions[region_id].second_lib &= ~(1ULL << pos);
+    }
+}
+
 /**
  * - Add new region to list of regions
  * - Update cell information of board which is inside the region
  */
-void add_region_to_board(Region region, Board &board, int color) {
+void add_region_to_board(Region region, Board &board, int pos, int color) {
 
     board.regions.push_back(region);
     int region_id = board.regions.size() - 1;
 
-    for (int pos = 0; pos < NUM_CELL; pos++) {
-        int cell_color = get_region_cell(region, pos);
+    for (int i = 0; i < NUM_CELL; i++) {
+        int cell_color = get_region_cell(region, i);
         if (cell_color == color)
-            board.cell_to_region[pos] = region_id;
+            board.cell_to_region[i] = region_id;
     }
+
+    board.cell_to_region[pos] = region_id;
 }
 
 /**
@@ -315,6 +338,7 @@ void merge_region(int fr_id, int sr_id, Board &board, int color) {
  *      - Update new cell in region
  *      - Update mapping from cell to region
  *      - Update liberties in region
+ *      - Update liberties of adjacent regions
  */
 void update_board_info(Board &board, int pos, int color) {
 
@@ -337,8 +361,8 @@ void update_board_info(Board &board, int pos, int color) {
     if (pivot_id == -1) {  // no merging region, new region
         Region region;
         add_bit_region(region, pos, color);
-        update_liberty_region(region, board, pos, adj_cells);
-        add_region_to_board(region, board, color);
+        update_my_region_liberty(region, board, pos, adj_cells);
+        add_region_to_board(region, board, pos, color);
 
     } else {  // merging region
 
@@ -350,8 +374,12 @@ void update_board_info(Board &board, int pos, int color) {
         }
 
         add_bit_region(board.regions[pivot_id], pos, color);
-        update_liberty_region(board.regions[pivot_id], board, pos, adj_cells);
+        update_my_region_liberty(board.regions[pivot_id], board, pos, adj_cells);
+        board.cell_to_region[pos] = pivot_id;
     }
+
+    int oppo_color = get_oppo_color(color);
+    update_your_region_liberty(board, oppo_color, pos, adj_cells);
 }
 
 ull get_num_liberties(const Board &board, int region_id) {
@@ -415,6 +443,18 @@ void print_board(const Board &board) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
         if (get_board_cell(board, i) == BLACK) std::cout << " ○";
         else if (get_board_cell(board, i) == WHITE) std::cout << " ●";
+        else std::cout << " +";
+    }
+    std::cout << std::endl << std::endl;
+}
+
+void print_region(const Region &region) {
+    std::cout << " ";
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < NUM_CELL; i++) {
+        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
+        if (get_region_cell(region, i) == BLACK) std::cout << " ○";
+        else if (get_region_cell(region, i) == WHITE) std::cout << " ●";
         else std::cout << " +";
     }
     std::cout << std::endl << std::endl;
@@ -611,6 +651,9 @@ int main() {
         getline(std::cin, raw_command);
         exec_command(raw_command);
         print_board(mainboard);
+        for (int i = 0; i < mainboard.regions.size(); i++) {
+            print_region(mainboard.regions[i]);
+        }
     }
 
     return 0;
