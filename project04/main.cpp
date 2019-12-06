@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cassert>
 #include <vector>
+#include <array>
+#include <sstream>
+#include <iterator>
 
 #define ull unsigned long long
 #define ui  unsigned int
@@ -81,6 +84,12 @@ struct Board {
     std::vector<Region> regions;
     int cell_to_region[NUM_CELL];
 };
+
+void reset_board(Board &board) {
+    board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
+    board.regions.clear();
+    for(int i = 0; i < NUM_CELL; i++) board.cell_to_region[i] = 0;
+}
 
 /**
  * - Change the segment to BLACK (0)
@@ -235,7 +244,7 @@ int get_board_cell(const Board &board, int pos) {
  */
 void add_liberty_region(Region &region, const Board &board, const std::vector<int> &adj_cells) {
     for (int adj : adj_cells) {
-        assert(pos >= 0 && pos <= NUM_CELL - 1);
+        assert(adj >= 0 && adj <= NUM_CELL - 1);
         if (get_board_cell(board, adj) != NONE) continue;
         if (adj < 64) region.first_lib |= (1 << adj);
         else region.second_lib |= (1 << adj);
@@ -361,7 +370,7 @@ bool is_capture(const Board &board, int pos) {
     std::vector<int> adj_cells;
     get_adj_cells(pos, adj_cells);
 
-    for(int adj: adj_cells) {
+    for (int adj: adj_cells) {
         int region_id = get_region_id_by_cell(board, adj);
         if (get_num_liberties(board, region_id) == 0) return true;
     }
@@ -395,16 +404,197 @@ int set_board_cell(Board &board, int pos, int color) {
     return 1;
 }
 
-/** ----------------- Coordinator ----------------------- */
-
-
-
 /** ----------------- Node ------------------------- */
 /** ----------------- MCTS ----------------------- */
 /** ----------------- Agent ----------------------- */
 
+/** ----------------- Coordinator ----------------------- */
+
+int get_int_helper(const std::string &s) {
+    if (s.find_first_not_of("01234566789") != std::string::npos) return -1;
+    return strtol(s.c_str(), nullptr, 0);
+}
+
+std::string to_lowercase_helper(const std::string &s) {
+    std::string res;
+    for (auto x: s) {
+        if (x >= 'A' && x <= 'Z') res.append(1, x + 32);
+        else res.append(1, x);
+    }
+    return res;
+}
+
+int parse_color_helper(const std::string &arg) {
+    auto token = to_lowercase_helper(arg);
+    return (token[0] == 'b') ? BLACK : WHITE;
+}
+
+int parse_pos_helper(const std::string &arg) {
+    auto token = to_lowercase_helper(arg);
+    int row = token[1] - '1';
+    int col = token[0] - 'a';
+    return row * BOARD_SIZE + col;
+}
+
+struct Command {
+    int id = -1;
+    std::string command = "";
+    std::vector<std::string> arguments;
+
+    std::string get_string() {
+        std::string s = std::to_string(id).append(" ").append(command);
+        for (auto &arg: arguments) s.append(" ").append(arg);
+        return s;
+    }
+};
+
+void init_command(Command &command, int _id, const std::string &_command, const std::string &_arg) {
+    command.id = _id;
+    command.command = _command;
+    command.arguments.push_back(_arg);
+}
+
+std::string preprocess_command(const std::string &raw_command) {
+
+    std::string res;
+    bool in_comment = false;
+    for (int code : raw_command) {
+        if (code < 32 && code != 9 && code != 10) continue;  // control char not HT or LF
+
+        if (code == 35) in_comment = true;   // # char
+        if (code == 10) in_comment = false;  // LF char
+        if (in_comment) continue;  // after # char
+
+        if (code == 9) res.append(1, (char) 32);  // HT to SPACE
+        else res.append(1, (char) code);
+    }
+
+    return res;
+}
+
+Command parse_command(const std::string &command) {
+    std::istringstream iss(command);
+    std::vector<std::string> tokens(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
+
+    Command res;
+    if (tokens.size() == 0) return res;  // NOLINT(readability-container-size-empty)
+
+    int id = get_int_helper(tokens[0]);
+    if (id >= 0) {
+        res.id = id;
+        if (tokens.size() > 1) res.command = tokens[1];
+        if (tokens.size() > 2) res.arguments.assign(tokens.begin() + 2, tokens.end());
+    } else {
+        res.command = tokens[0];
+        if (tokens.size() > 1) res.arguments.assign(tokens.begin() + 1, tokens.end());
+    }
+    return res;
+}
+
+std::string get_response(bool is_success, Command &command, const std::string &mess) {
+    std::string res;
+    if (is_success) res.append("="); else res.append("?");
+    if (command.id != -1) res.append(std::to_string(command.id));
+    if (!mess.empty()) res.append(" ").append(mess);
+    res.append("\n\n");
+    return res;
+}
+
+bool is_known_command(const std::string &c, const std::array<std::string, 11> &known_coms) {
+    for (const auto &command : known_coms)
+        if (command == c) return true;
+    return false;
+}
+
+bool make_move_by_input(Board &board, const std::vector<std::string> &args) {
+    if (args.size() < 2) return false;
+    int color = parse_color_helper(args[0]);
+    int pos = parse_pos_helper(args[1]);
+    return set_board_cell(board, pos, color) != -1;
+}
+
+/** ---------------------- MAIN --------------------------- */
+
+struct Log {
+    Command command;
+    std::string response;
+};
+
+std::array<std::string, 11> known_commands = {
+        "protocol_version", "name", "version", "known_command", "list_commands", "quit", "boardsize", "clear_board",
+        "komi", "play", "genmove"
+};
+
+Board mainboard;
+bool is_quit;
+std::vector<Log> history;
+
+void exec_command(const std::string &raw_command) {
+
+    auto command_string = preprocess_command(raw_command);
+    Command command = parse_command(command_string);
+    auto head = command.command;
+    auto args = command.arguments;
+
+    std::string response;
+
+    if (head == "protocol_version") {
+        response = get_response(true, command, "2");
+
+    } else if (head == "name") {
+        response = get_response(true, command, "0860832");
+
+    } else if (head == "version") {
+        response = get_response(true, command, "0.0");
+
+    } else if (head == "known_command") {
+        std::string res = is_known_command(args[0], known_commands) ? "true" : "false";
+        response = get_response(true, command, res);
+
+    } else if (head == "list_commands") {
+        std::string res;
+        for (const auto &x: known_commands) {
+            res.append(x);
+            res.append("\n");
+        }
+        response = get_response(true, command, res);
+
+    } else if (head == "quit") {
+        is_quit = true;
+        response = get_response(true, command, "");
+
+    } else if (head == "clear_board") {
+        reset_board(mainboard);
+        response = get_response(true, command, "");
+
+    } else if (head == "play") {
+        bool can_move = make_move_by_input(mainboard, args);
+        response = get_response(can_move, command, can_move ? "" : "illegal make_move_by_input");
+
+    } else if (head == "genmove") {
+        // TODO: assume that args always true because the protocol don't specify this
+//        auto color = parse_color_helper(args[0]);
+//        int pos = ai.make_move(mainboard, color);
+//        response = get_response(pos != -1, command, pos != -1 ? "" : "resign");
+
+    } else {
+        response = get_response(false, command, "unknown command");
+    }
+
+    history.push_back({command, response});
+    std::cout << history.back().response;
+}
 
 int main() {
+
+    is_quit = false;
+    reset_board(mainboard);
+
+    std::string raw_command;
+    while (!is_quit) {
+        getline(std::cin, raw_command);
+        exec_command(raw_command);
+    }
 
     return 0;
 }
