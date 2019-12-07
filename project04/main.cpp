@@ -4,7 +4,6 @@
 #include <array>
 #include <sstream>
 #include <iterator>
-#include <memory>
 #include <cmath>
 
 #define ull unsigned long long
