@@ -289,7 +289,7 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
 /**
  * - Add new region to list of regions
  * - Update cell information of board which is inside the region
- * - O(81)
+ * - O(n)
  * TODO: is there anyway to reduce the number of cells I need to check
  * TODO: like jumping directly into each bit 1 position
  */
