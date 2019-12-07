@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iterator>
 #include <memory>
+#include <cmath>
 
 #define ull unsigned long long
 #define ui  unsigned int
@@ -474,8 +475,20 @@ int set_board_cell(Board &board, int pos, int color) {
     return 1;
 }
 
-int get_random_empty_pos(const Board &board, int color) {
+void remove_valid_cell(Board &board, int id) {
+    std::swap(board.valid_cells.back(), board.valid_cells[id]);
+    board.valid_cells.pop_back();
+}
 
+int get_random_valid_pos(Board &board, int color) {
+    srand(time(NULL));
+    Board tmp = board;
+    while (!board.valid_cells.empty()) {
+        int id = std::rand() % board.valid_cells.size();
+        int cell = board.valid_cells[id];
+        if (set_board_cell(tmp, cell, color) != -1) return cell;
+        remove_valid_cell(board, id);
+    }
 }
 
 void print_board(const Board &board) {
@@ -507,6 +520,7 @@ struct Node {
     Board board;
     Node *parent;
     int pos, color;
+    int count, num_win;
 
     std::vector<Node *> children;
 
@@ -516,6 +530,7 @@ struct Node {
         this->color = color;
         this->children.clear();
         this->parent = nullptr;
+        this->count = this->num_win = 0;
     }
 };
 
@@ -525,16 +540,35 @@ bool is_fully_expanded(Node *node) {
     return num_empty == node->children.size();
 }
 
-bool is_terminated(Node *node) {
+double get_score(Node* node) {
+    return (double)node->num_win / node->count + sqrt(log(node->parent->count) / node->count);
+}
 
-    int oppo_color = get_oppo_color(node->color);
-    Board tmp = node->board;
-    for(int i = node->board.valid_cells.size() - 1; i >= 0; i--) {
-        if (set_board_cell(tmp, i, oppo_color) != -1) return false;
-        node->board.valid_cells.pop_back();
+Node* get_best_uct_child(Node* parent) {
+
+    assert(!parent->children.empty());  // not leaf node
+
+    double curr_score = get_score(parent->children[0]);
+    std::vector<Node*> chosen(1, parent->children[0]);
+
+    for(Node* child: parent->children) {
+        double score = get_score(child);
+        if (curr_score - score > 0.0001) {  /** curr_score > score */
+            chosen.clear();
+            chosen.push_back(child);
+            curr_score = score;
+        } else if (curr_score - score > -0.0001) {  /** curr_score >= score */
+            chosen.push_back(child);
+        }
     }
 
-    return true;
+    srand(time(NULL));
+    return chosen[std::rand() % chosen.size()];
+}
+
+void update_node_value(Node *node, int value) {
+    node->num_win += value;
+    node->count++;
 }
 
 
@@ -558,10 +592,9 @@ Node *selection(Node *node) {
 
 Node *expansion(Node *parent) {
 
-    if (is_terminated(parent)) return parent;
-
     int oppo_color = get_oppo_color(parent->color);
-    int random_pos = get_random_empty_pos(parent->board, oppo_color);
+    int random_pos = get_random_valid_pos(parent->board, oppo_color);
+    if (random_pos == -1) return parent;  // terminated
 
     Node *child = new Node(parent->board, random_pos, oppo_color);
     parent->children.push_back(child);
@@ -570,23 +603,30 @@ Node *expansion(Node *parent) {
     return get_best_uct_child(parent);
 }
 
+/**
+ * Play until end game (or other conditions meet)
+ *  Return:
+ *  - win: 1
+ *  - lose: 0
+ */
 int simulation(Node *node, int player_color) {
 
-    int oppo_color = node->color;
+    int curr_color = node->color;
     Board tmp = node->board;
     while (true) {
-        oppo_color = get_oppo_color(oppo_color);
-        int random_pos = get_random_empty_pos(tmp, oppo_color);
+        curr_color = get_oppo_color(curr_color);
+        int random_pos = get_random_valid_pos(tmp, curr_color);
         if (random_pos == -1) break;
-        set_board_cell(tmp, random_pos, oppo_color);
+        set_board_cell(tmp, random_pos, curr_color);
     }
 
-    return oppo_color == player_color ? -1 : 1;
+    // if we can not move, then we lose
+    return curr_color == player_color ? -1 : 0;
 }
 
 void backpropagation(Node *node, int value) {
     while (node != nullptr) {
-        update_value_node(node);
+        update_node_value(node, value);
         node = node->parent;
     }
 }
