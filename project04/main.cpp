@@ -4,6 +4,7 @@
 #include <array>
 #include <sstream>
 #include <iterator>
+#include <memory>
 
 #define ull unsigned long long
 #define ui  unsigned int
@@ -91,12 +92,18 @@ struct Board {
     ull first_flag = 0;
     ui second_flag = 0;
 
+    ull first_black = 0;
+    ui second_black = 0;
+    ull first_white = 0;
+    ui second_white = 0;
+
     std::vector<Region> regions;
     int cell_to_region[NUM_CELL];
 };
 
 void reset_board(Board &board) {
     board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
+    board.first_black = board.second_black = board.first_white = board.second_white = 0;
     board.regions.clear();
     for (int &cell : board.cell_to_region) cell = -1;
 }
@@ -388,6 +395,11 @@ ull get_num_liberties(const Board &board, int region_id) {
     return res;
 }
 
+ull get_num_empty(const Board &board) {
+    ull res = count_on_bit(board.first_seg) + count_on_bit(board.second_seg);
+    return res;
+}
+
 bool is_suicide(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
 
@@ -461,7 +473,95 @@ void print_region(const Region &region) {
 }
 
 /** ----------------- Node ------------------------- */
+struct Node {
+    Board board;
+    Node *parent;
+    int pos, color;
+    bool is_terminated = 0;
+
+    std::vector<Node *> children;
+
+    Node(Board board, int pos, int color) {
+        this->board = board;
+        this->pos = pos;
+        this->color = color;
+        this->children.clear();
+        this->parent = nullptr;
+    }
+};
+
+bool is_fully_expanded(Node *node) {
+    int num_empty = get_num_empty(node->board);
+    assert(num_empty < node->children.size());
+    return num_empty == node->children.size();
+}
+
+bool is_terminated(Node *node) {
+    if (node->is_terminated == 1) return true;
+
+    Board tmp = node->board;
+    int oppo_color = get_oppo_color(node->color);
+    for(int pos = 0; pos < NUM_CELL; pos++) {
+        if (set_board_cell(tmp, pos, oppo_color) != -1) return false;
+    }
+
+    node->is_terminated = 1;
+    return true;
+}
+
+
 /** ----------------- MCTS ----------------------- */
+struct MCTS {
+    Node *root;
+    int depth = 0;
+};
+
+void init_tree(MCTS &tree, Node *node, int _depth) {
+    tree.root = node;
+    tree.depth = _depth;
+}
+
+Node *selection(Node *node) {
+    while (is_fully_expanded(node)) {
+        node = get_best_uct_child(node);
+    }
+    return node;
+}
+
+Node *expansion(Node *parent) {
+
+    if (is_terminated(parent)) return parent;
+
+    int oppo_color = get_oppo_color(parent->color);
+    int random_pos = get_random_empty_pos(parent->board);
+
+    Node *child = new Node(parent->board, random_pos, oppo_color);
+    parent->children.push_back(child);
+    child->parent = parent;
+
+    return get_best_uct_child(parent);
+}
+
+int simulation(Node *node, int player_color) {
+
+
+
+    while (!is_terminated(node)) {
+        int oppo_color = get_oppo_color(node->color);
+        int random_pos = get_random_empty_pos(node->board);
+        set_board_cell(node->board, random_pos, oppo_color);
+    }
+
+    return node->color == player_color ? 1 : -1;
+}
+
+void backpropagation(Node *node, int value) {
+    while (node != nullptr) {
+        update_value_node(node);
+        node = node->parent;
+    }
+}
+
 /** ----------------- Agent ----------------------- */
 
 /** ----------------- Coordinator ----------------------- */
@@ -642,6 +742,16 @@ void exec_command(const std::string &raw_command) {
 }
 
 int main() {
+
+    /** Should run test here
+     * Board & Region:
+     *  - Place in correct position
+     *  - Merging region
+     *  - Create new region
+     *  - Occur suicide
+     *  - Occur capture
+     */
+
 
     is_quit = false;
     reset_board(mainboard);
