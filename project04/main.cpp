@@ -546,7 +546,7 @@ double get_score(Node* node) {
 
 Node* get_best_uct_child(Node* parent) {
 
-    assert(!parent->children.empty());  // not leaf node
+    if (parent->children.empty()) return nullptr;
 
     double curr_score = get_score(parent->children[0]);
     std::vector<Node*> chosen(1, parent->children[0]);
@@ -631,7 +631,43 @@ void backpropagation(Node *node, int value) {
     }
 }
 
+void run_once(Node* node, int player_color) {
+    Node* leaf = selection(node);
+    leaf = expansion(leaf);
+    int end_game = simulation(leaf, player_color);
+    backpropagation(node, end_game);
+}
+
+void free_all_child(Node* node) {
+    if (node->children.empty()) {
+        free(node);
+        return;
+    }
+
+    for(Node* child: node->children) {
+        free_all_child(child);
+    }
+}
+
 /** ----------------- Agent ----------------------- */
+struct Agent {
+    MCTS tree;
+};
+
+int make_move_by_AI(Agent &agent, Board &board, int player_color) {
+
+    int oppo_color = get_oppo_color(player_color);
+    Node* root = new Node(board, -1, oppo_color);
+    init_tree(agent.tree, root, 0);
+
+    for(int i = 0; i < 100; i++) run_once(agent.tree.root, player_color);
+
+    Node* best_child = get_best_uct_child(agent.tree.root);
+    int res = (best_child == nullptr) ? -1 : best_child->pos;
+    free_all_child(agent.tree.root);
+
+    return res;
+}
 
 /** ----------------- Coordinator ----------------------- */
 
@@ -750,6 +786,7 @@ std::array<std::string, 11> known_commands = {
         "komi", "play", "genmove"
 };
 
+Agent ai;
 Board mainboard;
 bool is_quit;
 std::vector<Log> history;
@@ -798,9 +835,9 @@ void exec_command(const std::string &raw_command) {
 
     } else if (head == "genmove") {
         // TODO: assume that args always true because the protocol don't specify this
-//        auto color = parse_color_helper(args[0]);
-//        int pos = ai.make_move(mainboard, color);
-//        response = get_response(pos != -1, command, pos != -1 ? "" : "resign");
+        int color = parse_color_helper(args[0]);
+        int pos = make_move_by_AI(ai, mainboard, color);
+        response = get_response(pos != -1, command, pos != -1 ? "" : "resign");
 
     } else {
         response = get_response(false, command, "unknown command");
