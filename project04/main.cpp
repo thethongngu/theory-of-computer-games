@@ -92,20 +92,16 @@ struct Board {
     ull first_flag = 0;
     ui second_flag = 0;
 
-    ull first_black = 0;
-    ui second_black = 0;
-    ull first_white = 0;
-    ui second_white = 0;
-
     std::vector<Region> regions;
     int cell_to_region[NUM_CELL];
+    std::vector<int> valid_cells;
 };
 
 void reset_board(Board &board) {
     board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
-    board.first_black = board.second_black = board.first_white = board.second_white = 0;
     board.regions.clear();
     for (int &cell : board.cell_to_region) cell = -1;
+    for(int i = 0; i < NUM_CELL; i++) board.valid_cells.push_back(i);
 }
 
 /**
@@ -171,6 +167,7 @@ void add_while_bit_board(Board &board, int i) {
 /**
  * - Change the segment to corresponding color
  * - Change the flag to 1
+ * O(1)
  */
 void add_bit_region(Region &region, int pos, int color) {
     assert(color == BLACK || color == WHITE);
@@ -183,6 +180,7 @@ void add_bit_region(Region &region, int pos, int color) {
 /**
  * - Change the segment to corresponding color
  * - Change the flag to 1
+ * O(1)
  */
 void add_bit_board(Board &board, int pos, int color) {
     assert(color == BLACK || color == WHITE);
@@ -199,6 +197,7 @@ int get_region_id_by_cell(const Board &board, int pos) {
 /**
  * - Change the segment to 0
  * - Change the flag to 0
+ * O(1)
  */
 void remove_cell_on_board(Board &board, int i) {
     assert(i >= 0 && i <= NUM_CELL - 1);
@@ -213,6 +212,7 @@ void remove_cell_on_board(Board &board, int i) {
 
 /**
  * Return color at the position of a Region
+ * O(1)
  */
 int get_region_cell(const Region &region, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
@@ -234,6 +234,7 @@ int get_region_cell(const Region &region, int pos) {
 
 /**
  * Return color at the position of a Board
+ * O(1)
  */
 int get_board_cell(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
@@ -256,12 +257,13 @@ int get_board_cell(const Board &board, int pos) {
 /**
  * - Check adj_cell whether a new liberty
  * - Remove the liberty in 'pos'
+ * O(1) * 4
  *
  * @param region
  * @param board
  * @param adj_cells
  */
-void update_my_region_liberty(Region &region, const Board &board, int pos, const std::vector<int> &adj_cells) {
+void update_player_liberty(Region &region, const Board &board, int pos, const std::vector<int> &adj_cells) {
     for (int adj : adj_cells) {
         assert(adj >= 0 && adj <= NUM_CELL - 1);
         if (get_board_cell(board, adj) != NONE) continue;
@@ -272,7 +274,10 @@ void update_my_region_liberty(Region &region, const Board &board, int pos, const
     else region.second_lib &= ~(1ULL << pos);
 }
 
-void update_your_region_liberty(Board &board, int oppo_color, int pos, std::vector<int> adj_cells) {
+/**
+ * O(1) * 4
+ */
+void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int> adj_cells) {
     for (int adj : adj_cells) {
         if (get_board_cell(board, adj) != oppo_color) continue;
         int region_id = get_region_id_by_cell(board, adj);
@@ -284,6 +289,9 @@ void update_your_region_liberty(Board &board, int oppo_color, int pos, std::vect
 /**
  * - Add new region to list of regions
  * - Update cell information of board which is inside the region
+ * - O(81)
+ * TODO: is there anyway to reduce the number of cells I need to check
+ * TODO: like jumping directly into each bit 1 position
  */
 void add_region_to_board(Region region, Board &board, int pos, int color) {
 
@@ -305,6 +313,7 @@ void add_region_to_board(Region region, Board &board, int pos, int color) {
  *  - Update mapping of cell from second region to first region
  *  - Remove second region from board information
  *
+ * O(81)
  * @param fr_id id of the first region
  * @param sr_id id of the second region
  * @param board the board that contains two regions
@@ -346,6 +355,9 @@ void merge_region(int fr_id, int sr_id, Board &board, int color) {
  *      - Update mapping from cell to region
  *      - Update liberties in region
  *      - Update liberties of adjacent regions
+ *
+ *  New region : O(81)
+ *  Merged region: O(81) * 4
  */
 void update_board_info(Board &board, int pos, int color) {
 
@@ -368,7 +380,7 @@ void update_board_info(Board &board, int pos, int color) {
     if (pivot_id == -1) {  // no merging region, new region
         Region region;
         add_bit_region(region, pos, color);
-        update_my_region_liberty(region, board, pos, adj_cells);
+        update_player_liberty(region, board, pos, adj_cells);
         add_region_to_board(region, board, pos, color);
 
     } else {  // merging region
@@ -381,25 +393,34 @@ void update_board_info(Board &board, int pos, int color) {
         }
 
         add_bit_region(board.regions[pivot_id], pos, color);
-        update_my_region_liberty(board.regions[pivot_id], board, pos, adj_cells);
+        update_player_liberty(board.regions[pivot_id], board, pos, adj_cells);
         board.cell_to_region[pos] = pivot_id;
     }
 
     int oppo_color = get_oppo_color(color);
-    update_your_region_liberty(board, oppo_color, pos, adj_cells);
+    update_evil_liberty(board, oppo_color, pos, adj_cells);
 }
 
+/**
+ * O(1)
+ */
 ull get_num_liberties(const Board &board, int region_id) {
     assert(region_id >= 0);
     ull res = count_on_bit(board.regions[region_id].first_lib) + count_on_bit(board.regions[region_id].second_lib);
     return res;
 }
 
+/**
+ * O(1)
+ */
 ull get_num_empty(const Board &board) {
     ull res = count_on_bit(board.first_seg) + count_on_bit(board.second_seg);
     return res;
 }
 
+/**
+ * O(1)
+ */
 bool is_suicide(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
 
@@ -407,6 +428,9 @@ bool is_suicide(const Board &board, int pos) {
     return get_num_liberties(board, region_id) == 0;
 }
 
+/**
+ * O(1) * 4
+ */
 bool is_capture(const Board &board, int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
 
@@ -431,6 +455,8 @@ bool is_capture(const Board &board, int pos) {
  * Return:
  *  - 1: success
  *  - 2: fail, board not change
+ *
+ *  O(81) * 4
  */
 int set_board_cell(Board &board, int pos, int color) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
@@ -446,6 +472,10 @@ int set_board_cell(Board &board, int pos, int color) {
 
     board = tmp;
     return 1;
+}
+
+int get_random_empty_pos(const Board &board, int color) {
+
 }
 
 void print_board(const Board &board) {
@@ -477,7 +507,6 @@ struct Node {
     Board board;
     Node *parent;
     int pos, color;
-    bool is_terminated = 0;
 
     std::vector<Node *> children;
 
@@ -497,15 +526,14 @@ bool is_fully_expanded(Node *node) {
 }
 
 bool is_terminated(Node *node) {
-    if (node->is_terminated == 1) return true;
 
-    Board tmp = node->board;
     int oppo_color = get_oppo_color(node->color);
-    for(int pos = 0; pos < NUM_CELL; pos++) {
-        if (set_board_cell(tmp, pos, oppo_color) != -1) return false;
+    Board tmp = node->board;
+    for(int i = node->board.valid_cells.size() - 1; i >= 0; i--) {
+        if (set_board_cell(tmp, i, oppo_color) != -1) return false;
+        node->board.valid_cells.pop_back();
     }
 
-    node->is_terminated = 1;
     return true;
 }
 
@@ -533,7 +561,7 @@ Node *expansion(Node *parent) {
     if (is_terminated(parent)) return parent;
 
     int oppo_color = get_oppo_color(parent->color);
-    int random_pos = get_random_empty_pos(parent->board);
+    int random_pos = get_random_empty_pos(parent->board, oppo_color);
 
     Node *child = new Node(parent->board, random_pos, oppo_color);
     parent->children.push_back(child);
@@ -544,15 +572,16 @@ Node *expansion(Node *parent) {
 
 int simulation(Node *node, int player_color) {
 
-
-
-    while (!is_terminated(node)) {
-        int oppo_color = get_oppo_color(node->color);
-        int random_pos = get_random_empty_pos(node->board);
-        set_board_cell(node->board, random_pos, oppo_color);
+    int oppo_color = node->color;
+    Board tmp = node->board;
+    while (true) {
+        oppo_color = get_oppo_color(oppo_color);
+        int random_pos = get_random_empty_pos(tmp, oppo_color);
+        if (random_pos == -1) break;
+        set_board_cell(tmp, random_pos, oppo_color);
     }
 
-    return node->color == player_color ? 1 : -1;
+    return oppo_color == player_color ? -1 : 1;
 }
 
 void backpropagation(Node *node, int value) {
