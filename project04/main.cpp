@@ -290,21 +290,17 @@ void get_all_on_bit(const Region &region, std::vector<int> &res) {
     res.clear();
 
     ull tmp = region.first_flag;
-    int mem = 0;
     while (tmp != 0) {
         int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
-        res.push_back(pos + mem);
-        tmp = tmp >> (pos + 1);
-        mem += pos + 1;
+        res.push_back(pos);
+        tmp &= ~(1ULL << pos);
     }
 
     tmp = region.second_flag;
-    mem = 64;
     while (tmp != 0) {
         int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
-        res.push_back(pos + mem);
-        tmp = tmp >> (pos + 1);
-        mem += pos + 1;
+        res.push_back(pos + 64);
+        tmp &= ~(1ULL << pos);
     }
 }
 
