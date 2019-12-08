@@ -47,15 +47,15 @@ int bsft[64];
  *
  */
 
+void init_bsf_table() {
+    for (int i = 0; i < 64; i++)
+        bsft[((1ULL << i) * 0x218A392CD3D5DBFULL) >> 58] = i;
+}
+
 ull count_on_bit(ull i) {
     i = i - ((i >> 1ULL) & 0x5555555555555555ULL);
     i = (i & 0x3333333333333333ULL) + ((i >> 2ULL) & 0x3333333333333333ULL);
     return (((i + (i >> 4ULL)) & 0xF0F0F0F0F0F0F0FULL) * 0x101010101010101ULL) >> 56;
-}
-
-void init_bsf_table() {
-    for (int i = 0; i < 64; i++)
-        bsft[((1ULL << i) * 0x218A392CD3D5DBFULL) >> 58] = i;
 }
 
 void get_adj_cells(int pos, std::vector<int> &res) {
@@ -68,7 +68,7 @@ void get_adj_cells(int pos, std::vector<int> &res) {
         int new_pos = pos + d[i];
         if (new_pos >= 0 && new_pos <= NUM_CELL - 1) {
             if (pos % BOARD_SIZE == 0 && d[i] == -1) continue;
-            if (pos % (BOARD_SIZE - 1) == 0 && d[i] == 1) continue;
+            if (pos % BOARD_SIZE == 8 && d[i] == 1) continue;
             res.push_back(new_pos);
         }
     }
@@ -104,11 +104,16 @@ struct Board {
     std::vector<int> valid_cells;
 };
 
+void reset_region(Region &region) {
+    region.first_seg = region.second_seg = region.first_flag = region.second_flag = 0;
+    region.first_lib = region.second_lib = 0;
+}
+
 void reset_board(Board &board) {
     board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
     board.regions.clear();
     for (int &cell : board.cell_to_region) cell = -1;
-    for(int i = 0; i < NUM_CELL; i++) board.valid_cells.push_back(i);
+    for (int i = 0; i < NUM_CELL; i++) board.valid_cells.push_back(i);
 }
 
 /**
@@ -293,7 +298,7 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
     }
 }
 
-std::vector<int> get_all_on_bit(const Region &region, std::vector<int> &res) {
+void get_all_on_bit(const Region &region, std::vector<int> &res) {
     res.clear();
 
     ull tmp = region.first_flag;
@@ -303,7 +308,7 @@ std::vector<int> get_all_on_bit(const Region &region, std::vector<int> &res) {
         tmp = tmp >> (pos + 1);
     }
 
-    ull tmp = region.second_flag;
+    tmp = region.second_flag;
     while (tmp != 0) {
         int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
         res.push_back(pos);
@@ -327,7 +332,7 @@ void add_region_to_board(Region region, Board &board, int pos, int color) {
     get_all_on_bit(region, on_bit_pos);
     assert(on_bit_pos.size() == 1);   // otherwise, it is merging regions
 
-    for(int i: on_bit_pos) {
+    for (int i: on_bit_pos) {
         int cell_color = get_region_cell(region, i);
         assert(cell_color == color);  // all stone in region suppose to have same color
         board.cell_to_region[i] = region_id;
@@ -369,7 +374,7 @@ void merge_region(int fr_id, int sr_id, Board &board) {
     // for each cell in second region, change mapping to first region
     std::vector<int> on_bit_pos;
     get_all_on_bit(sr, on_bit_pos);
-    for(int pos: on_bit_pos) {
+    for (int pos: on_bit_pos) {
         board.cell_to_region[pos] = fr_id;
     }
 }
@@ -516,6 +521,8 @@ int get_random_valid_pos(Board &board, int color) {
         if (set_board_cell(tmp, cell, color) != -1) return cell;
         remove_valid_cell(board, id);
     }
+
+    return -1;
 }
 
 void print_board(const Board &board) {
@@ -567,18 +574,18 @@ bool is_fully_expanded(Node *node) {
     return num_empty == node->children.size();
 }
 
-double get_score(Node* node) {
-    return (double)node->num_win / node->count + sqrt(log(node->parent->count) / node->count);
+double get_score(Node *node) {
+    return (double) node->num_win / node->count + sqrt(log(node->parent->count) / node->count);
 }
 
-Node* get_best_uct_child(Node* parent) {
+Node *get_best_uct_child(Node *parent) {
 
     if (parent->children.empty()) return nullptr;
 
     double curr_score = get_score(parent->children[0]);
-    std::vector<Node*> chosen(1, parent->children[0]);
+    std::vector<Node *> chosen(1, parent->children[0]);
 
-    for(Node* child: parent->children) {
+    for (Node *child: parent->children) {
         double score = get_score(child);
         if (curr_score - score > 0.0001) {  /** curr_score > score */
             chosen.clear();
@@ -658,20 +665,20 @@ void backpropagation(Node *node, int value) {
     }
 }
 
-void run_once(Node* node, int player_color) {
-    Node* leaf = selection(node);
+void run_once(Node *node, int player_color) {
+    Node *leaf = selection(node);
     leaf = expansion(leaf);
     int end_game = simulation(leaf, player_color);
     backpropagation(node, end_game);
 }
 
-void free_all_child(Node* node) {
+void free_all_child(Node *node) {
     if (node->children.empty()) {
         free(node);
         return;
     }
 
-    for(Node* child: node->children) {
+    for (Node *child: node->children) {
         free_all_child(child);
     }
 }
@@ -684,12 +691,12 @@ struct Agent {
 int make_move_by_AI(Agent &agent, Board &board, int player_color) {
 
     int oppo_color = get_oppo_color(player_color);
-    Node* root = new Node(board, -1, oppo_color);
+    Node *root = new Node(board, -1, oppo_color);
     init_tree(agent.tree, root, 0);
 
-    for(int i = 0; i < 100; i++) run_once(agent.tree.root, player_color);
+    for (int i = 0; i < 100; i++) run_once(agent.tree.root, player_color);
 
-    Node* best_child = get_best_uct_child(agent.tree.root);
+    Node *best_child = get_best_uct_child(agent.tree.root);
     int res = (best_child == nullptr) ? -1 : best_child->pos;
     free_all_child(agent.tree.root);
 
@@ -728,19 +735,7 @@ struct Command {
     int id = -1;
     std::string command = "";
     std::vector<std::string> arguments;
-
-    std::string get_string() {
-        std::string s = std::to_string(id).append(" ").append(command);
-        for (auto &arg: arguments) s.append(" ").append(arg);
-        return s;
-    }
 };
-
-void init_command(Command &command, int _id, const std::string &_command, const std::string &_arg) {
-    command.id = _id;
-    command.command = _command;
-    command.arguments.push_back(_arg);
-}
 
 std::string preprocess_command(const std::string &raw_command) {
 
@@ -764,7 +759,7 @@ Command parse_command(const std::string &command) {
     std::istringstream iss(command);
     std::vector<std::string> tokens(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
 
-    Command res;
+    Command res = Command();
     if (tokens.size() == 0) return res;  // NOLINT(readability-container-size-empty)
 
     int id = get_int_helper(tokens[0]);
@@ -880,6 +875,224 @@ void init_program() {
     init_bsf_table();
 }
 
+/** ------------------- TESTING ----------------- */
+void test_count_on_bit() {
+    assert(count_on_bit(0b01010101) == 4);
+    assert(count_on_bit(0b0000000000000000000000000000000000000000000000000000000000000000) == 0);
+    assert(count_on_bit(0b0000000000000000000000000000000000000000000000000000011000000000) == 2);
+    assert(count_on_bit(0b0000000000000000000000000000000000000000000000000000011000000010) == 3);
+    assert(count_on_bit(0b1111111111111111111111111111111111111111111111111111111111111111) == 64);
+    assert(count_on_bit(0b1111111111111111111111111111111110000000000000000000011000000000) == 35);
+    assert(count_on_bit(0b0001000110000111001011001000000001100011010101000000000110000000) == 19);
+}
+
+void test_get_adj_cells() {
+    std::vector<int> res;
+
+    res.clear();
+    get_adj_cells(0, res);
+    assert(res.size() == 2);
+    assert(res[0] == 1);
+    assert(res[1] == 9);
+
+    res.clear();
+    get_adj_cells(1, res);
+    assert(res.size() == 3);
+    assert(res[0] == 2);
+    assert(res[1] == 10);
+    assert(res[2] == 0);
+
+    res.clear();
+    get_adj_cells(5, res);
+    assert(res.size() == 3);
+    assert(res[0] == 6);
+    assert(res[1] == 14);
+    assert(res[2] == 4);
+
+    res.clear();
+    get_adj_cells(8, res);
+    assert(res.size() == 2);
+    assert(res[0] == 17);
+    assert(res[1] == 7);
+
+    res.clear();
+    get_adj_cells(9, res);
+    assert(res.size() == 3);
+    assert(res[0] == 0);
+    assert(res[1] == 10);
+    assert(res[2] == 18);
+
+    res.clear();
+    get_adj_cells(10, res);
+    assert(res.size() == 4);
+    assert(res[0] == 1);
+    assert(res[1] == 11);
+    assert(res[2] == 19);
+    assert(res[3] == 9);
+
+    res.clear();
+    get_adj_cells(22, res);
+    assert(res.size() == 4);
+    assert(res[0] == 13);
+    assert(res[1] == 23);
+    assert(res[2] == 31);
+    assert(res[3] == 21);
+
+    res.clear();
+    get_adj_cells(72, res);
+    assert(res.size() == 2);
+    assert(res[0] == 63);
+    assert(res[1] == 73);
+
+    res.clear();
+    get_adj_cells(76, res);
+    assert(res.size() == 3);
+    assert(res[0] == 67);
+    assert(res[1] == 77);
+    assert(res[2] == 75);
+
+    res.clear();
+    get_adj_cells(80, res);
+    assert(res.size() == 2);
+    assert(res[0] == 71);
+    assert(res[1] == 79);
+}
+
+void test_get_oppo_color() {
+    assert(get_oppo_color(BLACK) == WHITE);
+    assert(get_oppo_color(WHITE) == BLACK);
+}
+
+void test_add_black_bit_region() {
+    Region region;
+
+    add_black_bit_region(region, 0);
+    assert(region.first_flag == 1);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_black_bit_region(region, 1);
+    assert(region.first_flag == 2);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_black_bit_region(region, 1);
+    add_black_bit_region(region, 0);
+    assert(region.first_flag == 3);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_black_bit_region(region, 63);
+    add_black_bit_region(region, 0);
+    assert(region.first_flag == (1ULL << 63) + 1);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_black_bit_region(region, 64);
+    add_black_bit_region(region, 0);
+    assert(region.first_flag == 1);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == 1);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_black_bit_region(region, 80);
+    add_black_bit_region(region, 3);
+    assert(region.first_flag == 8);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == (1U << 16));
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_black_bit_region(region, 0);
+    add_black_bit_region(region, 10);
+    add_black_bit_region(region, 0);
+    add_black_bit_region(region, 78);
+    add_black_bit_region(region, 80);
+    assert(region.first_flag == (1 << 10) + 1);
+    assert(region.first_seg == 0);
+    assert(region.second_flag == (1U << 16) + (1U << 14));
+    assert(region.second_seg == 0);
+}
+
+void test_add_white_to_region() {
+    Region region;
+
+    add_white_bit_region(region, 0);
+    assert(region.first_flag == 1);
+    assert(region.first_seg == 1);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_white_bit_region(region, 1);
+    assert(region.first_flag == 2);
+    assert(region.first_seg == 2);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_white_bit_region(region, 1);
+    add_white_bit_region(region, 0);
+    assert(region.first_flag == 3);
+    assert(region.first_seg == 3);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_white_bit_region(region, 63);
+    add_white_bit_region(region, 0);
+    assert(region.first_flag == (1ULL << 63) + 1);
+    assert(region.first_seg == (1ULL << 63) + 1);
+    assert(region.second_flag == 0);
+    assert(region.second_seg == 0);
+
+    reset_region(region);
+    add_white_bit_region(region, 64);
+    add_white_bit_region(region, 0);
+    assert(region.first_flag == 1);
+    assert(region.first_seg == 1);
+    assert(region.second_flag == 1);
+    assert(region.second_seg == 1);
+
+    reset_region(region);
+    add_white_bit_region(region, 80);
+    add_white_bit_region(region, 3);
+    assert(region.first_flag == 8);
+    assert(region.first_seg == 8);
+    assert(region.second_flag == (1U << 16));
+    assert(region.second_seg == (1U << 16));
+
+    reset_region(region);
+    add_white_bit_region(region, 0);
+    add_white_bit_region(region, 10);
+    add_white_bit_region(region, 0);
+    add_white_bit_region(region, 78);
+    add_black_bit_region(region, 80);
+    assert(region.first_flag == (1 << 10) + 1);
+    assert(region.first_seg == (1 << 10) + 1);
+    assert(region.second_flag == (1U << 16) + (1U << 14));
+    assert(region.second_seg == (1U << 14));
+}
+
+void test_all() {
+    test_count_on_bit();
+    test_get_adj_cells();
+    test_get_oppo_color();
+    test_add_black_bit_region();
+    test_add_white_to_region();
+}
+
+
+/** ------------------ ENTRY POINT ---------------- */
 int main() {
 
     /** Should run test here
@@ -891,6 +1104,8 @@ int main() {
      *  - Occur capture
      */
 
+    init_program();
+    test_all();
 
     std::string raw_command;
     while (!is_quit) {
