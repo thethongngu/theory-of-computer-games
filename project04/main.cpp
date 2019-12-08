@@ -17,6 +17,8 @@ const int NONE = 0;
 const int BLACK = 1;
 const int WHITE = 2;
 
+int bsft[64];
+
 /**
  *   a b c d e f g h i
  * 1 + + + + + + + + +
@@ -49,6 +51,11 @@ ull count_on_bit(ull i) {
     i = i - ((i >> 1ULL) & 0x5555555555555555ULL);
     i = (i & 0x3333333333333333ULL) + ((i >> 2ULL) & 0x3333333333333333ULL);
     return (((i + (i >> 4ULL)) & 0xF0F0F0F0F0F0F0FULL) * 0x101010101010101ULL) >> 56;
+}
+
+void init_bsf_table() {
+    for (int i = 0; i < 64; i++)
+        bsft[((1ULL << i) * 0x218A392CD3D5DBFULL) >> 58] = i;
 }
 
 void get_adj_cells(int pos, std::vector<int> &res) {
@@ -286,10 +293,28 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
     }
 }
 
+std::vector<int> get_all_on_bit(const Region &region, std::vector<int> &res) {
+    res.clear();
+
+    ull tmp = region.first_flag;
+    while (tmp != 0) {
+        int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
+        res.push_back(pos);
+        tmp = tmp >> (pos + 1);
+    }
+
+    ull tmp = region.second_flag;
+    while (tmp != 0) {
+        int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
+        res.push_back(pos);
+        tmp = tmp >> (pos + 1);
+    }
+}
+
 /**
  * - Add new region to list of regions
  * - Update cell information of board which is inside the region
- * - O(n)
+ * - O(1)
  * TODO: is there anyway to reduce the number of cells I need to check
  * TODO: like jumping directly into each bit 1 position
  */
@@ -298,10 +323,14 @@ void add_region_to_board(Region region, Board &board, int pos, int color) {
     board.regions.push_back(region);
     int region_id = board.regions.size() - 1;
 
-    for (int i = 0; i < NUM_CELL; i++) {
+    std::vector<int> on_bit_pos;
+    get_all_on_bit(region, on_bit_pos);
+    assert(on_bit_pos.size() == 1);   // otherwise, it is merging regions
+
+    for(int i: on_bit_pos) {
         int cell_color = get_region_cell(region, i);
-        if (cell_color == color)
-            board.cell_to_region[i] = region_id;
+        assert(cell_color == color);  // all stone in region suppose to have same color
+        board.cell_to_region[i] = region_id;
     }
 
     board.cell_to_region[pos] = region_id;
@@ -313,12 +342,13 @@ void add_region_to_board(Region region, Board &board, int pos, int color) {
  *  - Update mapping of cell from second region to first region
  *  - Remove second region from board information
  *
- * O(81)
+ * Worst case: O(81)
+ * Best case: O(1)
  * @param fr_id id of the first region
  * @param sr_id id of the second region
  * @param board the board that contains two regions
  */
-void merge_region(int fr_id, int sr_id, Board &board, int color) {
+void merge_region(int fr_id, int sr_id, Board &board) {
 
     Region &fr = board.regions[fr_id];
     Region &sr = board.regions[sr_id];
@@ -328,23 +358,19 @@ void merge_region(int fr_id, int sr_id, Board &board, int color) {
     assert((fr.second_flag & sr.second_flag) != 0);
 
     // merging region
-    fr.first_seg |= sr.first_seg;
-    fr.second_seg |= sr.second_seg;
     fr.first_flag |= sr.first_flag;
     fr.second_flag |= sr.second_flag;
+    fr.first_seg |= sr.first_seg;
+    fr.second_seg |= sr.second_seg;
     fr.first_lib |= sr.first_lib;
     fr.second_lib |= sr.second_lib;
 
     // update mapping cell to region
     // for each cell in second region, change mapping to first region
-    for (int i = 0; i < NUM_CELL; i++) {
-        int fr_color = get_region_cell(fr, i);
-        int sr_color = get_region_cell(sr, i);
-
-        assert(fr_color != WHITE);
-        assert(sr_color != WHITE);
-        if (sr_color != color) continue;
-        board.cell_to_region[i] = fr_id;
+    std::vector<int> on_bit_pos;
+    get_all_on_bit(sr, on_bit_pos);
+    for(int pos: on_bit_pos) {
+        board.cell_to_region[pos] = fr_id;
     }
 }
 
@@ -356,8 +382,10 @@ void merge_region(int fr_id, int sr_id, Board &board, int color) {
  *      - Update liberties in region
  *      - Update liberties of adjacent regions
  *
- *  New region : O(81)
- *  Merged region: O(81) * 4
+ *  New region : O(1)
+ *  Merged region:
+ *      - Worst case: O(81) * 4 (two regions contains the whole board)
+ *      - Best case: O(1) * 4 (two pieces)
  */
 void update_board_info(Board &board, int pos, int color) {
 
@@ -389,7 +417,7 @@ void update_board_info(Board &board, int pos, int color) {
             if (get_board_cell(board, adj) != color) continue;
             int next_id = get_region_id_by_cell(board, adj);
             if (pivot_id == next_id) continue;
-            merge_region(pivot_id, next_id, board, color);
+            merge_region(pivot_id, next_id, board);
         }
 
         add_bit_region(board.regions[pivot_id], pos, color);
@@ -846,6 +874,12 @@ void exec_command(const std::string &raw_command) {
     std::cout << history.back().response;
 }
 
+void init_program() {
+    is_quit = false;
+    reset_board(mainboard);
+    init_bsf_table();
+}
+
 int main() {
 
     /** Should run test here
@@ -857,9 +891,6 @@ int main() {
      *  - Occur capture
      */
 
-
-    is_quit = false;
-    reset_board(mainboard);
 
     std::string raw_command;
     while (!is_quit) {
