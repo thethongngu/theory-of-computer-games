@@ -280,8 +280,8 @@ ull get_num_liberties(const Board &board, int region_id) {
  * O(1)
  */
 ull get_num_empty(const Board &board) {
-    ull res = count_on_bit(board.first_seg) + count_on_bit(board.second_seg);
-    return res;
+    ull res = count_on_bit(board.first_flag) + count_on_bit(board.second_flag);
+    return NUM_CELL - res;
 }
 
 void get_all_on_bit(const Region &region, std::vector<int> &res) {
@@ -456,6 +456,7 @@ void update_board_info(Board &board, int pos, int color) {
 }
 
 /**
+ * Check whether the position 'pos' at board is suicide.
  * O(1)
  */
 bool is_suicide(const Board &board, int pos) {
@@ -1136,6 +1137,7 @@ void test_get_all_on_bit() {
 
 void test_update_board_info() {
     Board board;
+    Board tmp;
     reset_board(board);
 
     // first move
@@ -1186,6 +1188,51 @@ void test_update_board_info() {
 
     assert(board.first_seg == (1ULL << 9));
     assert(board.first_flag == (1ULL << 10) + 1 + 2 + (1ULL << 9));
+
+    // cannot capture, suicide
+    update_board_info(board, 18, BLACK);
+    assert(is_capture(board, 18));
+    assert(!is_suicide(board, 18));
+    assert(is_suicide(board, 9));
+    assert(board.regions.size() == 4);
+    assert(board.regions[1].first_lib == (1ULL << 2) + (1ULL << 11) + (1ULL << 19));
+    assert(board.regions[1].second_lib == 0);
+    assert(board.regions[2].first_lib == 0);
+    assert(board.regions[2].second_lib == 0);
+    assert(board.regions[3].first_lib == (1ULL << 19) + (1ULL << 27));
+    assert(board.regions[3].second_lib == 0);
+    assert(get_num_liberties(board, 1) == 3);
+    assert(get_num_liberties(board, 2) == 0);
+    assert(get_num_liberties(board, 3) == 2);
+    assert(board.cell_to_region[0] == 1);
+    assert(board.cell_to_region[1] == 1);
+    assert(board.cell_to_region[10] == 1);
+    assert(board.cell_to_region[9] == 2);
+    assert(board.cell_to_region[18] == 3);
+
+    assert(board.first_seg == (1ULL << 9));
+    assert(board.first_flag == (1ULL << 10) + 1 + 2 + (1ULL << 9) + (1ULL << 18));
+
+    update_board_info(board, 20, BLACK);
+    assert(board.regions.size() == 5);
+
+    update_board_info(board, 28, BLACK);
+    assert(board.regions.size() == 6);
+
+    // merge 4 regions
+    update_board_info(board, 19, BLACK);
+    assert(board.regions.size() == 6);
+    assert(get_num_liberties(board, 1) == 6);
+    assert(board.cell_to_region[0] == 1);
+    assert(board.cell_to_region[1] == 1);
+    assert(board.cell_to_region[10] == 1);
+    assert(board.cell_to_region[9] == 2);
+    assert(board.cell_to_region[18] == 1);
+    assert(board.cell_to_region[19] == 1);
+    assert(board.cell_to_region[20] == 1);
+    assert(board.cell_to_region[28] == 1);
+    assert(get_num_empty(board) == 81 - 8);
+
 }
 
 void test_all() {
