@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iomanip>
 
+#define debug(a) std::cout << #a << " = " << a << std::endl
 #define ull unsigned long long
 #define ui  unsigned int
 
@@ -285,6 +286,7 @@ ull get_num_empty(const Board &board) {
 }
 
 void get_all_on_bit(const Region &region, std::vector<int> &res) {
+
     res.clear();
 
     ull tmp = region.first_flag;
@@ -297,12 +299,37 @@ void get_all_on_bit(const Region &region, std::vector<int> &res) {
     }
 
     tmp = region.second_flag;
+    mem = 64;
     while (tmp != 0) {
         int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
         res.push_back(pos + mem);
         tmp = tmp >> (pos + 1);
         mem += pos + 1;
     }
+}
+
+void print_board(const Board &board) {
+    std::cout << " ";
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < NUM_CELL; i++) {
+        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
+        if (get_board_cell(board, i) == BLACK) std::cout << "\033[32m" << " ●" << "\033[0m";
+        else if (get_board_cell(board, i) == WHITE) std::cout << "\033[31m" << " ●" << "\033[0m";
+        else std::cout << " +";
+    }
+    std::cout << std::endl << std::endl;
+}
+
+void print_region(const Region &region) {
+    std::cout << " ";
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < NUM_CELL; i++) {
+        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
+        if (get_region_cell(region, i) == BLACK) std::cout << " ○";
+        else if (get_region_cell(region, i) == WHITE) std::cout << " ●";
+        else std::cout << " +";
+    }
+    std::cout << std::endl << std::endl;
 }
 
 /**
@@ -346,14 +373,19 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
  */
 void add_region_to_board(Region region, Board &board, int pos, int color) {
 
+    std::cout << " inside\n";
     board.regions.push_back(region);
     int region_id = board.regions.size() - 1;
 
+    std::cout << " in inside\n";
+
     std::vector<int> on_bit_pos;
     get_all_on_bit(region, on_bit_pos);
+    debug(on_bit_pos.size());
     assert(on_bit_pos.size() == 1);   // otherwise, it is merging regions
 
     for (int i: on_bit_pos) {
+        debug(i);
         int cell_color = get_region_cell(region, i);
         assert(cell_color == color);  // all stone in region suppose to have same color
         board.cell_to_region[i] = region_id;
@@ -431,10 +463,13 @@ void update_board_info(Board &board, int pos, int color) {
         break;
     }
 
+    debug(pivot_id);
+
     if (pivot_id == -1) {  // no merging region, new region
         Region region;
         add_bit_region(region, pos, color);
         update_player_liberty(region, board, pos, adj_cells);
+        debug(region.first_lib);
         add_region_to_board(region, board, pos, color);
 
     } else {  // merging region
@@ -502,8 +537,12 @@ int set_board_cell(Board &board, int pos, int color) {
 
     if (get_board_cell(board, pos) != NONE) return -1;
 
+    debug(color);
+
     Board tmp = board;  // copy value
     update_board_info(tmp, pos, color);
+
+    debug(pos);
 
     if (is_suicide(tmp, pos)) return -1;
     if (is_capture(tmp, pos)) return -1;
@@ -523,35 +562,12 @@ int get_random_valid_pos(Board &board, int color) {
     while (!board.valid_cells.empty()) {
         int id = std::rand() % board.valid_cells.size();
         int cell = board.valid_cells[id];
+        debug(cell);
         if (set_board_cell(tmp, cell, color) != -1) return cell;
         remove_valid_cell(board, id);
     }
 
     return -1;
-}
-
-void print_board(const Board &board) {
-    std::cout << " ";
-    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
-    for (int i = 0; i < NUM_CELL; i++) {
-        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
-        if (get_board_cell(board, i) == BLACK) std::cout << " ○";
-        else if (get_board_cell(board, i) == WHITE) std::cout << " ●";
-        else std::cout << " +";
-    }
-    std::cout << std::endl << std::endl;
-}
-
-void print_region(const Region &region) {
-    std::cout << " ";
-    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
-    for (int i = 0; i < NUM_CELL; i++) {
-        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
-        if (get_region_cell(region, i) == BLACK) std::cout << " ○";
-        else if (get_region_cell(region, i) == WHITE) std::cout << " ●";
-        else std::cout << " +";
-    }
-    std::cout << std::endl << std::endl;
 }
 
 /** ----------------- Node ------------------------- */
@@ -575,7 +591,7 @@ struct Node {
 
 bool is_fully_expanded(Node *node) {
     int num_empty = get_num_empty(node->board);
-    assert(num_empty < node->children.size());
+    assert(num_empty > node->children.size());
     return num_empty == node->children.size();
 }
 
@@ -636,6 +652,7 @@ Node *expansion(Node *parent) {
     if (random_pos == -1) return parent;  // terminated
 
     Node *child = new Node(parent->board, random_pos, oppo_color);
+    set_board_cell(child->board, child->pos, child->color);
     parent->children.push_back(child);
     child->parent = parent;
 
@@ -657,7 +674,10 @@ int simulation(Node *node, int player_color) {
         int random_pos = get_random_valid_pos(tmp, curr_color);
         if (random_pos == -1) break;
         set_board_cell(tmp, random_pos, curr_color);
+        print_board(tmp);
     }
+
+    print_board(tmp);
 
     // if we can not move, then we lose
     return curr_color == player_color ? -1 : 0;
@@ -699,7 +719,7 @@ int make_move_by_AI(Agent &agent, Board &board, int player_color) {
     Node *root = new Node(board, -1, oppo_color);
     init_tree(agent.tree, root, 0);
 
-    for (int i = 0; i < 100; i++) run_once(agent.tree.root, player_color);
+    for (int i = 0; i < 10; i++) run_once(agent.tree.root, player_color);
 
     Node *best_child = get_best_uct_child(agent.tree.root);
     int res = (best_child == nullptr) ? -1 : best_child->pos;
@@ -1111,12 +1131,12 @@ void test_get_region_cell() {
 void test_get_all_on_bit() {
     Region region;
     reset_region(region);
-    region.first_flag = 0b1111100000000000000000000000000000000000000000010001000000110110;
+    region.first_flag = 0b0111100000000000000000000000000000000000000000010001000000110110;
     region.second_flag = 0b00000000000000010110000000000110;
 
     std::vector<int> pos;
     get_all_on_bit(region, pos);
-    assert(pos.size() == 16);
+    assert(pos.size() == 15);
     assert(pos[0] == 1);
     assert(pos[1] == 2);
     assert(pos[2] == 4);
@@ -1127,12 +1147,11 @@ void test_get_all_on_bit() {
     assert(pos[7] == 60);
     assert(pos[8] == 61);
     assert(pos[9] == 62);
-    assert(pos[10] == 63);
-    assert(pos[11] == 65);
-    assert(pos[12] == 66);
-    assert(pos[13] == 77);
-    assert(pos[14] == 78);
-    assert(pos[15] == 80);
+    assert(pos[10] == 65);
+    assert(pos[11] == 66);
+    assert(pos[12] == 77);
+    assert(pos[13] == 78);
+    assert(pos[14] == 80);
 }
 
 void test_update_board_info() {
@@ -1268,9 +1287,6 @@ int main() {
         getline(std::cin, raw_command);
         exec_command(raw_command);
         print_board(mainboard);
-        for (int i = 0; i < mainboard.regions.size(); i++) {
-            print_region(mainboard.regions[i]);
-        }
     }
 
     return 0;
