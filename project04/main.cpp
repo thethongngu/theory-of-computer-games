@@ -284,6 +284,27 @@ ull get_num_empty(const Board &board) {
     return res;
 }
 
+void get_all_on_bit(const Region &region, std::vector<int> &res) {
+    res.clear();
+
+    ull tmp = region.first_flag;
+    int mem = 0;
+    while (tmp != 0) {
+        int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
+        res.push_back(pos + mem);
+        tmp = tmp >> (pos + 1);
+        mem += pos + 1;
+    }
+
+    tmp = region.second_flag;
+    while (tmp != 0) {
+        int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
+        res.push_back(pos + mem);
+        tmp = tmp >> (pos + 1);
+        mem += pos + 1;
+    }
+}
+
 /**
  * - Check adj_cell whether a new liberty
  * - Remove the liberty in 'pos'
@@ -313,24 +334,6 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
         int region_id = get_region_id_by_cell(board, adj);
         if (adj < 64) board.regions[region_id].first_lib &= ~(1ULL << pos);
         else board.regions[region_id].second_lib &= ~(1ULL << pos);
-    }
-}
-
-void get_all_on_bit(const Region &region, std::vector<int> &res) {
-    res.clear();
-
-    ull tmp = region.first_flag;
-    while (tmp != 0) {
-        int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
-        res.push_back(pos);
-        tmp = tmp >> (pos + 1);
-    }
-
-    tmp = region.second_flag;
-    while (tmp != 0) {
-        int pos = bsft[((tmp & -tmp) * 0x218A392CD3D5DBFULL) >> 58];
-        res.push_back(pos);
-        tmp = tmp >> (pos + 1);
     }
 }
 
@@ -377,8 +380,8 @@ void merge_region(int fr_id, int sr_id, Board &board) {
     Region &sr = board.regions[sr_id];
 
     // one cell can not in 2 different regions
-    assert((fr.first_flag & sr.first_flag) != 0);
-    assert((fr.second_flag & sr.second_flag) != 0);
+    assert((fr.first_flag & sr.first_flag) == 0);
+    assert((fr.second_flag & sr.second_flag) == 0);
 
     // merging region
     fr.first_flag |= sr.first_flag;
@@ -1104,21 +1107,85 @@ void test_get_region_cell() {
     assert(get_region_cell(region, 2) == WHITE);
 }
 
-void test_update_player_liberty() {
-    Board board;
+void test_get_all_on_bit() {
     Region region;
-    std::vector<int> adj;
-    int pos;
-
-    reset_board(board);
     reset_region(region);
+    region.first_flag = 0b1111100000000000000000000000000000000000000000010001000000110110;
+    region.second_flag = 0b00000000000000010110000000000110;
 
-    pos = 31;
-    get_adj_cells(pos, adj);
-    add_bit_board(board, pos, WHITE);
-    update_player_liberty(region, board, pos, adj);
+    std::vector<int> pos;
+    get_all_on_bit(region, pos);
+    assert(pos.size() == 16);
+    assert(pos[0] == 1);
+    assert(pos[1] == 2);
+    assert(pos[2] == 4);
+    assert(pos[3] == 5);
+    assert(pos[4] == 12);
+    assert(pos[5] == 16);
+    assert(pos[6] == 59);
+    assert(pos[7] == 60);
+    assert(pos[8] == 61);
+    assert(pos[9] == 62);
+    assert(pos[10] == 63);
+    assert(pos[11] == 65);
+    assert(pos[12] == 66);
+    assert(pos[13] == 77);
+    assert(pos[14] == 78);
+    assert(pos[15] == 80);
+}
 
+void test_update_board_info() {
+    Board board;
+    reset_board(board);
 
+    // first move
+    update_board_info(board, 0, BLACK);
+    assert(board.regions.size() == 1);
+    assert(board.regions[0].first_lib == (1ULL << 9) + 2);
+    assert(get_num_liberties(board, 0) == 2);
+    assert(board.cell_to_region[0] == 0);
+    assert(board.cell_to_region[1] == -1);
+    assert(board.first_seg == 0);
+    assert(board.first_flag == 1);
+
+    // 2 regions
+    update_board_info(board, 10, BLACK);
+    assert(board.regions.size() == 2);
+    assert(board.regions[0].first_lib == (1ULL << 9) + 2);
+    assert(board.regions[1].first_lib == (1ULL << 9) + 2 + (1ULL << 11) + (1ULL << 19));
+    assert(get_num_liberties(board, 1) == 4);
+    assert(board.cell_to_region[0] == 0);
+    assert(board.cell_to_region[1] == -1);
+    assert(board.cell_to_region[10] == 1);
+    assert(board.first_seg == 0);
+    assert(board.first_flag == (1ULL << 10) + 1);
+
+    // merging (1 regions)
+    update_board_info(board, 1, BLACK);
+    assert(board.regions.size() == 2);
+    assert(board.regions[1].first_lib == (1ULL << 9) + (1ULL << 2) + (1ULL << 11) + (1ULL << 19));
+    assert(get_num_liberties(board, 1) == 4);
+    assert(board.cell_to_region[0] == 1);
+    assert(board.cell_to_region[1] == 1);
+    assert(board.cell_to_region[10] == 1);
+    assert(board.first_seg == 0);
+    assert(board.first_flag == (1ULL << 10) + 1 + 2);
+
+    update_board_info(board, 9, WHITE);
+    assert(board.regions.size() == 3);
+    assert(board.regions[1].first_lib == (1ULL << 2) + (1ULL << 11) + (1ULL << 19));
+    assert(board.regions[1].second_lib == 0);
+    assert(board.regions[2].first_lib == (1ULL << 18));
+    assert(board.regions[2].second_lib == 0);
+    assert(get_num_liberties(board, 1) == 3);
+    assert(get_num_liberties(board, 2) == 1);
+    assert(board.cell_to_region[0] == 1);
+    assert(board.cell_to_region[1] == 1);
+    assert(board.cell_to_region[10] == 1);
+    assert(board.cell_to_region[9] == 2);
+
+    assert(board.first_seg == (1ULL << 9));
+    assert(board.first_flag == (1ULL << 10) + 1 + 2 + (1ULL << 9));
 }
 
 void test_all() {
@@ -1128,7 +1195,9 @@ void test_all() {
     test_add_black_bit_region();
     test_add_white_to_region();
     test_get_region_cell();
-    test_update_player_liberty();
+    test_get_all_on_bit();
+    test_update_board_info();
+    std::cout << "Test OK!" << std::endl;
 }
 
 
