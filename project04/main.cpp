@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iterator>
 #include <cmath>
+#include <iomanip>
 
 #define ull unsigned long long
 #define ui  unsigned int
@@ -267,6 +268,23 @@ int get_board_cell(const Board &board, int pos) {
 }
 
 /**
+ * O(1)
+ */
+ull get_num_liberties(const Board &board, int region_id) {
+    assert(region_id >= 0);
+    ull res = count_on_bit(board.regions[region_id].first_lib) + count_on_bit(board.regions[region_id].second_lib);
+    return res;
+}
+
+/**
+ * O(1)
+ */
+ull get_num_empty(const Board &board) {
+    ull res = count_on_bit(board.first_seg) + count_on_bit(board.second_seg);
+    return res;
+}
+
+/**
  * - Check adj_cell whether a new liberty
  * - Remove the liberty in 'pos'
  * O(1) * 4
@@ -432,23 +450,6 @@ void update_board_info(Board &board, int pos, int color) {
 
     int oppo_color = get_oppo_color(color);
     update_evil_liberty(board, oppo_color, pos, adj_cells);
-}
-
-/**
- * O(1)
- */
-ull get_num_liberties(const Board &board, int region_id) {
-    assert(region_id >= 0);
-    ull res = count_on_bit(board.regions[region_id].first_lib) + count_on_bit(board.regions[region_id].second_lib);
-    return res;
-}
-
-/**
- * O(1)
- */
-ull get_num_empty(const Board &board) {
-    ull res = count_on_bit(board.first_seg) + count_on_bit(board.second_seg);
-    return res;
 }
 
 /**
@@ -1083,12 +1084,51 @@ void test_add_white_to_region() {
     assert(region.second_seg == (1U << 14));
 }
 
+void test_get_region_cell() {
+    Region region;
+    reset_region(region);
+
+    add_bit_region(region, 2, BLACK);
+    assert(get_region_cell(region, 2) == BLACK);
+
+    add_bit_region(region, 10, BLACK);
+    assert(get_region_cell(region, 10) == BLACK);
+
+    add_bit_region(region, 11, WHITE);
+    assert(get_region_cell(region, 11) == WHITE);
+
+    assert(get_region_cell(region, 12) == NONE);
+    assert(get_region_cell(region, 80) == NONE);
+
+    add_bit_region(region, 2, WHITE);
+    assert(get_region_cell(region, 2) == WHITE);
+}
+
+void test_update_player_liberty() {
+    Board board;
+    Region region;
+    std::vector<int> adj;
+    int pos;
+
+    reset_board(board);
+    reset_region(region);
+
+    pos = 31;
+    get_adj_cells(pos, adj);
+    add_bit_board(board, pos, WHITE);
+    update_player_liberty(region, board, pos, adj);
+
+
+}
+
 void test_all() {
     test_count_on_bit();
     test_get_adj_cells();
     test_get_oppo_color();
     test_add_black_bit_region();
     test_add_white_to_region();
+    test_get_region_cell();
+    test_update_player_liberty();
 }
 
 
