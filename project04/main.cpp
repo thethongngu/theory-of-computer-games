@@ -128,6 +128,7 @@ void add_black_bit_region(Region &region, int i) {
         region.first_seg &= ~(1ULL << i);
         region.first_flag |= (1ULL << i);
     } else {
+        i -= 64;
         region.second_seg &= ~(1ULL << i);
         region.second_flag |= (1ULL << i);
     }
@@ -143,6 +144,7 @@ void add_white_bit_region(Region &region, int i) {
         region.first_seg |= (1ULL << i);
         region.first_flag |= (1ULL << i);
     } else {
+        i -= 64;
         region.second_seg |= (1ULL << i);
         region.second_flag |= (1ULL << i);
     }
@@ -158,6 +160,7 @@ void add_black_bit_board(Board &board, int i) {
         board.first_seg &= ~(1ULL << i);
         board.first_flag |= (1ULL << i);
     } else {
+        i -= 64;
         board.second_seg &= ~(1ULL << i);
         board.second_flag |= (1ULL << i);
     }
@@ -173,6 +176,7 @@ void add_while_bit_board(Board &board, int i) {
         board.first_seg |= (1ULL << i);
         board.first_flag |= (1ULL << i);
     } else {
+        i -= 64;
         board.second_seg |= (1ULL << i);
         board.second_flag |= (1ULL << i);
     }
@@ -219,6 +223,7 @@ void remove_cell_on_board(Board &board, int i) {
         board.first_seg &= ~(1ULL << i);
         board.first_flag &= ~(1ULL << i);
     } else {
+        i -= 64;
         board.second_seg &= ~(1ULL << i);
         board.second_flag &= ~(1ULL << i);
     }
@@ -238,6 +243,8 @@ int get_region_cell(const Region &region, int pos) {
         return (bit) ? WHITE : BLACK;
 
     } else {
+        pos -= 64;
+
         int is_filled = (region.second_flag & (1ULL << pos)) >> pos;
         if (!is_filled) return NONE;
 
@@ -260,6 +267,8 @@ int get_board_cell(const Board &board, int pos) {
         return (bit) ? WHITE : BLACK;
 
     } else {
+        pos -= 64;
+
         int is_filled = (board.second_flag & (1ULL << pos)) >> pos;
         if (!is_filled) return NONE;
 
@@ -309,8 +318,8 @@ void print_board(const Board &board) {
     for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
     for (int i = 0; i < NUM_CELL; i++) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
-        if (get_board_cell(board, i) == BLACK) std::cout << "\033[32m" << " ●" << "\033[0m";
-        else if (get_board_cell(board, i) == WHITE) std::cout << "\033[31m" << " ●" << "\033[0m";
+        if (get_board_cell(board, i) == BLACK) std::cout << "\033[32m" << " ●" << "\033[0m";   // green
+        else if (get_board_cell(board, i) == WHITE) std::cout << "\033[31m" << " ●" << "\033[0m";  // red
         else std::cout << " +";
     }
     std::cout << std::endl << std::endl;
@@ -324,6 +333,23 @@ void print_region(const Region &region) {
         if (get_region_cell(region, i) == BLACK) std::cout << " ○";
         else if (get_region_cell(region, i) == WHITE) std::cout << " ●";
         else std::cout << " +";
+    }
+    std::cout << std::endl << std::endl;
+}
+
+void print_liberties(const Region &region) {
+    std::cout << " ";
+    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < NUM_CELL; i++) {
+        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
+        if (i < 64) {
+            if ((region.first_lib & (1ULL << i)) != 0) std::cout << " ○";
+            else std::cout << " +";
+        } else {
+            i -= 64;
+            if ((region.second_lib & (1ULL << i)) != 0) std::cout << " ○";
+            else std::cout << " +";
+        }
     }
     std::cout << std::endl << std::endl;
 }
@@ -342,10 +368,10 @@ void update_player_liberty(Region &region, const Board &board, int pos, const st
         assert(adj >= 0 && adj <= NUM_CELL - 1);
         if (get_board_cell(board, adj) != NONE) continue;
         if (adj < 64) region.first_lib |= (1 << adj);
-        else region.second_lib |= (1 << adj);
+        else region.second_lib |= (1 << (adj - 64));
     }
     if (pos < 64) region.first_lib &= ~(1ULL << pos);
-    else region.second_lib &= ~(1ULL << pos);
+    else region.second_lib &= ~(1ULL << (pos - 64));
 }
 
 /**
@@ -356,7 +382,7 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
         if (get_board_cell(board, adj) != oppo_color) continue;
         int region_id = get_region_id_by_cell(board, adj);
         if (adj < 64) board.regions[region_id].first_lib &= ~(1ULL << pos);
-        else board.regions[region_id].second_lib &= ~(1ULL << pos);
+        else board.regions[region_id].second_lib &= ~(1ULL << (pos - 64));
     }
 }
 
@@ -369,19 +395,14 @@ void update_evil_liberty(Board &board, int oppo_color, int pos, std::vector<int>
  */
 void add_region_to_board(Region region, Board &board, int pos, int color) {
 
-    std::cout << " inside\n";
     board.regions.push_back(region);
     int region_id = board.regions.size() - 1;
 
-    std::cout << " in inside\n";
-
     std::vector<int> on_bit_pos;
     get_all_on_bit(region, on_bit_pos);
-    debug(on_bit_pos.size());
     assert(on_bit_pos.size() == 1);   // otherwise, it is merging regions
 
     for (int i: on_bit_pos) {
-        debug(i);
         int cell_color = get_region_cell(region, i);
         assert(cell_color == color);  // all stone in region suppose to have same color
         board.cell_to_region[i] = region_id;
@@ -459,13 +480,10 @@ void update_board_info(Board &board, int pos, int color) {
         break;
     }
 
-    debug(pivot_id);
-
     if (pivot_id == -1) {  // no merging region, new region
         Region region;
         add_bit_region(region, pos, color);
         update_player_liberty(region, board, pos, adj_cells);
-        debug(region.first_lib);
         add_region_to_board(region, board, pos, color);
 
     } else {  // merging region
@@ -533,12 +551,8 @@ int set_board_cell(Board &board, int pos, int color) {
 
     if (get_board_cell(board, pos) != NONE) return -1;
 
-    debug(color);
-
     Board tmp = board;  // copy value
     update_board_info(tmp, pos, color);
-
-    debug(pos);
 
     if (is_suicide(tmp, pos)) return -1;
     if (is_capture(tmp, pos)) return -1;
@@ -558,7 +572,6 @@ int get_random_valid_pos(Board &board, int color) {
     while (!board.valid_cells.empty()) {
         int id = std::rand() % board.valid_cells.size();
         int cell = board.valid_cells[id];
-        debug(cell);
         if (set_board_cell(tmp, cell, color) != -1) return cell;
         remove_valid_cell(board, id);
     }
@@ -670,6 +683,7 @@ int simulation(Node *node, int player_color) {
         int random_pos = get_random_valid_pos(tmp, curr_color);
         if (random_pos == -1) break;
         set_board_cell(tmp, random_pos, curr_color);
+        debug(random_pos);
         print_board(tmp);
     }
 
@@ -880,6 +894,7 @@ void exec_command(const std::string &raw_command) {
         // TODO: assume that args always true because the protocol don't specify this
         int color = parse_color_helper(args[0]);
         int pos = make_move_by_AI(ai, mainboard, color);
+        if (pos != -1) set_board_cell(mainboard, pos, color);
         response = get_response(pos != -1, command, pos != -1 ? "" : "resign");
 
     } else {
@@ -1250,6 +1265,46 @@ void test_update_board_info() {
 
 }
 
+void test_bug_01() {
+    std::vector<int> pos = {32, 66, 51, 21, 68, 61, 28, 31, 40, 79, 25, 18, 45, 69, 57, 16, 3, 60, 65, 63, 8, 15, 20,
+                            71, 62, 49, 46, 67, 12, 9, 5, 70, 77, 78, 14, 72, 44, 36, 23, 11, 41, 76, 29, 2, 52, 6, 1,
+                            48, 35, 38, 37, 17, 75, 43, 26, 56, 54, 59};
+
+    Board board;
+    int color = WHITE;
+
+    for(int i : pos) {
+        color = get_oppo_color(color);
+
+        set_board_cell(board, i, color);
+        debug(i);
+        print_board(board);
+
+        std::cout << " ============= Region: =================" << std::endl;
+        for(int j = 0; j < board.regions.size(); j++) {
+            std::cout << "region" << std::endl;
+            print_region(board.regions[j]);
+            std::cout << "liberty" << std::endl;
+            print_liberties(board.regions[j]);
+        }
+
+        if (i == 5) {
+            print_region(board.regions[5]);
+            print_liberties(board.regions[5]);
+            assert(get_num_liberties(board, board.cell_to_region[60]) == 4);
+        }
+
+        if (i == 77) {
+            assert(get_num_liberties(board, board.cell_to_region[60]) == 4);
+        }
+
+        if (i == 14) {
+            assert(get_num_liberties(board, board.cell_to_region[60]) == 3);
+        }
+
+    }
+}
+
 void test_all() {
     test_count_on_bit();
     test_get_adj_cells();
@@ -1259,6 +1314,7 @@ void test_all() {
     test_get_region_cell();
     test_get_all_on_bit();
     test_update_board_info();
+    test_bug_01();
     std::cout << "Test OK!" << std::endl;
 }
 
