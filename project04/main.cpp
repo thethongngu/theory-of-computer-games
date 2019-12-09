@@ -604,7 +604,7 @@ struct Node {
 
 bool is_fully_expanded(Node *node) {
     int num_empty = get_num_empty(node->board);
-    assert(num_empty > node->children.size());
+    assert(num_empty >= node->children.size());
     return num_empty == node->children.size();
 }
 
@@ -687,11 +687,11 @@ int simulation(Node *node, int player_color) {
         int random_pos = get_random_valid_pos(tmp, curr_color);
         if (random_pos == -1) break;
         set_board_cell(tmp, random_pos, curr_color);
-        debug(random_pos);
-        print_board(tmp);
+//        debug(random_pos);
+//        print_board(tmp);
     }
 
-    print_board(tmp);
+//    print_board(tmp);
 
     // if we can not move, then we lose
     return curr_color == player_color ? -1 : 0;
@@ -733,7 +733,7 @@ int make_move_by_AI(Agent &agent, Board &board, int player_color) {
     Node *root = new Node(board, -1, oppo_color);
     init_tree(agent.tree, root, 0);
 
-    for (int i = 0; i < 10; i++) run_once(agent.tree.root, player_color);
+    for (int i = 0; i < 1000; i++) run_once(agent.tree.root, player_color);
 
     Node *best_child = get_best_uct_child(agent.tree.root);
     int res = (best_child == nullptr) ? -1 : best_child->pos;
@@ -828,6 +828,14 @@ bool is_known_command(const std::string &c, const std::array<std::string, 11> &k
     return false;
 }
 
+std::string get_string_pos(int pos) {
+    assert(pos >= 0 && pos <= NUM_CELL - 1);
+    std::string res;
+    res.append(1, (char)(pos % BOARD_SIZE + 'a'));
+    res.append(1, (char)((pos / BOARD_SIZE) + 1 + '0'));
+    return res;
+}
+
 bool make_move_by_input(Board &board, const std::vector<std::string> &args) {
     if (args.size() < 2) return false;
     int color = parse_color_helper(args[0]);
@@ -898,8 +906,13 @@ void exec_command(const std::string &raw_command) {
         // TODO: assume that args always true because the protocol don't specify this
         int color = parse_color_helper(args[0]);
         int pos = make_move_by_AI(ai, mainboard, color);
-        if (pos != -1) set_board_cell(mainboard, pos, color);
-        response = get_response(pos != -1, command, pos != -1 ? "" : "resign");
+        if (pos != -1) {
+            set_board_cell(mainboard, pos, color);
+            std::string move = get_string_pos(pos);
+            response = get_response(true, command, move);
+        } else {
+            response = get_response(false, command, "resign");
+        }
 
     } else {
         response = get_response(false, command, "unknown command");
@@ -1315,14 +1328,14 @@ void test_bug_01() {
 }
 
 void test_all() {
-//    test_count_on_bit();
-//    test_get_adj_cells();
-//    test_get_oppo_color();
-//    test_add_black_bit_region();
-//    test_add_white_to_region();
-//    test_get_region_cell();
-//    test_get_all_on_bit();
-//    test_update_board_info();
+    test_count_on_bit();
+    test_get_adj_cells();
+    test_get_oppo_color();
+    test_add_black_bit_region();
+    test_add_white_to_region();
+    test_get_region_cell();
+    test_get_all_on_bit();
+    test_update_board_info();
     test_bug_01();
     std::cout << "Test OK!" << std::endl;
 }
