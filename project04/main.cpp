@@ -7,7 +7,7 @@
 #include <cmath>
 #include <iomanip>
 
-#define debug(a) std::cout << #a << " = " << a << std::endl
+#define debug(a) std::clog << #a << " = " << a << std::endl
 #define ull unsigned long long
 #define ui  unsigned int
 
@@ -314,20 +314,20 @@ void get_all_on_bit(const Region &region, std::vector<int> &res) {
 }
 
 void print_board(const Board &board) {
-    std::cout << " ";
-    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    std::clog << " ";
+    for (int i = 0; i < BOARD_SIZE - 1; i++) std::clog << " " << (char) (i + 'a');  std::clog << " j";
     for (int i = 0; i < NUM_CELL; i++) {
-        if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
-        if (get_board_cell(board, i) == BLACK) std::cout << "\033[32m" << " ●" << "\033[0m";   // green
-        else if (get_board_cell(board, i) == WHITE) std::cout << "\033[31m" << " ●" << "\033[0m";  // red
-        else std::cout << " +";
+        if (i % BOARD_SIZE == 0) std::clog << std::endl << i / BOARD_SIZE + 1;
+        if (get_board_cell(board, i) == BLACK) std::clog << "\033[32m" << " ●" << "\033[0m";   // green
+        else if (get_board_cell(board, i) == WHITE) std::clog << "\033[31m" << " ●" << "\033[0m";  // red
+        else std::clog << " +";
     }
-    std::cout << std::endl << std::endl;
+    std::clog << std::endl << std::endl;
 }
 
 void print_region(const Region &region) {
     std::cout << " ";
-    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < BOARD_SIZE - 1; i++) std::cout << " " << (char) (i + 'a');  std::cout << " j";
     for (int i = 0; i < NUM_CELL; i++) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
         if (get_region_cell(region, i) == BLACK) std::cout << " ○";
@@ -339,7 +339,7 @@ void print_region(const Region &region) {
 
 void print_liberties(const Region &region) {
     std::cout << " ";
-    for (int i = 0; i < BOARD_SIZE; i++) std::cout << " " << (char) (i + 'a');
+    for (int i = 0; i < BOARD_SIZE - 1; i++) std::cout << " " << (char) (i + 'a');  std::cout << " j";
     for (int i = 0; i < NUM_CELL; i++) {
         if (i % BOARD_SIZE == 0) std::cout << std::endl << i / BOARD_SIZE + 1;
         int pos = i;
@@ -570,17 +570,17 @@ void remove_valid_cell(Board &board, int id) {
     board.valid_cells.pop_back();
 }
 
-int get_random_valid_pos(Board &board, int color) {
+std::pair<int, int> get_random_valid_pos(Board &board, int color) {
     srand(time(NULL));
     Board tmp = board;
     while (!board.valid_cells.empty()) {
         int id = std::rand() % board.valid_cells.size();
         int cell = board.valid_cells[id];
-        if (set_board_cell(tmp, cell, color) != -1) return cell;
+        if (set_board_cell(tmp, cell, color) != -1) return {cell, id};
         remove_valid_cell(board, id);
     }
 
-    return -1;
+    return {-1, -1};
 }
 
 /** ----------------- Node ------------------------- */
@@ -589,11 +589,13 @@ struct Node {
     Node *parent;
     int pos, color;
     int count, num_win;
+    Board child_board;
 
     std::vector<Node *> children;
 
     Node(Board board, int pos, int color) {
         this->board = board;
+        this->child_board = board;
         this->pos = pos;
         this->color = color;
         this->children.clear();
@@ -661,11 +663,12 @@ Node *selection(Node *node) {
 Node *expansion(Node *parent) {
 
     int oppo_color = get_oppo_color(parent->color);
-    int random_pos = get_random_valid_pos(parent->board, oppo_color);
-    if (random_pos == -1) return parent;  // terminated
+    std::pair<int, int> random_pos = get_random_valid_pos(parent->child_board, oppo_color);
+    if (random_pos.first == -1) return parent;  // terminated
 
-    Node *child = new Node(parent->board, random_pos, oppo_color);
+    Node *child = new Node(parent->board, random_pos.first, oppo_color);
     set_board_cell(child->board, child->pos, child->color);
+    remove_valid_cell(parent->child_board, random_pos.second);
     parent->children.push_back(child);
     child->parent = parent;
 
@@ -684,7 +687,7 @@ int simulation(Node *node, int player_color) {
     Board tmp = node->board;
     while (true) {
         curr_color = get_oppo_color(curr_color);
-        int random_pos = get_random_valid_pos(tmp, curr_color);
+        int random_pos = get_random_valid_pos(tmp, curr_color).first;
         if (random_pos == -1) break;
         set_board_cell(tmp, random_pos, curr_color);
 //        debug(random_pos);
@@ -694,7 +697,7 @@ int simulation(Node *node, int player_color) {
 //    print_board(tmp);
 
     // if we can not move, then we lose
-    return curr_color == player_color ? -1 : 0;
+    return curr_color == player_color ? 0 : 1;
 }
 
 void backpropagation(Node *node, int value) {
@@ -708,7 +711,7 @@ void run_once(Node *node, int player_color) {
     Node *leaf = selection(node);
     leaf = expansion(leaf);
     int end_game = simulation(leaf, player_color);
-    backpropagation(node, end_game);
+    backpropagation(leaf, end_game);
 }
 
 void free_all_child(Node *node) {
@@ -727,13 +730,48 @@ struct Agent {
     MCTS tree;
 };
 
+void debug_tree(Node* node, Node* r) {
+
+    if (node == r) {
+        std::clog << " ========================================" << std::endl;
+        std::clog << " Root " << std::endl;
+        debug(node->pos);
+        debug(node->color);
+        debug(node->num_win);
+        debug(node->count);
+        print_board(node->board);
+    }
+
+    std::clog << "=========================================" << std::endl;
+    std::clog << "Node " << std::endl;
+    debug(node->children.size());
+    int i = 0;
+    for(Node* child: node->children) {
+        std::clog << "   Child :" << ++i << std::endl;
+        debug(child->pos);
+        debug(child->color);
+        debug(child->num_win);
+        debug(child->count);
+        print_board(child->board);
+    }
+
+    for(Node* child: node->children) {
+        debug_tree(child, r);
+    }
+}
+
 int make_move_by_AI(Agent &agent, Board &board, int player_color) {
 
     int oppo_color = get_oppo_color(player_color);
     Node *root = new Node(board, -1, oppo_color);
     init_tree(agent.tree, root, 0);
 
-    for (int i = 0; i < 1000; i++) run_once(agent.tree.root, player_color);
+    for (int i = 0; i < 10000; i++) {
+        run_once(agent.tree.root, player_color);
+//        debug_tree(agent.tree.root, agent.tree.root);
+    }
+
+
 
     Node *best_child = get_best_uct_child(agent.tree.root);
     int res = (best_child == nullptr) ? -1 : best_child->pos;
@@ -767,6 +805,7 @@ int parse_pos_helper(const std::string &arg) {
     auto token = to_lowercase_helper(arg);
     int row = token[1] - '1';
     int col = token[0] - 'a';
+    if (col == 9) col = 8;  // fucking j :)
     return row * BOARD_SIZE + col;
 }
 
@@ -832,7 +871,8 @@ std::string get_string_pos(int pos) {
     assert(pos >= 0 && pos <= NUM_CELL - 1);
     std::string res;
     res.append(1, (char)(pos % BOARD_SIZE + 'a'));
-    res.append(1, (char)((pos / BOARD_SIZE) + 1 + '0'));
+    if (res[0] == 'i') res[0] = 'j';   // fucking j :)
+    res.append(1, (char)((pos / BOARD_SIZE) + '1'));
     return res;
 }
 
@@ -890,6 +930,9 @@ void exec_command(const std::string &raw_command) {
         }
         response = get_response(true, command, res);
 
+    } else if (head == "boardsize") {
+        response = get_response(true, command, "");
+
     } else if (head == "quit") {
         is_quit = true;
         response = get_response(true, command, "");
@@ -911,7 +954,7 @@ void exec_command(const std::string &raw_command) {
             std::string move = get_string_pos(pos);
             response = get_response(true, command, move);
         } else {
-            response = get_response(false, command, "resign");
+            response = get_response(true, command, "resign");
         }
 
     } else {
@@ -1354,13 +1397,13 @@ int main() {
      */
 
     init_program();
-    test_all();
+//    test_all();
 
     std::string raw_command;
     while (!is_quit) {
         getline(std::cin, raw_command);
         exec_command(raw_command);
-        print_board(mainboard);
+//        print_board(mainboard);
     }
 
     return 0;
