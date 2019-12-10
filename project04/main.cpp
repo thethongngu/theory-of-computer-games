@@ -103,7 +103,8 @@ struct Board {
 
     std::vector<Region> regions;
     int cell_to_region[NUM_CELL];
-    std::vector<int> valid_cells;
+    std::vector<int> valid_blacks;
+    std::vector<int> valid_whites;
 };
 
 void reset_region(Region &region) {
@@ -115,7 +116,8 @@ void reset_board(Board &board) {
     board.first_seg = board.second_seg = board.first_flag = board.second_flag = 0;
     board.regions.clear();
     for (int &cell : board.cell_to_region) cell = -1;
-    for (int i = 0; i < NUM_CELL; i++) board.valid_cells.push_back(i);
+    for (int i = 0; i < NUM_CELL; i++) board.valid_blacks.push_back(i);
+    for (int i = 0; i < NUM_CELL; i++) board.valid_whites.push_back(i);
 }
 
 /**
@@ -568,19 +570,37 @@ int set_board_cell(Board &board, int pos, int color) {
     return 1;
 }
 
-void remove_valid_cell(Board &board, int id) {
-    std::swap(board.valid_cells.back(), board.valid_cells[id]);
-    board.valid_cells.pop_back();
+void remove_valid_cell(Board &board, int color, int id) {
+    assert(color == BLACK || color == WHITE);
+    if (color == BLACK) {
+        std::swap(board.valid_blacks.back(), board.valid_blacks[id]);
+        board.valid_blacks.pop_back();
+    }
+    else {
+        std::swap(board.valid_whites.back(), board.valid_whites[id]);
+        board.valid_whites.pop_back();
+    }
 }
 
 std::pair<int, int> get_random_valid_pos(Board &board, int color) {
+    assert(color == BLACK || color == WHITE);
     srand(time(NULL));
     Board tmp = board;
-    while (!board.valid_cells.empty()) {
-        int id = std::rand() % board.valid_cells.size();
-        int cell = board.valid_cells[id];
-        if (set_board_cell(tmp, cell, color) != -1) return {cell, id};
-        remove_valid_cell(board, id);
+
+    if (color == BLACK) {
+        while (!board.valid_blacks.empty()) {
+            int id = std::rand() % board.valid_blacks.size();
+            int cell = board.valid_blacks[id];
+            if (set_board_cell(tmp, cell, color) != -1) return {cell, id};
+            remove_valid_cell(board, BLACK, id);
+        }
+    } else {
+        while (!board.valid_whites.empty()) {
+            int id = std::rand() % board.valid_whites.size();
+            int cell = board.valid_whites[id];
+            if (set_board_cell(tmp, cell, color) != -1) return {cell, id};
+            remove_valid_cell(board, WHITE, id);
+        }
     }
 
     return {-1, -1};
@@ -602,7 +622,7 @@ struct Node {
     Board child_board;
 
     std::vector<Node *> children;
-    Node* child_pos[NUM_CELL];
+    Node *child_pos[NUM_CELL];
 
     Node(Board board, int pos, int color) {
         this->board = board;
@@ -617,7 +637,7 @@ struct Node {
         this->rave_mean = RAVE_MEAN;
         this->log_count = 1;
 
-        for(int i = 0; i < NUM_CELL; i++) child_pos[i] = nullptr;
+        for (int i = 0; i < NUM_CELL; i++) child_pos[i] = nullptr;
     }
 };
 
@@ -627,22 +647,26 @@ bool is_fully_expanded(Node *node) {
     return num_empty == node->children.size();
 }
 
-Node* get_child_with_pos(Node *node, int pos) {
+Node *get_child_with_pos(Node *node, int pos) {
     return node->child_pos[pos];
 }
 
 double get_score(Node *node) {
-    return (node->rave_mean * node->rave_count + node->mean * node->count +
-            sqrt(node->parent->log_count * node->count) * UCB_WEIGHT) / (node->count + node->rave_count);
+    return
+            (double) (node->rave_mean * node->rave_count + node->mean * node->count +
+                      sqrt(node->parent->log_count * node->count) * UCB_WEIGHT) /
+            (node->count + node->rave_count);
 }
 
-void update_normal_value(Node *node, int value) {
+void update_normal_value(Node *node, int end_game) {
+    double value = (end_game > 0) ? 1 : 0;  // if win, then 1, else 0
     node->mean = (node->mean * node->count + value) / (node->count + 1);
     node->count += 1;
     node->log_count = log(node->count);
 }
 
-void update_rave_value(Node *node, int value) {
+void update_rave_value(Node *node, int end_game) {
+    double value = (end_game > 0) ? 1 : 0;  // if win, then 1, else 0
     node->rave_mean = (node->rave_mean * node->rave_count + value) / (node->rave_count + 1);
     node->rave_count += 1;
 }
@@ -654,13 +678,14 @@ Node *get_best_uct_child(Node *parent) {
     double curr_score = get_score(parent->children[0]);
     std::vector<Node *> chosen(1, parent->children[0]);
 
-    for (Node *child: parent->children) {
-        double score = get_score(child);
-        if (curr_score - score > 0.0001) {  /** curr_score > score */
+    for (auto it = parent->children.begin() + 1; it != parent->children.end(); it++) {
+        Node *child = *it;
+        double new_score = get_score(child);
+        if (new_score - curr_score > 0.0001) {  /** new_score > curr_score */
             chosen.clear();
             chosen.push_back(child);
-            curr_score = score;
-        } else if (curr_score - score > -0.0001) {  /** curr_score >= score */
+            curr_score = new_score;
+        } else if (new_score - curr_score > -0.0001) {  /** new_score >= curr_score */
             chosen.push_back(child);
         }
     }
@@ -679,6 +704,40 @@ struct MCTS {
 void init_tree(MCTS &tree, Node *node, int _depth) {
     tree.root = node;
     tree.depth = _depth;
+}
+
+void debug_tree(Node *node, Node *r) {
+
+    if (node == r) {
+        std::clog << " ========================================" << std::endl;
+        std::clog << " Root " << std::endl;
+        debug(node->pos);
+        debug(node->color);
+        debug(node->mean);
+        debug(node->count);
+        debug(node->rave_mean);
+        debug(node->rave_count);
+        print_board(node->board);
+    }
+
+    std::clog << "=========================================" << std::endl;
+    std::clog << "Node " << std::endl;
+    debug(node->children.size());
+    int i = 0;
+    for (Node *child: node->children) {
+        std::clog << "   Child :" << ++i << std::endl;
+        debug(child->pos);
+        debug(child->color);
+        debug(child->mean);
+        debug(child->count);
+        debug(child->rave_mean);
+        debug(child->rave_count);
+        print_board(child->board);
+    }
+
+    for (Node *child: node->children) {
+        debug_tree(child, r);
+    }
 }
 
 
@@ -708,11 +767,13 @@ Node *expansion(Node *parent) {
     auto random_pos = get_random_valid_pos(parent->child_board, oppo_color);
     if (random_pos.first == -1) return parent;  // terminated
 
+    // update new generated child
     Node *child = new Node(parent->board, random_pos.first, oppo_color);
     set_board_cell(child->board, child->pos, child->color);
     child->parent = parent;
 
-    remove_valid_cell(parent->child_board, random_pos.second);
+    // update parent based on generated children
+    remove_valid_cell(parent->child_board, oppo_color, random_pos.second);
     parent->children.push_back(child);
     parent->child_pos[random_pos.first] = child;
 
@@ -744,30 +805,39 @@ void simulation(Node *node, int *end_game, std::vector<int> &white_path, std::ve
 
         if (curr_color == BLACK) black_path.push_back(random_pos);
         else white_path.push_back(random_pos);
+        print_board(tmp);
     }
 
     // if the 'first_color' cannot move, then lose
-    *end_game = (curr_color == first_color) ? 0 : 1;
+    *end_game = (curr_color == first_color) ? -1 : 1;
 }
 
-void backpropagation(Node *node, int value, const std::vector<int> white_path, const std::vector<int> black_path) {
+void backpropagation(Node *node, int end_game, const std::vector<int> &white_path, const std::vector<int> &black_path) {
+
     while (node != nullptr) {
 
         // update value for node
-        update_normal_value(node, value);
-        if (node->color == BLACK) {  // WHITE move on this node
-            for (int pos: white_path) {
-                Node* child = get_child_with_pos(node, pos);
-                update_rave_value(child, 1);
-            }
+        update_normal_value(node, end_game);
+
+        // choose BLACK or WHITE
+        std::vector<int>::const_iterator child_start, child_end;
+        if (node->color == BLACK) {  // if BLACK, then WHITE will move
+            child_start = white_path.begin();
+            child_end = white_path.end();
         } else {
-            for (int pos: black_path) {
-                Node* child = get_child_with_pos(node, pos);
-                update_rave_value(child, 1);
-            }
+            child_start = black_path.begin();
+            child_end = black_path.end();
+        }
+
+        // update rave
+        for(auto it = child_start; it != child_end; it++) {
+            int pos = *it;
+            Node *child = get_child_with_pos(node, pos);
+            if (child != nullptr) update_rave_value(child, end_game);
         }
 
         node = node->parent;
+        end_game *= -1;   // change end game value for different color
     }
 }
 
@@ -781,6 +851,7 @@ void run_once(Node *node) {
 
     simulation(leaf, &end_game, white_path, black_path);
     backpropagation(leaf, end_game, white_path, black_path);
+//    debug_tree(node, node);
 }
 
 void free_all_child(Node *node) {
@@ -799,43 +870,13 @@ struct Agent {
     MCTS tree;
 };
 
-void debug_tree(Node *node, Node *r) {
-
-    if (node == r) {
-        std::clog << " ========================================" << std::endl;
-        std::clog << " Root " << std::endl;
-        debug(node->pos);
-        debug(node->color);
-        debug(node->num_win);
-        debug(node->count);
-        print_board(node->board);
-    }
-
-    std::clog << "=========================================" << std::endl;
-    std::clog << "Node " << std::endl;
-    debug(node->children.size());
-    int i = 0;
-    for (Node *child: node->children) {
-        std::clog << "   Child :" << ++i << std::endl;
-        debug(child->pos);
-        debug(child->color);
-        debug(child->num_win);
-        debug(child->count);
-        print_board(child->board);
-    }
-
-    for (Node *child: node->children) {
-        debug_tree(child, r);
-    }
-}
-
 int make_move_by_AI(Agent &agent, Board &board, int player_color) {
 
     int oppo_color = get_oppo_color(player_color);
     Node *root = new Node(board, -1, oppo_color);
     init_tree(agent.tree, root, 0);
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 10; i++) {
         run_once(agent.tree.root);
 //        debug_tree(agent.tree.root, agent.tree.root);
     }
