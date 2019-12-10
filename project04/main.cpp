@@ -697,7 +697,7 @@ Node *get_best_uct_child(Node *parent) {
 
 /** ----------------- MCTS ----------------------- */
 struct MCTS {
-    Node *root;
+    Node *root = nullptr;
     int depth = 0;
 };
 
@@ -717,7 +717,6 @@ void debug_tree(Node *node, Node *r) {
         debug(node->count);
         debug(node->rave_mean);
         debug(node->rave_count);
-        print_board(node->board);
     }
 
     std::clog << "=========================================" << std::endl;
@@ -732,7 +731,6 @@ void debug_tree(Node *node, Node *r) {
         debug(child->count);
         debug(child->rave_mean);
         debug(child->rave_count);
-        print_board(child->board);
     }
 
     for (Node *child: node->children) {
@@ -805,7 +803,7 @@ void simulation(Node *node, int *end_game, std::vector<int> &white_path, std::ve
 
         if (curr_color == BLACK) black_path.push_back(random_pos);
         else white_path.push_back(random_pos);
-        print_board(tmp);
+//        print_board(tmp);
     }
 
     // if the 'first_color' cannot move, then lose
@@ -830,10 +828,12 @@ void backpropagation(Node *node, int end_game, const std::vector<int> &white_pat
         }
 
         // update rave
-        for(auto it = child_start; it != child_end; it++) {
-            int pos = *it;
-            Node *child = get_child_with_pos(node, pos);
-            if (child != nullptr) update_rave_value(child, end_game);
+        if (!node->children.empty()) {
+            for (auto it = child_start; it != child_end; it++) {
+                int pos = *it;
+                Node *child = get_child_with_pos(node, pos);
+                if (child != nullptr) update_rave_value(child, end_game);
+            }
         }
 
         node = node->parent;
@@ -855,14 +855,12 @@ void run_once(Node *node) {
 }
 
 void free_all_child(Node *node) {
-    if (node->children.empty()) {
-        free(node);
-        return;
+    if (!node->children.empty()) {
+        for (Node *child: node->children) {
+            free_all_child(child);
+        }
     }
-
-    for (Node *child: node->children) {
-        free_all_child(child);
-    }
+    free(node);
 }
 
 /** ----------------- Agent ----------------------- */
@@ -870,21 +868,43 @@ struct Agent {
     MCTS tree;
 };
 
+void change_root(Agent &agent, int pos, int color) {
+    if (agent.tree.root == nullptr) return;
+    if (agent.tree.root->color == color) return;  // must different color
+
+    Node* child = agent.tree.root->child_pos[pos];
+    for(Node* other_child : agent.tree.root->children) {
+        if (other_child != child) free_all_child(other_child);
+    }
+    Node* tmp = agent.tree.root;
+    agent.tree.root = child;
+    if (child != nullptr) agent.tree.root->parent = nullptr;
+    free(tmp);  // free old root node
+}
+
 int make_move_by_AI(Agent &agent, Board &board, int player_color) {
 
-    int oppo_color = get_oppo_color(player_color);
-    Node *root = new Node(board, -1, oppo_color);
-    init_tree(agent.tree, root, 0);
-
-    for (int i = 0; i < 10; i++) {
-        run_once(agent.tree.root);
-//        debug_tree(agent.tree.root, agent.tree.root);
+    if (agent.tree.root == nullptr) {
+        int oppo_color = get_oppo_color(player_color);
+        Node *root = new Node(board, -1, oppo_color);
+        init_tree(agent.tree, root, 0);
     }
 
+    for (int i = 0; i < 1000; i++) {
+        run_once(agent.tree.root);
+    }
 
+//    debug_tree(agent.tree.root, agent.tree.root);
+
+    int res;
     Node *best_child = get_best_uct_child(agent.tree.root);
-    int res = (best_child == nullptr) ? -1 : best_child->pos;
-    free_all_child(agent.tree.root);
+    if (best_child == nullptr) {
+        res = -1;
+        free_all_child(agent.tree.root);
+    } else {
+        res = best_child->pos;
+        change_root(agent, res, player_color);
+    }
 
     return res;
 }
@@ -1052,6 +1072,9 @@ void exec_command(const std::string &raw_command) {
 
     } else if (head == "play") {
         bool can_move = make_move_by_input(mainboard, args);
+        int color = parse_color_helper(args[0]);
+        int pos = parse_pos_helper(args[1]);
+        change_root(ai, pos, color);
         response = get_response(can_move, command, can_move ? "" : "illegal move");
 
     } else if (head == "genmove") {
@@ -1512,7 +1535,7 @@ int main() {
     while (!is_quit) {
         getline(std::cin, raw_command);
         exec_command(raw_command);
-//        print_board(mainboard);
+        print_board(mainboard);
     }
 
     return 0;
