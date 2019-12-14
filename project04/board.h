@@ -9,6 +9,8 @@
 
 #include <vector>
 #include <cassert>
+#include <ctime>
+#include <cstdlib>
 #include "global.h"
 #include "bit_board.h"
 
@@ -44,6 +46,8 @@ public:
     BitBoard zero_pos[2];
     BitBoard one_pos[2];
 
+    std::vector<int> two_go, one_black_go, one_white_go;
+
     Board() {
         clear_all();
     }
@@ -75,6 +79,10 @@ public:
         zero_pos[1].clear();
         one_pos[0].clear();
         one_pos[1].clear();
+        two_go.clear();
+        one_black_go.clear();
+        one_white_go.clear();
+        srand(time(NULL))
         for(int i = 0; i < NUM_CELL; i++) {
             lib[i].clear();
             lib_count[i] = 0;
@@ -124,8 +132,6 @@ public:
             zero_pos[xxxxx] |= lib_after;
             one_pos[color] |= lib_after;
         }
-
-        add_history(pos, color);
     }
 
     bool can_move(int pos, int color) {
@@ -145,5 +151,41 @@ public:
 
         zero_pos[color].on_bit(pos);  // suicide at `pos`
         return false;
+    }
+
+    void recheck_moves() {
+
+        two_go.clear();
+        one_black_go.clear();
+        one_white_go.clear();
+
+        for(int pos = 0; pos < NUM_CELL; pos++) {
+            if (!is_empty(pos)) continue;
+            bool can_black = can_move(pos, BLACK);
+            bool can_white = can_move(pos, WHITE);
+            if (!can_black && !can_white) continue;
+
+            if (can_black && can_white) {
+                two_go.push_back(pos);
+            } else {
+                if (can_black) one_black_go.push_back(pos);
+                else one_white_go.push_back(pos);
+            }
+        }
+    }
+
+    int get_2_go() {
+        if (two_go.empty()) return -1;
+        return two_go[std::rand() % two_go.size()];
+    }
+
+    int get_1_go(int color) {
+        if (color == BLACK) {
+            if (one_black_go.empty()) return -1;
+            return one_black_go[std::rand() % one_black_go.size()];
+        } else {
+            if (one_white_go.empty()) return -1;
+            return one_white_go[std::rand() % one_white_go.size()];
+        }
     }
 };

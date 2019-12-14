@@ -72,7 +72,7 @@ public:
 
         while (true) {
             color = Board::change_color(node->last_color);
-            int pos = board.get_1_go();
+            int pos = board.get_1_go(color);
             if (pos == -1) break;
             board.add_piece(pos, color);
             add_history(pos, color);
@@ -101,7 +101,7 @@ public:
 
         Board board;
         Node* leaf;
-        double outcome = 0.0;
+        double outcome;
 
         leaf = selection(board);
         leaf = expansion(leaf, board);
