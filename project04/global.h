@@ -7,6 +7,8 @@
 
 #endif //PROJECT04_GLOBAL_H
 
+#define debug(a) std::clog << #a << " = " << a << std::endl
+
 #define BOARDSIZE 9
 #define NUM_CELL 81
 #define ull unsigned long long

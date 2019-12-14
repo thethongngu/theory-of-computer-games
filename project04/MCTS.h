@@ -98,7 +98,6 @@ public:
     }
 
     void run_once() {
-
         Board board;
         Node* leaf;
         double outcome;
@@ -108,4 +107,6 @@ public:
         outcome = simulation(leaf, board);
         backprop(leaf, outcome);
     }
+
+    void clear_tree();
 };
