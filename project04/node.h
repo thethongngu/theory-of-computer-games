@@ -26,6 +26,16 @@ public:
 
     std::vector<Node*> children;
 
+    Node(Node* _parent, int pos, int color) {
+        last_color = color;
+        last_pos = pos;
+        parent = _parent;
+        children.clear();
+
+        win = count = 0;
+        rave_win = rave_count = 0;
+    }
+
     double get_score() {
         double ucb = (double)win / count + C_BIAS * sqrt(log(parent->count) / count);
         double rave = (double)rave_win / rave_count;
@@ -54,5 +64,21 @@ public:
 
         srand(time(NULL));
         return chosen[std::rand() % chosen.size()];
+    }
+
+    void add_normal_result(double outcome) {
+        double value = 0.0;
+        if (outcome > 0 && last_color == BLACK) value = 1.0;
+        if (outcome < 0 && last_color == WHITE) value = 1.0;
+        win += value;
+        count += 1;
+    }
+
+    void add_rave_result(double outcome) {
+        double value = 0.0;
+        if (outcome > 0 && last_color == BLACK) value = 1.0;
+        if (outcome < 0 && last_color == WHITE) value = 1.0;
+        rave_win += value;
+        rave_count += 1;
     }
 };

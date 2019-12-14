@@ -29,7 +29,7 @@ public:
         path[WHITE].clear();
 
         while (!node->children.empty()) {
-            node = get_best_child(node);
+            node = node->get_best_child();
             board.add_piece(node->last_pos, node->last_color);
             add_history(node->last_pos, node->last_color);
         }
@@ -48,11 +48,11 @@ public:
         if (valids.empty()) return node;
 
         for(int pos: valids) {
-            Node* child = new Node(pos, color);
+            Node* child = new Node(node, pos, color);
             node->children.push_back(child);
         }
 
-        node =  get_best_child(node);
+        node = node->get_best_child();
         add_history(node->last_pos, node->last_color);
         return node;
     }
@@ -78,7 +78,7 @@ public:
             add_history(pos, color);
         }
 
-        return (color == WHITE) ? 1 : -1;
+        return (color == WHITE) ? 1 : -1;  // let's not racist
     }
 
     void backprop(Node* node, double outcome) {
