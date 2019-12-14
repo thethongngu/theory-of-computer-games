@@ -44,6 +44,10 @@ public:
     BitBoard zero_pos[2];
     BitBoard one_pos[2];
 
+    Board() {
+        clear_all();
+    }
+
     int get_root(int i) {
         assert(i >= 0 && i < NUM_CELL);
         while (i != parent[i]) i = parent[i];
@@ -62,6 +66,20 @@ public:
 
     bool is_empty(int pos) {
         return state[WHITE].get(pos) == 0 && state[BLACK].get(pos) == 0;
+    }
+
+    void clear_all() {
+        state[0].clear();
+        state[1].clear();
+        zero_pos[0].clear();
+        zero_pos[1].clear();
+        one_pos[0].clear();
+        one_pos[1].clear();
+        for(int i = 0; i < NUM_CELL; i++) {
+            lib[i].clear();
+            lib_count[i] = 0;
+            parent[i] = i;
+        }
     }
 
     void add_piece(int pos, int color) {
