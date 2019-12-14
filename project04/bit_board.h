@@ -43,11 +43,11 @@ public:
         return (x[i >> 6] & (1LL << (i & 63))) != 0;
     }
 
-    void off(int i) {
+    void off_bit(int i) {
         x[i >> 6] &= ~(1LL << (i & 63));
     }
 
-    void on(int i) {
+    void on_bit(int i) {
         x[i >> 6] |= (1LL << (i & 63));
     }
 

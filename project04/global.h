@@ -10,3 +10,5 @@
 #define BOARDSIZE 9
 #define NUM_CELL 81
 #define ull unsigned long long
+#define BLACK 0
+#define WHITE 1
