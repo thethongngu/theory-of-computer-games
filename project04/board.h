@@ -124,6 +124,8 @@ public:
             zero_pos[xxxxx] |= lib_after;
             one_pos[color] |= lib_after;
         }
+
+        add_history(pos, color);
     }
 
     bool can_move(int pos, int color) {
