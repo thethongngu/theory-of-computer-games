@@ -16,5 +16,7 @@ public:
     int last_pos;
     int last_color;
 
+    Node* parent;
+
     std::vector<Node*> children;
 };

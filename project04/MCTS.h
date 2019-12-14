@@ -16,17 +16,17 @@ class MCTS {
 public:
     Node* root;
 
-    std::vector<int> pos_data;
-    std::vector<int> color_data;
+    std::vector<int> path[2];
 
     void add_history(int pos, int color) {
-        pos_data.push_back(pos);
-        color_data.push_back(color);
+        path[color].push_back(pos);
     }
 
     Node* selection(Board &board) {
         Node* node = root;
         int color = Board::change_color(node->last_color);
+        path[BLACK].clear();
+        path[WHITE].clear();
 
         while (!node->children.empty()) {
             node = get_best_child(node);
@@ -57,7 +57,45 @@ public:
         return node;
     }
 
+    double simulation(Node* node, Board &board) {
 
+        board.recheck_moves();
+        int color;
+
+        while (true) {
+            color = Board::change_color(node->last_color);
+            int pos = board.get_2_go();
+            if (pos == -1) break;
+            board.add_piece(pos, color);
+            add_history(pos, color);
+        }
+
+        while (true) {
+            color = Board::change_color(node->last_color);
+            int pos = board.get_1_go();
+            if (pos == -1) break;
+            board.add_piece(pos, color);
+            add_history(pos, color);
+        }
+
+        return (color == WHITE) ? 1 : -1;
+    }
+
+    void backprop(Node* node, double outcome) {
+        int color;
+
+        while (true) {
+
+            node->add_normal_result(outcome);
+            color = Board::change_color(node->last_color);
+            for(int pos: path[color]) {
+                node->children[pos]->add_rave_result(outcome);
+            }
+
+            if (node->parent == nullptr) break;
+            node = node->parent;
+        }
+    }
 
     void run_once() {
 
