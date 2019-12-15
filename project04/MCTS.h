@@ -10,16 +10,28 @@
 #include <vector>
 #include "global.h"
 #include "node.h"
-#include "board.h"
 
 class MCTS {
 public:
+
     Node* root;
+    Board root_board;
 
     std::vector<int> path[2];
 
     void add_history(int pos, int color) {
         path[color].push_back(pos);
+    }
+
+    void clear_tree() {
+        if (root != nullptr) delete root;
+        root = nullptr;
+        root_board.clear_all();
+    }
+
+    void init_tree(const Board &board, int color) {
+        root = new Node(nullptr, -1, Board::change_color(color));
+        root_board = board;
     }
 
     Node* selection(Board &board) {
@@ -98,15 +110,13 @@ public:
     }
 
     void run_once() {
-        Board board;
         Node* leaf;
         double outcome;
+        Board board = root_board;
 
         leaf = selection(board);
         leaf = expansion(leaf, board);
         outcome = simulation(leaf, board);
         backprop(leaf, outcome);
     }
-
-    void clear_tree();
 };

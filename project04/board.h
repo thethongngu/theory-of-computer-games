@@ -82,8 +82,8 @@ public:
         two_go.clear();
         one_black_go.clear();
         one_white_go.clear();
-        srand(time(NULL))
-        for(int i = 0; i < NUM_CELL; i++) {
+        srand(time(NULL));
+        for (int i = 0; i < NUM_CELL; i++) {
             lib[i].clear();
             lib_count[i] = 0;
             parent[i] = i;
@@ -144,7 +144,7 @@ public:
         one_pos[color].off_bit(pos);  // now 1-Go
         int xxxxx = change_color(color);
 
-        for(int nei: adj_cells[pos]) {
+        for (int nei: adj_cells[pos]) {
             if (is_occupied(nei, color) && lib_count[get_root(nei)] > 1) return true;  // no suicide
             if (is_empty(nei)) return true;  // no suicide
         }
@@ -159,7 +159,7 @@ public:
         one_black_go.clear();
         one_white_go.clear();
 
-        for(int pos = 0; pos < NUM_CELL; pos++) {
+        for (int pos = 0; pos < NUM_CELL; pos++) {
             if (!is_empty(pos)) continue;
             bool can_black = can_move(pos, BLACK);
             bool can_white = can_move(pos, WHITE);

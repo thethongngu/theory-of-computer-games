@@ -81,4 +81,9 @@ public:
         rave_win += value;
         rave_count += 1;
     }
+
+    ~Node() {
+        for(Node* child: children) delete child;
+        children.clear();
+    }
 };
