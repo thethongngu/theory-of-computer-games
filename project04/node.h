@@ -72,14 +72,14 @@ public:
 
         std::vector<Node *> chosen;
         double curr_score = children[0]->get_score();
-        chosen.push_back(children[0]);
 
         for (Node *child: children) {
-            double score = child->get_score();
-            if (score - curr_score > -0.0001) {  // score >= curr_score
-                if (score - curr_score > 0.0001) {  // score > curr_score
+            double new_score = child->get_score();
+            if (new_score - curr_score > -0.000001) {  // new_score >= curr_score
+                if (new_score - curr_score > 0.000001) {  // new_score > curr_score
                     chosen.clear();
                     chosen.push_back(child);
+                    curr_score = new_score;
                 } else {
                     chosen.push_back(child);
                 }
