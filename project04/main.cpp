@@ -30,6 +30,7 @@ std::array<std::string, 11> valid_coms = {
         "list_commands",
         "quit",
         "boardsize",
+        "showboard",
         "clear_board",
         "play",
         "genmove"
@@ -58,14 +59,19 @@ std::string to_lowercase_helper(const std::string &s) {
 
 int parse_color_helper(const std::string &arg) {
     auto token = to_lowercase_helper(arg);
-    return (token[0] == 'b') ? BLACK : WHITE;
+    if (token[0] == 'b') return BLACK;
+    if (token[0] == 'w') return WHITE;
+    return -1;
 }
 
 int parse_pos_helper(const std::string &arg) {
     auto token = to_lowercase_helper(arg);
     int row = token[1] - '1';
     int col = token[0] - 'a';
-    if (col == 9) col = 8;  // fucking j :)
+
+    if (col == 9) col = 8;   // fucking j :)
+    if (token[0] == 'i') return -1;
+
     return row * BOARDSIZE + col;
 }
 
@@ -138,6 +144,8 @@ bool make_input_move(Board &board, const std::vector<std::string> &args) {
     int color = parse_color_helper(args[0]);
     int pos = parse_pos_helper(args[1]);
 
+    if (color != BLACK && color != WHITE) return -1;
+    if (pos < 0 || pos >= NUM_CELL) return -1;
     if (!board.can_move(pos, color)) return -1;
 
     board.add_piece(pos, color);
@@ -152,7 +160,10 @@ bool make_AI_move(const Board &board, int color) {
 
     Node* child = tree.root->get_best_child();
     if (child == nullptr) return false;
-    return child->last_pos;
+
+    int res = child->last_pos;
+    tree.clear_tree();
+    return res;
 }
 
 /** ---------------------- MAIN --------------------------- */
@@ -190,6 +201,10 @@ void exec_command(const std::string &raw_command) {
     } else if (head == "boardsize") {
         response = get_response(true, command, "");
 
+    } else if (head == "showboard") {
+        response = get_response(true, command, "");
+        mainboard.print();
+
     } else if (head == "quit") {
         is_quit = true;
         response = get_response(true, command, "");
@@ -206,6 +221,11 @@ void exec_command(const std::string &raw_command) {
         // TODO: assume that args always true because the protocol don't specify this
         int color = parse_color_helper(args[0]);
         int pos = make_AI_move(mainboard, color);
+
+        if (color != WHITE && color != BLACK) {
+            response = get_response(false, command, "wrong color syntax");
+        }
+
         if (pos != -1) {
             std::string move = get_move_string(pos);
             response = get_response(true, command, move);
@@ -223,6 +243,7 @@ void exec_command(const std::string &raw_command) {
 
 void init_program() {
     is_quit = false;
+    Board::generate_all_adjs();
     mainboard.clear_all();
     tree.clear_tree();
 }
@@ -236,6 +257,7 @@ int main() {
     while (!is_quit) {
         getline(std::cin, raw_command);
         exec_command(raw_command);
+        mainboard.print();
     }
 
     return 0;

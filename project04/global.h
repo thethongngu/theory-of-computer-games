@@ -9,6 +9,8 @@
 
 #define debug(a) std::clog << #a << " = " << a << std::endl
 
+//#define NDEBUG
+
 #define BOARDSIZE 9
 #define NUM_CELL 81
 #define ull unsigned long long

@@ -31,6 +31,14 @@ public:
         }
     }
 
+    static int pop_at(std::vector<int> &a, int pos) {
+        int res = a[pos];
+        a[pos] = a.back();
+        a.pop_back();
+
+        return res;
+    }
+
     static int change_color(int color) {
         assert(color == BLACK || color == WHITE);
         if (color == BLACK) return WHITE; else return BLACK;
@@ -50,6 +58,19 @@ public:
 
     Board() {
         clear_all();
+    }
+
+    void print() {
+        std::clog << " ";
+        for (int i = 0; i < BOARDSIZE - 1; i++) std::clog << " " << (char) (i + 'a');
+        std::clog << " j";
+        for (int i = 0; i < NUM_CELL; i++) {
+            if (i % BOARDSIZE == 0) std::clog << std::endl << i / BOARDSIZE + 1;
+            if (state[BLACK].get(i) == 1) std::clog << " B";
+            else if (state[WHITE].get(i) == 1) std::clog << " W";
+            else std::clog << " +";
+        }
+        std::clog << std::endl << std::endl;
     }
 
     int get_root(int i) {
@@ -176,16 +197,21 @@ public:
 
     int get_2_go() {
         if (two_go.empty()) return -1;
-        return two_go[std::rand() % two_go.size()];
+        int pos = std::rand() % two_go.size();
+        return pop_at(two_go, pos);
     }
 
     int get_1_go(int color) {
         if (color == BLACK) {
             if (one_black_go.empty()) return -1;
-            return one_black_go[std::rand() % one_black_go.size()];
+            int pos = std::rand() % one_black_go.size();
+            return pop_at(one_black_go, pos);
         } else {
             if (one_white_go.empty()) return -1;
-            return one_white_go[std::rand() % one_white_go.size()];
+            int pos = std::rand() % one_white_go.size();
+            return pop_at(one_white_go, pos);
         }
     }
 };
+
+std::vector<int> Board::adj_cells[NUM_CELL];
