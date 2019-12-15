@@ -37,6 +37,19 @@ public:
         total_node = 1;
     }
 
+    Node* get_child_move() {
+        if (root->children.size() == 0) return nullptr;
+        Node* best_child = root->children[0];
+
+        for(Node* child: root->children) {
+            if (child->count > best_child->count) {
+                best_child = child;
+            }
+        }
+
+        return best_child;
+    }
+
     Node* selection(Board &board) {
         Node* node = root;
         int color = Board::change_color(node->last_color);
@@ -112,8 +125,7 @@ public:
         while (true) {
 
             node->add_normal_result(outcome);
-            color = Board::change_color(node->last_color);
-            rave_color = Board::change_color(color);
+            rave_color = Board::change_color(node->last_color);
 
             for(int pos: path[rave_color]) {
                 int pos_child = node->child_pos[pos];

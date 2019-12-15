@@ -48,6 +48,7 @@ public:
         debug(count);
         debug(rave_mean);
         debug(rave_count);
+        if (parent != nullptr) debug(get_score());
     }
 
     void print_tree(int d) {
@@ -75,8 +76,8 @@ public:
 
         for (Node *child: children) {
             double new_score = child->get_score();
-            if (new_score - curr_score > -0.000001) {  // new_score >= curr_score
-                if (new_score - curr_score > 0.000001) {  // new_score > curr_score
+            if (new_score - curr_score > -EPS) {  // new_score >= curr_score
+                if (new_score - curr_score > EPS) {  // new_score > curr_score
                     chosen.clear();
                     chosen.push_back(child);
                     curr_score = new_score;
@@ -102,7 +103,7 @@ public:
         double value = 0.0;
         if (outcome > 0 && last_color == BLACK) value = 1.0;
         if (outcome < 0 && last_color == WHITE) value = 1.0;
-        rave_mean = (rave_mean + rave_count + value) / (rave_count + 1);
+        rave_mean = (rave_mean * rave_count + value) / (rave_count + 1);
         rave_count += 1;
     }
 
