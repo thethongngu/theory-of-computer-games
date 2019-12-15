@@ -159,7 +159,7 @@ int make_AI_move(Board &board, int color) {
     }
 
     Node* child = tree.root->get_best_child();
-    if (child == nullptr) return false;
+    if (child == nullptr) return -1;
 
     int pos = child->last_pos;
     board.add_piece(pos, color);
@@ -259,7 +259,7 @@ int main() {
     while (!is_quit) {
         getline(std::cin, raw_command);
         exec_command(raw_command);
-        mainboard.print();
+//        mainboard.print();
     }
 
     return 0;

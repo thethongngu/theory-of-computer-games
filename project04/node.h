@@ -19,40 +19,42 @@ public:
     int last_pos;
     int last_color;
 
-    int win, count;
-    int rave_win, rave_count;
+    double count, mean;
+    double rave_count, rave_mean;
 
-    Node* parent;
+    Node *parent;
 
-    std::vector<Node*> children;
+    std::vector<Node *> children;
     int child_pos[NUM_CELL];
 
-    Node(Node* _parent, int pos, int color) {
+    Node(Node *_parent, int pos, int color) {
         last_color = color;
         last_pos = pos;
         parent = _parent;
         children.clear();
-        for(int i = 0; i < NUM_CELL; i++) child_pos[i] = -1;
+        for (int i = 0; i < NUM_CELL; i++) child_pos[i] = -1;
 
-        win = count = 0;
-        rave_win = rave_count = 0;
+        mean = 0.5;
+        count = 0.0;
+        rave_mean = 0.5;
+        rave_count = 20;
     }
 
     double get_score() {
-        double ucb = (double)win / count + C_BIAS * sqrt(log(parent->count) / count);
-        double rave = (double)rave_win / rave_count;
-        double beta = (double)rave_count / (count + rave_count + 4 * count * rave_count * SQR_B);
-        return (1 - beta) * ucb + beta * rave;
+        return (rave_mean * rave_count + mean * count +
+                C_BIAS * sqrt(log(parent->count) * count)
+               )
+               / (count + rave_count);
     }
 
-    Node* get_best_child() {
+    Node *get_best_child() {
         if (children.empty()) return nullptr;
 
-        std::vector<Node*> chosen;
+        std::vector<Node *> chosen;
         double curr_score = children[0]->get_score();
         chosen.push_back(children[0]);
 
-        for(Node* child: children) {
+        for (Node *child: children) {
             double score = child->get_score();
             if (score - curr_score > -0.0001) {  // score >= curr_score
                 if (score - curr_score > 0.0001) {  // score > curr_score
@@ -72,7 +74,7 @@ public:
         double value = 0.0;
         if (outcome > 0 && last_color == BLACK) value = 1.0;
         if (outcome < 0 && last_color == WHITE) value = 1.0;
-        win += value;
+        mean = (mean * count + value) / (count + 1);
         count += 1;
     }
 
@@ -80,12 +82,12 @@ public:
         double value = 0.0;
         if (outcome > 0 && last_color == BLACK) value = 1.0;
         if (outcome < 0 && last_color == WHITE) value = 1.0;
-        rave_win += value;
+        rave_mean = (rave_mean + rave_count + value) / (rave_count + 1);
         rave_count += 1;
     }
 
     ~Node() {
-        for(Node* child: children) delete child;
+        for (Node *child: children) delete child;
         children.clear();
     }
 };
