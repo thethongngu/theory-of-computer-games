@@ -81,7 +81,9 @@ public:
 
         while (true) {
             int pos = board.get_2_go();
+
             if (pos == -1) break;
+            if (!board.can_move(pos, color)) continue;
 
             board.add_piece(pos, color);
             add_history(pos, color);
@@ -90,7 +92,9 @@ public:
 
         while (true) {
             int pos = board.get_1_go(color);
+
             if (pos == -1) break;
+            if (!board.can_move(pos, color)) continue;
 
             board.add_piece(pos, color);
             add_history(pos, color);

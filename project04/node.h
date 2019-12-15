@@ -50,11 +50,13 @@ public:
         debug(rave_count);
     }
 
-    void print_tree() {
+    void print_tree(int d) {
+
         print_info();
+        if (d == 1) return;
         std::clog << " ========================= Child =================== " << std::endl;
         for(Node* child: children) {
-            child->print_tree();
+            child->print_tree(d - 1);
         }
         std::clog << " ====================== End Child =================== " << std::endl;
     }
