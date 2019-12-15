@@ -40,11 +40,29 @@ public:
         rave_count = 20;
     }
 
+    void print_info() {
+        std::clog << " ========= Node ======== " << std::endl;
+        debug(children.size());
+        debug(last_pos);
+        debug(mean);
+        debug(count);
+        debug(rave_mean);
+        debug(rave_count);
+    }
+
+    void print_tree() {
+        print_info();
+        std::clog << " ========================= Child =================== " << std::endl;
+        for(Node* child: children) {
+            child->print_tree();
+        }
+        std::clog << " ====================== End Child =================== " << std::endl;
+    }
+
     double get_score() {
-        return (rave_mean * rave_count + mean * count +
-                C_BIAS * sqrt(log(parent->count) * count)
-               )
-               / (count + rave_count);
+        int p_count = (parent->count == 0) ? 1 : parent->count;
+        double res = (rave_mean * rave_count + mean * count + C_BIAS * sqrt(log(p_count) * count)) / (count + rave_count);
+        return res;
     }
 
     Node *get_best_child() {

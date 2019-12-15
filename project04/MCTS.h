@@ -16,6 +16,7 @@ public:
 
     Node* root;
     Board root_board;
+    int total_node;
 
     std::vector<int> path[2];
 
@@ -27,11 +28,13 @@ public:
         if (root != nullptr) delete root;
         root = nullptr;
         root_board.clear_all();
+        total_node = 0;
     }
 
     void init_tree(const Board &board, int color) {
         root = new Node(nullptr, -1, Board::change_color(color));
         root_board = board;
+        total_node = 1;
     }
 
     Node* selection(Board &board) {
@@ -61,6 +64,7 @@ public:
 
         for(int pos: valids) {
             Node* child = new Node(node, pos, color);
+            total_node++;
             node->children.push_back(child);
             node->child_pos[pos] = node->children.size() - 1;
         }
@@ -73,35 +77,41 @@ public:
     double simulation(Node* node, Board &board) {
 
         board.recheck_moves();
-        int color = node->last_color;
+        int color = Board::change_color(node->last_color);
 
         while (true) {
-            color = Board::change_color(color);
             int pos = board.get_2_go();
             if (pos == -1) break;
+
             board.add_piece(pos, color);
             add_history(pos, color);
+            color = Board::change_color(color);
         }
 
         while (true) {
-            color = Board::change_color(color);
             int pos = board.get_1_go(color);
             if (pos == -1) break;
+
             board.add_piece(pos, color);
             add_history(pos, color);
+            color = Board::change_color(color);
         }
 
         return (color == WHITE) ? 1 : -1;  // let's not racist
     }
 
     void backprop(Node* node, double outcome) {
+
         int color;
+        int rave_color;
 
         while (true) {
 
             node->add_normal_result(outcome);
             color = Board::change_color(node->last_color);
-            for(int pos: path[color]) {
+            rave_color = Board::change_color(color);
+
+            for(int pos: path[rave_color]) {
                 int pos_child = node->child_pos[pos];
                 if (pos_child == -1) continue;
                 node->children[pos_child]->add_rave_result(outcome);

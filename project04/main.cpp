@@ -158,10 +158,17 @@ int make_AI_move(Board &board, int color) {
         tree.run_once();
     }
 
+    if (tree.root->children.size() <= 3) {
+        debug(tree.total_node);
+        tree.root->print_tree();
+    }
+
     Node* child = tree.root->get_best_child();
     if (child == nullptr) return -1;
 
     int pos = child->last_pos;
+//    child->print_info();
+
     board.add_piece(pos, color);
     tree.clear_tree();
 
