@@ -144,15 +144,15 @@ bool make_input_move(Board &board, const std::vector<std::string> &args) {
     int color = parse_color_helper(args[0]);
     int pos = parse_pos_helper(args[1]);
 
-    if (color != BLACK && color != WHITE) return -1;
-    if (pos < 0 || pos >= NUM_CELL) return -1;
-    if (!board.can_move(pos, color)) return -1;
+    if (color != BLACK && color != WHITE) return false;
+    if (pos < 0 || pos >= NUM_CELL) return false;
+    if (!board.can_move(pos, color)) return false;
 
     board.add_piece(pos, color);
     return true;
 }
 
-bool make_AI_move(const Board &board, int color) {
+int make_AI_move(Board &board, int color) {
     tree.init_tree(board, color);
     for(int i = 0; i < SIM_TIMES; i++) {
         tree.run_once();
@@ -161,9 +161,11 @@ bool make_AI_move(const Board &board, int color) {
     Node* child = tree.root->get_best_child();
     if (child == nullptr) return false;
 
-    int res = child->last_pos;
+    int pos = child->last_pos;
+    board.add_piece(pos, color);
     tree.clear_tree();
-    return res;
+
+    return pos;
 }
 
 /** ---------------------- MAIN --------------------------- */

@@ -62,6 +62,7 @@ public:
         for(int pos: valids) {
             Node* child = new Node(node, pos, color);
             node->children.push_back(child);
+            node->child_pos[pos] = node->children.size() - 1;
         }
 
         node = node->get_best_child();
@@ -72,10 +73,10 @@ public:
     double simulation(Node* node, Board &board) {
 
         board.recheck_moves();
-        int color;
+        int color = node->last_color;
 
         while (true) {
-            color = Board::change_color(node->last_color);
+            color = Board::change_color(color);
             int pos = board.get_2_go();
             if (pos == -1) break;
             board.add_piece(pos, color);
@@ -83,7 +84,7 @@ public:
         }
 
         while (true) {
-            color = Board::change_color(node->last_color);
+            color = Board::change_color(color);
             int pos = board.get_1_go(color);
             if (pos == -1) break;
             board.add_piece(pos, color);
@@ -101,7 +102,9 @@ public:
             node->add_normal_result(outcome);
             color = Board::change_color(node->last_color);
             for(int pos: path[color]) {
-                node->children[pos]->add_rave_result(outcome);
+                int pos_child = node->child_pos[pos];
+                if (pos_child == -1) continue;
+                node->children[pos_child]->add_rave_result(outcome);
             }
 
             if (node->parent == nullptr) break;

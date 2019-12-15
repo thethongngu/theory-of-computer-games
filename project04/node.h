@@ -25,12 +25,14 @@ public:
     Node* parent;
 
     std::vector<Node*> children;
+    int child_pos[NUM_CELL];
 
     Node(Node* _parent, int pos, int color) {
         last_color = color;
         last_pos = pos;
         parent = _parent;
         children.clear();
+        for(int i = 0; i < NUM_CELL; i++) child_pos[i] = -1;
 
         win = count = 0;
         rave_win = rave_count = 0;
