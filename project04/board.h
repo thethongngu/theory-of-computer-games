@@ -31,14 +31,6 @@ public:
         }
     }
 
-    static int pop_at(std::vector<int> &a, int pos) {
-        int res = a[pos];
-        a[pos] = a.back();
-        a.pop_back();
-
-        return res;
-    }
-
     static int change_color(int color) {
         assert(color == BLACK || color == WHITE);
         if (color == BLACK) return WHITE; else return BLACK;
@@ -54,7 +46,8 @@ public:
     BitBoard zero_pos[2];
     BitBoard one_pos[2];
 
-    std::vector<int> two_go, one_black_go, one_white_go;
+    int two_go[NUM_CELL], one_black_go[NUM_CELL], one_white_go[NUM_CELL];
+    int ntwo, none_black, none_white;
 
     Board() {
         clear_all();
@@ -100,9 +93,7 @@ public:
         zero_pos[1].clear();
         one_pos[0].clear();
         one_pos[1].clear();
-        two_go.clear();
-        one_black_go.clear();
-        one_white_go.clear();
+        ntwo = none_white = none_black = 0;
         srand(time(NULL));
         for (int i = 0; i < NUM_CELL; i++) {
             lib[i].clear();
@@ -176,9 +167,7 @@ public:
 
     void recheck_moves() {
 
-        two_go.clear();
-        one_black_go.clear();
-        one_white_go.clear();
+        ntwo = none_black = none_white = 0;
 
         for (int pos = 0; pos < NUM_CELL; pos++) {
             if (!is_empty(pos)) continue;
@@ -187,35 +176,41 @@ public:
             if (!can_black && !can_white) continue;
 
             if (can_black && can_white) {
-                two_go.push_back(pos);
+                two_go[ntwo++] = pos;
             } else {
-                if (can_black) one_black_go.push_back(pos);
-                else one_white_go.push_back(pos);
+                if (can_black) one_black_go[none_black++] = pos;
+                else one_white_go[none_white++] = pos;
             }
         }
     }
 
     int get_2_go() {
-        if (two_go.empty()) return -1;
-        int pos = std::rand() % two_go.size();
-        return pop_at(two_go, pos);
+        if (ntwo == 0) return -1;
+        int pos = std::rand() % ntwo;
+        int res = two_go[pos];  two_go[pos] = two_go[ntwo - 1];  ntwo--;
+
+        return res;
     }
 
     void add_1_go(int pos, int color) {
-        if (color == BLACK) one_black_go.push_back(pos);
-        else one_white_go.push_back(pos);
+        if (color == BLACK) one_black_go[none_black++] = pos;
+        else one_white_go[none_white++] = pos;
     }
 
     int get_1_go(int color) {
+        int res;
+
         if (color == BLACK) {
-            if (one_black_go.empty()) return -1;
-            int pos = std::rand() % one_black_go.size();
-            return pop_at(one_black_go, pos);
+            if (none_black == 0) return -1;
+            int pos = std::rand() % none_black;
+            res = one_black_go[pos];  one_black_go[pos] = one_black_go[none_black - 1];  none_black--;
         } else {
-            if (one_white_go.empty()) return -1;
-            int pos = std::rand() % one_white_go.size();
-            return pop_at(one_white_go, pos);
+            if (none_white == 0) return -1;
+            int pos = std::rand() % none_white;
+            res = one_white_go[pos];  one_white_go[pos] = one_white_go[none_white - 1];  none_white--;
         }
+
+        return res;
     }
 };
 

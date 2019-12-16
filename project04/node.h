@@ -21,6 +21,7 @@ public:
 
     double count, mean;
     double rave_count, rave_mean;
+    double score;
 
     Node *parent;
 
@@ -38,6 +39,7 @@ public:
         count = 0.0;
         rave_mean = 0.5;
         rave_count = 20;
+        score = -1;
     }
 
     void print_info() {
@@ -48,7 +50,6 @@ public:
         debug(count);
         debug(rave_mean);
         debug(rave_count);
-        if (parent != nullptr) debug(get_score());
     }
 
     void print_tree(int d) {
@@ -63,8 +64,9 @@ public:
     }
 
     double get_score() {
-        double res = (rave_mean * rave_count + mean * count + C_BIAS * sqrt(log(parent->count) * count)) / (count + rave_count);
-        return res;
+        if (score != -1) return score;
+        score = (rave_mean * rave_count + mean * count + C_BIAS * sqrt(log(parent->count) * count)) / (count + rave_count);
+        return score;
     }
 
     Node *get_best_child() {
@@ -96,6 +98,7 @@ public:
         if (outcome < 0 && last_color == WHITE) value = 1.0;
         mean = (mean * count + value) / (count + 1);
         count += 1;
+        score = -1;
     }
 
     void add_rave_result(double outcome) {
@@ -104,6 +107,7 @@ public:
         if (outcome < 0 && last_color == WHITE) value = 1.0;
         rave_mean = (rave_mean * rave_count + value) / (rave_count + 1);
         rave_count += 1;
+        score = -1;
     }
 
     ~Node() {
