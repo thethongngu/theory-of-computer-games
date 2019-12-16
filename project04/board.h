@@ -201,6 +201,11 @@ public:
         return pop_at(two_go, pos);
     }
 
+    void add_1_go(int pos, int color) {
+        if (color == BLACK) one_black_go.push_back(pos);
+        else one_white_go.push_back(pos);
+    }
+
     int get_1_go(int color) {
         if (color == BLACK) {
             if (one_black_go.empty()) return -1;

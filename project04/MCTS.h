@@ -96,11 +96,20 @@ public:
             int pos = board.get_2_go();
 
             if (pos == -1) break;
-            if (!board.can_move(pos, color)) continue;
 
-            board.add_piece(pos, color);
-            add_history(pos, color);
-            color = Board::change_color(color);
+            bool black_can = board.can_move(pos, BLACK);
+            bool white_can = board.can_move(pos, WHITE);
+
+            if (board.can_move(pos, color)) {
+                path[color].push_back(pos);
+                board.add_piece(pos, color);
+                add_history(pos, color);
+                color = Board::change_color(color);
+            }
+            else {
+                if (white_can && !black_can) board.add_1_go(pos, WHITE);
+                else board.add_1_go(pos, BLACK);
+            }
         }
 
         while (true) {
