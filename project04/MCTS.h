@@ -18,10 +18,11 @@ public:
     Board root_board;
     int total_node;
 
-    std::vector<int> path[2];
+    int path[2][NUM_CELL];
+    int num_path[2];
 
     void add_history(int pos, int color) {
-        path[color].push_back(pos);
+        path[color][num_path[color]++] = pos;
     }
 
     void clear_tree() {
@@ -53,8 +54,7 @@ public:
     Node* selection(Board &board) {
         Node* node = root;
         int color = Board::change_color(node->last_color);
-        path[BLACK].clear();
-        path[WHITE].clear();
+        num_path[BLACK] = num_path[WHITE] = 0;
 
         while (!node->children.empty()) {
             node = node->get_best_child();

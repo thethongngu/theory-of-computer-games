@@ -7,7 +7,6 @@
 
 #endif //PROJECT04_BOARD_H
 
-#include <vector>
 #include <cassert>
 #include <ctime>
 #include <cstdlib>
