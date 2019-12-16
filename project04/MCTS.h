@@ -67,6 +67,8 @@ public:
 
     Node* expansion(Node* node, Board &board) {
 
+        if (node->count == 0) return node;  // simulation first time
+
         int color = Board::change_color(node->last_color);
         std::vector<int> valids;
 
@@ -83,6 +85,7 @@ public:
         }
 
         node = node->get_best_child();
+        board.add_piece(node->last_pos, node->last_color);
         add_history(node->last_pos, node->last_color);
         return node;
     }
@@ -101,14 +104,13 @@ public:
             bool white_can = board.can_move(pos, WHITE);
 
             if (board.can_move(pos, color)) {
-                path[color].push_back(pos);
                 board.add_piece(pos, color);
                 add_history(pos, color);
                 color = Board::change_color(color);
             }
             else {
                 if (white_can && !black_can) board.add_1_go(pos, WHITE);
-                else board.add_1_go(pos, BLACK);
+                else if (!white_can && black_can) board.add_1_go(pos, BLACK);
             }
         }
 
@@ -119,7 +121,6 @@ public:
             if (!board.can_move(pos, color)) continue;
 
             board.add_piece(pos, color);
-            add_history(pos, color);
             color = Board::change_color(color);
         }
 
