@@ -55,7 +55,6 @@ public:
 
     Node* selection(Board &board) {
         Node* node = root;
-        int color = Board::change_color(node->last_color);
         num_path[BLACK] = num_path[WHITE] = 0;
 
         while (node->num_child > 0) {
@@ -137,9 +136,7 @@ public:
 
     void backprop(Node* node, double outcome) {
 
-        int color;
         int rave_color;
-
         while (true) {
 
             node->add_normal_result(outcome);

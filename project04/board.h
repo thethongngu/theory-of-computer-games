@@ -153,7 +153,6 @@ public:
         if (one_pos[color].get(pos) == 0) return true;  // 2-Go
 
         one_pos[color].off_bit(pos);  // now 1-Go
-        int xxxxx = change_color(color);
 
         for (int nei: adj_cells[pos]) {
             if (is_occupied(nei, color) && lib_count[get_root(nei)] > 1) return true;  // no suicide

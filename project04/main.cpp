@@ -266,7 +266,6 @@ int main() {
     while (!is_quit) {
         getline(std::cin, raw_command);
         exec_command(raw_command);
-//        mainboard.print();
     }
 
     return 0;
