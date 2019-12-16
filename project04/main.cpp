@@ -154,19 +154,19 @@ bool make_input_move(Board &board, const std::vector<std::string> &args) {
 
 int make_AI_move(Board &board, int color) {
     tree.init_tree(board, color);
-    for(int i = 0; i < SIM_TIMES; i++) {
+    for (int i = 0; i < SIM_TIMES; i++) {
         tree.run_once();
     }
 
-    debug(tree.total_node);
+//    debug(tree.total_node);
 //    std::clog << " ========= ROOT =========" << std::endl;
 //    tree.root->print_tree(2);
 
-    Node* child = tree.get_child_move();
+    Node *child = tree.get_child_move();
     if (child == nullptr) return -1;
 
-    std::clog << " ========= Best child =========" << std::endl;
-    child->print_tree(1);
+//    std::clog << " ========= Best child =========" << std::endl;
+//    child->print_tree(1);
 
     int pos = child->last_pos;
     board.add_piece(pos, color);
@@ -229,19 +229,17 @@ void exec_command(const std::string &raw_command) {
     } else if (head == "genmove") {
         // TODO: assume that args always true because the protocol don't specify this
         int color = parse_color_helper(args[0]);
-        int pos = make_AI_move(mainboard, color);
-
         if (color != WHITE && color != BLACK) {
             response = get_response(false, command, "wrong color syntax");
-        }
-
-        if (pos != -1) {
-            std::string move = get_move_string(pos);
-            response = get_response(true, command, move);
         } else {
-            response = get_response(true, command, "resign");
+            int pos = make_AI_move(mainboard, color);
+            if (pos != -1) {
+                std::string move = get_move_string(pos);
+                response = get_response(true, command, move);
+            } else {
+                response = get_response(true, command, "resign");
+            }
         }
-
     } else {
         response = get_response(false, command, "unknown command");
     }
