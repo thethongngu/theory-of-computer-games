@@ -159,21 +159,16 @@ int make_AI_move(Board &board, int color) {
     }
 
     debug(tree.total_node);
-    std::clog << " ========= ROOT =========" << std::endl;
-    tree.root->print_tree(2);
+//    std::clog << " ========= ROOT =========" << std::endl;
+//    tree.root->print_tree(2);
 
     Node* child = tree.get_child_move();
     if (child == nullptr) return -1;
+
     std::clog << " ========= Best child =========" << std::endl;
     child->print_tree(1);
 
     int pos = child->last_pos;
-
-//    if (child->children.size() <= 5) {
-//        std::clog << "Best child!" << std::endl;
-//        child->print_tree(100);
-//    }
-
     board.add_piece(pos, color);
     tree.clear_tree();
 
