@@ -139,7 +139,8 @@ public:
             node->add_normal_result(outcome);
             rave_color = Board::change_color(node->last_color);
 
-            for(int pos: path[rave_color]) {
+            for(int i = 0; i < num_path[rave_color]; i++) {
+                int pos = path[rave_color][i];
                 int pos_child = node->child_pos[pos];
                 if (pos_child == -1) continue;
                 node->children[pos_child]->add_rave_result(outcome);
