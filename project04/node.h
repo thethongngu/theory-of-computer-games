@@ -63,8 +63,7 @@ public:
     }
 
     double get_score() {
-        int p_count = (parent->count == 0) ? 1 : parent->count;
-        double res = (rave_mean * rave_count + mean * count + C_BIAS * sqrt(log(p_count) * count)) / (count + rave_count);
+        double res = (rave_mean * rave_count + mean * count + C_BIAS * sqrt(log(parent->count) * count)) / (count + rave_count);
         return res;
     }
 
