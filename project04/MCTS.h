@@ -70,18 +70,20 @@ public:
         if (node->count == 0) return node;  // simulation first time
 
         int color = Board::change_color(node->last_color);
-        std::vector<int> valids;
+        int num_valid = 0;
 
         for(int i = 0; i < NUM_CELL; i++) {
-            if (board.can_move(i, color)) valids.push_back(i);
+            if (board.can_move(i, color)) num_valid++;
         }
-        if (valids.empty()) return node;
+        if (num_valid == 0) return node;
 
-        for(int pos: valids) {
-            Node* child = new Node(node, pos, color);
-            total_node++;
-            node->children.push_back(child);
-            node->child_pos[pos] = node->children.size() - 1;
+        for(int pos = 0; pos < NUM_CELL; pos++) {
+            if (board.can_move(pos, color)) {
+                Node *child = new Node(node, pos, color);
+                total_node++;
+                node->children.push_back(child);
+                node->child_pos[pos] = node->children.size() - 1;
+            }
         }
 
         node = node->get_best_child();
