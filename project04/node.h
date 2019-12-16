@@ -7,7 +7,6 @@
 
 #endif //PROJECT04_NODE_H
 
-#include <vector>
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
@@ -24,15 +23,20 @@ public:
     double score;
 
     Node *parent;
-
-    std::vector<Node *> children;
+    Node* children;
     int child_pos[NUM_CELL];
+    int num_child;
 
-    Node(Node *_parent, int pos, int color) {
+    Node() {
+
+    }
+
+    void init_node(Node *_parent, int pos, int color) {
         last_color = color;
         last_pos = pos;
         parent = _parent;
-        children.clear();
+        children = nullptr;
+        num_child = 0;
         for (int i = 0; i < NUM_CELL; i++) child_pos[i] = -1;
 
         mean = 0.5;
@@ -44,7 +48,7 @@ public:
 
     void print_info() {
         std::clog << " ========= Node ======== " << std::endl;
-        debug(children.size());
+        debug(num_child);
         debug(last_pos);
         debug(mean);
         debug(count);
@@ -57,8 +61,8 @@ public:
         print_info();
         if (d == 1) return;
         std::clog << " ========================= Child =================== " << std::endl;
-        for(Node* child: children) {
-            child->print_tree(d - 1);
+        for(int i = 0; i < num_child; i++) {
+            (children + i)->print_tree(d - 1);
         }
         std::clog << " ====================== End Child =================== " << std::endl;
     }
@@ -70,26 +74,29 @@ public:
     }
 
     Node *get_best_child() {
-        if (children.empty()) return nullptr;
+        if (num_child == 0) return nullptr;
 
-        std::vector<Node *> chosen;
-        double curr_score = children[0]->get_score();
+        Node* chosen[NUM_CELL];
+        int num_choose = 0;
+        double curr_score = (children + 0)->get_score();
+        chosen[num_choose++] = (children + 0);
 
-        for (Node *child: children) {
+        for(int i = 1; i < num_child; i++) {
+            Node* child = (children + i);
             double new_score = child->get_score();
             if (new_score - curr_score > -EPS) {  // new_score >= curr_score
                 if (new_score - curr_score > EPS) {  // new_score > curr_score
-                    chosen.clear();
-                    chosen.push_back(child);
+                    chosen[0] = child;
+                    num_choose = 1;
                     curr_score = new_score;
                 } else {
-                    chosen.push_back(child);
+                    chosen[num_choose++] = child;
                 }
             }
         }
 
         srand(time(NULL));
-        return chosen[std::rand() % chosen.size()];
+        return chosen[std::rand() % num_choose];
     }
 
     void add_normal_result(double outcome) {
@@ -111,7 +118,9 @@ public:
     }
 
     ~Node() {
-        for (Node *child: children) delete child;
-        children.clear();
+        if (children != nullptr) {
+            delete[] children;
+            children = nullptr;
+        }
     }
 };

@@ -33,16 +33,18 @@ public:
     }
 
     void init_tree(const Board &board, int color) {
-        root = new Node(nullptr, -1, Board::change_color(color));
+        root = new Node();
+        root->init_node(nullptr, -1, Board::change_color(color));
         root_board = board;
         total_node = 1;
     }
 
     Node* get_child_move() {
-        if (root->children.size() == 0) return nullptr;
-        Node* best_child = root->children[0];
+        if (root->num_child == 0) return nullptr;
+        Node* best_child = (root->children + 0);
 
-        for(Node* child: root->children) {
+        for(int i = 0; i < root->num_child; i++) {
+            Node *child = (root->children + i);
             if (child->count > best_child->count) {
                 best_child = child;
             }
@@ -56,7 +58,7 @@ public:
         int color = Board::change_color(node->last_color);
         num_path[BLACK] = num_path[WHITE] = 0;
 
-        while (!node->children.empty()) {
+        while (node->num_child > 0) {
             node = node->get_best_child();
             board.add_piece(node->last_pos, node->last_color);
             add_history(node->last_pos, node->last_color);
@@ -77,12 +79,16 @@ public:
         }
         if (num_valid == 0) return node;
 
+        node->children = new Node[num_valid];
+        int child_id = 0;
+
         for(int pos = 0; pos < NUM_CELL; pos++) {
             if (board.can_move(pos, color)) {
-                Node *child = new Node(node, pos, color);
+                node->child_pos[pos] = child_id;
+                (node->children + child_id)->init_node(node, pos, color);
                 total_node++;
-                node->children.push_back(child);
-                node->child_pos[pos] = node->children.size() - 1;
+                node->num_child++;
+                child_id++;
             }
         }
 
@@ -141,9 +147,9 @@ public:
 
             for(int i = 0; i < num_path[rave_color]; i++) {
                 int pos = path[rave_color][i];
-                int pos_child = node->child_pos[pos];
-                if (pos_child == -1) continue;
-                node->children[pos_child]->add_rave_result(outcome);
+                int child_id = node->child_pos[pos];
+                if (child_id == -1) continue;
+                (node->children + child_id)->add_rave_result(outcome);
             }
 
             if (node->parent == nullptr) break;
