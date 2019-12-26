@@ -7,7 +7,6 @@
 
 #endif //PROJECT04_MCTS_H
 
-#include <vector>
 #include "global.h"
 #include "node.h"
 
