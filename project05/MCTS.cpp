@@ -146,7 +146,7 @@ void MCTS::reset(Board &board) {
     root = new Node;
     root->last_color = root_board.just_play_color();
     root->last_pos = 81;
-    root->count = 0;
+    root->count = PARENT_SIMS;
     root->log_count = 1;
 
     memset(root->child_pos, -1, sizeof(root->child_pos));

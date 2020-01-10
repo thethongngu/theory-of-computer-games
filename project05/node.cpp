@@ -19,7 +19,7 @@ void Node::init_node(int pos, bool color) {
     last_color = color;
     last_pos = pos;
     mean = 0.5;
-    count = 0;
+    count = PARENT_SIMS;
     rave_count = 20;
     rave_mean = 0.5;
     num_child = 0;

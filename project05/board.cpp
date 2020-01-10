@@ -89,8 +89,9 @@ bool Board::can_move(int pos, bool color) {
 
     for (int i : adj_cells[pos]) {
         int nei = i;
-        if (state[color].get(nei) && (num_lib[get_root_region(nei)] != 1)) return true;
-        if (!state[!color].get(nei)) return true;
+        if (state[color].get(nei)) {
+            if (num_lib[get_root_region(nei)] != 1) return true;
+        } else if (!state[!color].get(nei)) return true;
     }
 
     zero_go[color].on_bit(pos);
@@ -112,8 +113,8 @@ void Board::recheck_move(int *bone, int *wone, int *two, int &bsize, int &wsize,
     for (int i = 0; i < NUM_CELL; i++) {
         if (!state[0].get(i) && !state[1].get(i)) {
 
-            can_black = can_move(i, 0);
-            can_white = can_move(i, 1);
+            can_black = can_move(i, BLACK);
+            can_white = can_move(i, WHITE);
 
             if (can_black && can_white) {
                 two[tsize] = i;
@@ -153,56 +154,62 @@ string Board::inttostring(int i) {
     return s;
 }
 
-double Board::simulate(bool color, int black_one[NUM_CELL], int white_one[NUM_CELL], int two[NUM_CELL], int black_size,
-                       int white_size, int two_size) {
-    int id, pos;
-    bool black_can, white_can;
+double Board::simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize,
+                       int tsize) {
+    int i, pos;
+    bool can_black, can_white;
 
-    while (two_size > 0) {
-        id = rand() % two_size;
-        pos = two[id];
-        two[id] = two[two_size - 1];
-        two_size--;
-
-        black_can = can_move(pos, BLACK);
-        white_can = can_move(pos, WHITE);
-
+    TWO_GO:
+    while (tsize > 0) {
+        i = rand() % tsize;
+        pos = two[i];
+        two[i] = two[tsize - 1];
+        tsize--;
+        can_black = can_move(pos, BLACK);
+        can_white = can_move(pos, WHITE);
         if (can_move(pos, color)) {
-            if (color == BLACK) black_path[num_black++] = pos;
+            if (color == 0) black_path[num_black++] = pos;
             else white_path[num_white++] = pos;
+
             add_piece(pos, color);
             color = !color;
+            goto TWO_GO;
+
         } else {
-            if (!black_can && white_can) {
-                white_one[white_size] = pos;
-                white_size++;
-            } else if (black_can && !white_can) {
-                black_one[black_size] = pos;
-                black_size++;
+            if (!can_black && can_white) {
+                wone[wsize] = pos;
+                wsize++;
+            } else if (can_black && !can_white) {
+                bone[bsize] = pos;
+                bsize++;
             }
         }
     }
 
-    while (true) {
-        if (color == BLACK) {
-            if (black_size <= 0) break;
-            id = rand() % black_size;
-            pos = black_one[id];
-            black_one[id] = black_one[black_size - 1];
-            black_size--;
+    ONE_GO :
+    if (color == 0) {
+
+        while (bsize > 0) {
+            i = rand() % bsize;
+            pos = bone[i];
+            bone[i] = bone[bsize - 1];
+            bsize--;
             if (can_move(pos, color)) {
                 add_piece(pos, color);
                 color = !color;
+                goto ONE_GO;
             }
-        } else {
-            if (white_size <= 0) break;
-            id = rand() % white_size;
-            pos = white_one[id];
-            white_one[id] = white_one[white_size - 1];
-            white_size--;
+        }
+    } else {
+        while (wsize > 0) {
+            i = rand() % wsize;
+            pos = wone[i];
+            wone[i] = wone[wsize - 1];
+            wsize--;
             if (can_move(pos, color)) {
                 add_piece(pos, color);
                 color = !color;
+                goto ONE_GO;
             }
         }
     }

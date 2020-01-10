@@ -69,16 +69,15 @@ public:
 
     string inttostring(int i);
 
-    double simulate(bool color, int black_one[NUM_CELL], int white_one[NUM_CELL], int two[NUM_CELL], int black_size,
-                    int white_size, int two_size);
+    double simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
 
-    inline void add_black_to_path(int k) {
-        black_path[num_black] = k;
+    inline void add_black_to_path(int pos) {
+        black_path[num_black] = pos;
         num_black++;
     }
 
-    inline void add_white_to_path(int k) {
-        white_path[num_white] = k;
+    inline void add_white_to_path(int pos) {
+        white_path[num_white] = pos;
         num_white++;
     }
 };
