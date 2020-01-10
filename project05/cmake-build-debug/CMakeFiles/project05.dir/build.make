@@ -70,9 +70,35 @@ CMakeFiles/project05.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/project05.dir/main.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/thethongngu/Documents/code/theory-of-computer-games/project05/main.cpp -o CMakeFiles/project05.dir/main.cpp.s
 
+CMakeFiles/project05.dir/board.cpp.o: CMakeFiles/project05.dir/flags.make
+CMakeFiles/project05.dir/board.cpp.o: ../board.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/project05.dir/board.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/project05.dir/board.cpp.o -c /home/thethongngu/Documents/code/theory-of-computer-games/project05/board.cpp
+
+CMakeFiles/project05.dir/board.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/project05.dir/board.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/thethongngu/Documents/code/theory-of-computer-games/project05/board.cpp > CMakeFiles/project05.dir/board.cpp.i
+
+CMakeFiles/project05.dir/board.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/project05.dir/board.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/thethongngu/Documents/code/theory-of-computer-games/project05/board.cpp -o CMakeFiles/project05.dir/board.cpp.s
+
+CMakeFiles/project05.dir/MCTS.cpp.o: CMakeFiles/project05.dir/flags.make
+CMakeFiles/project05.dir/MCTS.cpp.o: ../MCTS.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/project05.dir/MCTS.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/project05.dir/MCTS.cpp.o -c /home/thethongngu/Documents/code/theory-of-computer-games/project05/MCTS.cpp
+
+CMakeFiles/project05.dir/MCTS.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/project05.dir/MCTS.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/thethongngu/Documents/code/theory-of-computer-games/project05/MCTS.cpp > CMakeFiles/project05.dir/MCTS.cpp.i
+
+CMakeFiles/project05.dir/MCTS.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/project05.dir/MCTS.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/thethongngu/Documents/code/theory-of-computer-games/project05/MCTS.cpp -o CMakeFiles/project05.dir/MCTS.cpp.s
+
 CMakeFiles/project05.dir/node.cpp.o: CMakeFiles/project05.dir/flags.make
 CMakeFiles/project05.dir/node.cpp.o: ../node.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/project05.dir/node.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/project05.dir/node.cpp.o"
 	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/project05.dir/node.cpp.o -c /home/thethongngu/Documents/code/theory-of-computer-games/project05/node.cpp
 
 CMakeFiles/project05.dir/node.cpp.i: cmake_force
@@ -86,16 +112,20 @@ CMakeFiles/project05.dir/node.cpp.s: cmake_force
 # Object files for target project05
 project05_OBJECTS = \
 "CMakeFiles/project05.dir/main.cpp.o" \
+"CMakeFiles/project05.dir/board.cpp.o" \
+"CMakeFiles/project05.dir/MCTS.cpp.o" \
 "CMakeFiles/project05.dir/node.cpp.o"
 
 # External object files for target project05
 project05_EXTERNAL_OBJECTS =
 
 project05: CMakeFiles/project05.dir/main.cpp.o
+project05: CMakeFiles/project05.dir/board.cpp.o
+project05: CMakeFiles/project05.dir/MCTS.cpp.o
 project05: CMakeFiles/project05.dir/node.cpp.o
 project05: CMakeFiles/project05.dir/build.make
 project05: CMakeFiles/project05.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable project05"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable project05"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/project05.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

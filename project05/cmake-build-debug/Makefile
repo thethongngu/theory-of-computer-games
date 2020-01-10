@@ -123,6 +123,60 @@ project05/fast:
 	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/build
 .PHONY : project05/fast
 
+MCTS.o: MCTS.cpp.o
+
+.PHONY : MCTS.o
+
+# target to build an object file
+MCTS.cpp.o:
+	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/MCTS.cpp.o
+.PHONY : MCTS.cpp.o
+
+MCTS.i: MCTS.cpp.i
+
+.PHONY : MCTS.i
+
+# target to preprocess a source file
+MCTS.cpp.i:
+	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/MCTS.cpp.i
+.PHONY : MCTS.cpp.i
+
+MCTS.s: MCTS.cpp.s
+
+.PHONY : MCTS.s
+
+# target to generate assembly for a file
+MCTS.cpp.s:
+	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/MCTS.cpp.s
+.PHONY : MCTS.cpp.s
+
+board.o: board.cpp.o
+
+.PHONY : board.o
+
+# target to build an object file
+board.cpp.o:
+	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/board.cpp.o
+.PHONY : board.cpp.o
+
+board.i: board.cpp.i
+
+.PHONY : board.i
+
+# target to preprocess a source file
+board.cpp.i:
+	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/board.cpp.i
+.PHONY : board.cpp.i
+
+board.s: board.cpp.s
+
+.PHONY : board.s
+
+# target to generate assembly for a file
+board.cpp.s:
+	$(MAKE) -f CMakeFiles/project05.dir/build.make CMakeFiles/project05.dir/board.cpp.s
+.PHONY : board.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -186,6 +240,12 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... project05"
 	@echo "... edit_cache"
+	@echo "... MCTS.o"
+	@echo "... MCTS.i"
+	@echo "... MCTS.s"
+	@echo "... board.o"
+	@echo "... board.i"
+	@echo "... board.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

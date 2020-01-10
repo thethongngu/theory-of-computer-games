@@ -4,6 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/thethongngu/Documents/code/theory-of-computer-games/project05/MCTS.cpp" "/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/project05.dir/MCTS.cpp.o"
+  "/home/thethongngu/Documents/code/theory-of-computer-games/project05/board.cpp" "/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/project05.dir/board.cpp.o"
   "/home/thethongngu/Documents/code/theory-of-computer-games/project05/main.cpp" "/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/project05.dir/main.cpp.o"
   "/home/thethongngu/Documents/code/theory-of-computer-games/project05/node.cpp" "/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/project05.dir/node.cpp.o"
   )

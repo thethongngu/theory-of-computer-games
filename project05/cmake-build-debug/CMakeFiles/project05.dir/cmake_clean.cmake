@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/project05.dir/MCTS.cpp.o"
+  "CMakeFiles/project05.dir/board.cpp.o"
   "CMakeFiles/project05.dir/main.cpp.o"
   "CMakeFiles/project05.dir/node.cpp.o"
   "project05"

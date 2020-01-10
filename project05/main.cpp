@@ -7,7 +7,6 @@
 #include <cmath>
 
 #include "global.h"
-#include "board.h"
 #include "MCTS.h"
 
 
@@ -153,26 +152,16 @@ bool make_input_move(Board &board, const std::vector<std::string> &args) {
 }
 
 int make_AI_move(Board &board, int color) {
-    tree.init_tree(board, color);
+    tree.reset(board);
     for (int i = 0; i < SIM_TIMES; i++) {
-        tree.run_once();
+        tree.run_a_cycle();
     }
 
-    debug(tree.total_node);
-    std::clog << " ========= ROOT =========" << std::endl;
-    tree.root->print_tree(2);
+    int child_id = tree.root->get_max_move();
+    int best_move = (tree.root->child_ptr + child_id)->last_pos;
+    tree.clear();
 
-    Node *child = tree.get_child_move();
-    if (child == nullptr) return -1;
-
-    std::clog << " ========= Best child =========" << std::endl;
-    child->print_tree(1);
-
-    int pos = child->last_pos;
-    board.add_piece(pos, color);
-    tree.clear_tree();
-
-    return pos;
+    return best_move;
 }
 
 /** ---------------------- MAIN --------------------------- */
@@ -212,7 +201,6 @@ void exec_command(const std::string &raw_command) {
 
     } else if (head == "showboard") {
         response = get_response(true, command, "");
-        mainboard.print();
 
     } else if (head == "quit") {
         is_quit = true;
@@ -250,8 +238,6 @@ void exec_command(const std::string &raw_command) {
 void init_program() {
     is_quit = false;
     Board::generate_all_adjs();
-    mainboard.clear_all();
-    tree.clear_tree();
 }
 
 /** ------------------ ENTRY POINT ---------------- */
