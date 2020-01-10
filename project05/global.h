@@ -17,6 +17,7 @@
 #define BLACK 0
 #define WHITE 1
 #define SIM_TIMES 70000
+#define PARENT_SIMS 0
 
 #define C_BIAS 0.25
 #define EPS 0.00000001
