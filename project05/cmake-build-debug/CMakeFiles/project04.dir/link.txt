@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/project04.dir/main.cpp.o CMakeFiles/project04.dir/node.cpp.o  -o project04 

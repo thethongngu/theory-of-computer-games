@@ -1,3 +1,0 @@
-/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/project05.dir
-/home/thethongngu/Documents/code/theory-of-computer-games/project05/cmake-build-debug/CMakeFiles/edit_cache.dir
