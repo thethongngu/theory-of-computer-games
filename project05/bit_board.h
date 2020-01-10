@@ -12,7 +12,7 @@
 class BitBoard {
 public:
 
-    ull x[2];
+    ull x[2]{};
 
     BitBoard() {
         x[0] = 0LL;

@@ -7,31 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include "global.h"
-#include "board.h"
-
-class Node {
-
-public:
-
-    int last_pos;
-    int last_color;
-    int child_pos[NUM_CELL];
-    int num_child;
-    Node *child_ptr;
-
-    double count, mean, rave_count, rave_mean;
-    double log_count;
-
-    void init_node(int pos, int color);
-    void add_normal_result(double outcome);
-    void add_rave_result(double outcome);
-    int get_max_move();
-
-    void expansion(Board &board);
-
-    Node();
-    ~Node();
-};
+#include "node.h"
 
 void Node::init_node(int pos, int color) {
     last_pos = pos;

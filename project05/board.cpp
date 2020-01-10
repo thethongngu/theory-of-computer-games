@@ -13,85 +13,7 @@
 #include <cstring>
 
 #include "global.h"
-#include "bit_board.h"
-
-using namespace std;
-
-class Board {
-public:
-
-    static std::vector<int> adj_cells[NUM_CELL];
-
-    static void generate_all_adjs() {
-        for (int i = 0; i < BOARDSIZE; i++) {
-            for (int j = 0; j < BOARDSIZE; j++) {
-                int pos = i * BOARDSIZE + j;
-                if (i > 0) adj_cells[pos].push_back(pos - BOARDSIZE);
-                if (j > 0) adj_cells[pos].push_back(pos - 1);
-                if (i < BOARDSIZE - 1) adj_cells[pos].push_back(pos + BOARDSIZE);
-                if (j < BOARDSIZE - 1) adj_cells[pos].push_back(pos + 1);
-            }
-        }
-    }
-
-    static int change_color(int color) {
-        assert(color == BLACK || color == WHITE);
-        if (color == BLACK) return WHITE; else return BLACK;
-    }
-
-public:
-
-    BitBoard ban[2];
-    BitBoard notsafe[2];
-
-    static char bpath[NUM_CELL + 10];
-    static int bpsize;
-    static char wpath[NUM_CELL + 10];
-    static int wpsize;
-    BitBoard bitb[2];
-    char parent[NUM_CELL];
-    BitBoard air[NUM_CELL];
-    char countair[NUM_CELL];
-
-
-    int get_root(int i);
-
-    void unite(int x, int y);
-
-    void getallair();
-
-    void add(int i, bool j);
-
-    bool check(int i, bool j);
-
-    Board();
-
-    inline bool get(int i, bool j);
-
-    bool just_play_color();
-
-    void getv(int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int &bsize, int &wsize, int &tsize);
-
-    void setdata();
-
-    void clear();
-
-    string inttostring(int i);
-
-    double simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
-
-    bool isempty();
-
-    inline void addbp(int k) {
-        bpath[bpsize] = k;
-        bpsize++;
-    }
-
-    inline void addwp(int k) {
-        wpath[wpsize] = k;
-        wpsize++;
-    }
-};
+#include "board.h"
 
 std::vector<int> Board::adj_cells[NUM_CELL];
 char Board::bpath[NUM_CELL + 10];
@@ -112,7 +34,7 @@ void Board::unite(int x, int y) {
     else parent[i] = j;
 }
 
-void Board::add(int i, bool j)//j=0 black j=1 white
+void Board::add_piece(int i, bool j)//j=0 black j=1 white
 {
     int k, l, lp;
     BitBoard tmp;
@@ -154,7 +76,7 @@ void Board::add(int i, bool j)//j=0 black j=1 white
 
 }
 
-bool Board::check(int i, bool j)//j=0 =>b
+bool Board::can_move(int i, bool j)//j=0 =>b
 {
     //cout<<"check"<<i<<endl;
     bool flag = false;
@@ -239,8 +161,8 @@ void Board::getv(int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int 
     bsize = wsize = tsize = 0;
     for (int i = 0; i < NUM_CELL; i++) {
         if (!bitb[0].get(i) && !bitb[1].get(i)) {
-            bc = check(i, 0);
-            wc = check(i, 1);
+            bc = can_move(i, 0);
+            wc = can_move(i, 1);
             if (bc) {
                 if (wc) {
                     two[tsize] = i;
@@ -257,7 +179,7 @@ void Board::getv(int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int 
     }
 }
 
-void Board::clear() {
+void Board::clear_all() {
     int i;
     for (i = 0; i < NUM_CELL; i++) {
         parent[i] = i;
@@ -294,9 +216,9 @@ Board::simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL
         k = two[i];
         two[i] = two[tsize - 1];
         tsize--;
-        bc = check(k, 0);
-        wc = check(k, 1);
-        if (check(k, j)) {
+        bc = can_move(k, 0);
+        wc = can_move(k, 1);
+        if (can_move(k, j)) {
             if (j == 0) {
                 bpath[bpsize] = k;
                 bpsize++;
@@ -304,7 +226,7 @@ Board::simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL
                 wpath[wpsize] = k;
                 wpsize++;
             }
-            add(k, j);
+            add_piece(k, j);
             j = !j;
             goto FLAG;
         } else {
@@ -325,8 +247,8 @@ Board::simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL
             k = bone[i];
             bone[i] = bone[bsize - 1];
             bsize--;
-            if (check(k, j)) {
-                add(k, j);
+            if (can_move(k, j)) {
+                add_piece(k, j);
                 // bpath[bpsize] = k;
                 // bpsize++;
                 j = !j;
@@ -342,8 +264,8 @@ Board::simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL
             k = wone[i];
             wone[i] = wone[wsize - 1];
             wsize--;
-            if (check(k, j)) {
-                add(k, j);
+            if (can_move(k, j)) {
+                add_piece(k, j);
                 j = !j;
                 //  wpath[wpsize] = k;
                 //  wpsize++;
