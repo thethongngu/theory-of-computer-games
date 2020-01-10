@@ -41,51 +41,44 @@ public:
 
 public:
 
-    BitBoard ban[2];
-    BitBoard notsafe[2];
+    BitBoard zero_go[2];
+    BitBoard not_2_go[2];
 
-    static char bpath[NUM_CELL + 10];
-    static int bpsize;
-    static char wpath[NUM_CELL + 10];
-    static int wpsize;
-    BitBoard bitb[2];
-    char parent[NUM_CELL];
-    BitBoard air[NUM_CELL];
-    char countair[NUM_CELL];
+    static char black_path[NUM_CELL + 10];
+    static int num_black;
+    static char white_path[NUM_CELL + 10];
+    static int num_white;
+    BitBoard state[2];
+    char root_region[NUM_CELL];
+    BitBoard lib[NUM_CELL];
+    char num_lib[NUM_CELL];
 
-    int get_root(int i);
+    int get_root_region(int pos);
 
-    void unite(int x, int y);
+    void merge_region(int x, int y);
 
-    void getallair();
+    void add_piece(int pos, bool color);
 
-    void add_piece(int i, bool j);
+    bool can_move(int pos, bool color);
 
-    bool can_move(int i, bool j);
+    int just_play_color();
 
-    inline bool get(int i, bool j);
-
-    bool just_play_color();
-
-    void getv(int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int &bsize, int &wsize, int &tsize);
-
-    void setdata();
+    void recheck_move(int *bone, int *wone, int *two, int &bsize, int &wsize, int &tsize);
 
     void clear_all();
 
     string inttostring(int i);
 
-    double simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
+    double simulate(bool color, int black_one[NUM_CELL], int white_one[NUM_CELL], int two[NUM_CELL], int black_size,
+                    int white_size, int two_size);
 
-    bool isempty();
-
-    inline void addbp(int k) {
-        bpath[bpsize] = k;
-        bpsize++;
+    inline void add_black_to_path(int k) {
+        black_path[num_black] = k;
+        num_black++;
     }
 
-    inline void addwp(int k) {
-        wpath[wpsize] = k;
-        wpsize++;
+    inline void add_white_to_path(int k) {
+        white_path[num_white] = k;
+        num_white++;
     }
 };

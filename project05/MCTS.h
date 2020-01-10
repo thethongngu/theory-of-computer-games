@@ -12,10 +12,10 @@
 
 class MCTS {
 public:
-    int selectlist[NUM_CELL];
-    int slsize;
+    int chosen[NUM_CELL];
+    int num;
     Node *root;
-    Board rBoard;
+    Board root_board;
     double rave_num[2][NUM_CELL];
     double rave_wnum[2][NUM_CELL];
 
@@ -30,17 +30,17 @@ public:
     int total;
     int totalnode;
 
-    double getscore(Node *nodeptr, int child);
+    double get_score(Node *nodeptr, int child_id);
 
-    Node *getbestchild(Node *nodeptr);
+    Node *get_UTC_RAVE(Node *node_ptr);
 
-    void select(Board &b);
+    void select(Board &board);
 
     void update(double result, Board &b);
 
     void run_a_cycle();
 
-    void reset(Board &b);
+    void reset(Board &board);
 
     void clear();
 

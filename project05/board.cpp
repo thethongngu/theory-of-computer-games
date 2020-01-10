@@ -7,192 +7,141 @@
 
 #endif //PROJECT04_BOARD_H
 
-#include <cassert>
 #include <cstdlib>
-#include <random>
 #include <cstring>
 
 #include "global.h"
 #include "board.h"
 
 std::vector<int> Board::adj_cells[NUM_CELL];
-char Board::bpath[NUM_CELL + 10];
-int Board::bpsize;
-char Board::wpath[NUM_CELL + 10];
-int Board::wpsize;
 
-
-int Board::get_root(int i) {
-    char &j = parent[i];
-    if (j == parent[j])return j;
-    return j = get_root(j);
-}
-
-void Board::unite(int x, int y) {
-    char i = get_root(x), j = get_root(y);
-    if (i < j)parent[j] = i;
-    else parent[i] = j;
-}
-
-void Board::add_piece(int i, bool j)//j=0 black j=1 white
-{
-    int k, l, lp;
-    BitBoard tmp;
-#if SEARCH == 1
-    zValue ^= ztable.ZHT[j][i];
-#endif
-    ban[0].on_bit(i);
-    ban[1].on_bit(i);
-    bitb[j].on_bit(i);
-    for (k = 0; k < adj_cells[i].size(); k++) {
-        l = adj_cells[i][k];
-        if (bitb[j].get(l)) {
-            lp = get_root(l);
-            tmp |= air[lp];
-            air[lp].clear();
-            countair[lp] = 0;
-            unite(i, lp);
-        } else if (bitb[!j].get(l)) {
-            lp = get_root(l);
-            air[lp].off_bit(i);
-            countair[lp] = air[lp].count();
-            if (countair[lp] == 1) {
-                ban[j] |= air[lp];
-                notsafe[!j] |= air[lp];
-            }
-        } else {
-            notsafe[!j].on_bit(l);
-            tmp.on_bit(l);
-        }
-    }
-    tmp.off_bit(i);
-    k = get_root(i);
-    air[k] = tmp;
-    countair[k] = air[k].count();
-    if (countair[k] == 1) {
-        ban[!j] |= air[k];
-        notsafe[j] |= air[k];
-    }
-
-}
-
-bool Board::can_move(int i, bool j)//j=0 =>b
-{
-    //cout<<"check"<<i<<endl;
-    bool flag = false;
-    int l, k;
-    if (ban[j].get(i))return false;
-    else if (notsafe[j].get(i) == 0)return true;
-    notsafe[j].off_bit(i);
-#if search == 2
-    // if(checkTriangle(i,j))return true;
-#endif
-    for (k = 0; k < adj_cells[i].size(); k++) {
-        l = adj_cells[i][k];
-        if (bitb[j].get(l)) {
-            if (countair[get_root(l)] != 1)return true;
-        } else if (!bitb[!j].get(l)) {
-            return true;
-        }
-    }
-    ban[j].on_bit(i);
-    return false;
-}
-
-void Board::getallair() {
-    int i, j, t, u, r, d, l;
-    memset(air, 0, sizeof(air));
-    memset(countair, 0, sizeof(countair));
-    for (i = 0; i < BOARDSIZE; i++) {
-        for (j = 0; j < BOARDSIZE; j++) {
-            u = r = d = l = -1;
-            t = i * BOARDSIZE + j;
-            if (!bitb[0].get(t) && !bitb[1].get(t))//�ť�
-            {
-                if (i != 0) {
-                    if (bitb[0].get(t - BOARDSIZE) || bitb[1].get(t - BOARDSIZE)) {
-                        u = get_root(t - BOARDSIZE);
-                        air[u].on_bit(t);
-                    }
-                }
-                if (i != (BOARDSIZE - 1)) {
-                    if (bitb[0].get(t + BOARDSIZE) || bitb[1].get(t + BOARDSIZE)) {
-                        d = get_root(t + BOARDSIZE);
-                        if (d != u)air[d].on_bit(t);
-                    }
-                }
-                if (j != 0) {
-                    if (bitb[0].get(t - 1) || bitb[1].get(t - 1)) {
-                        r = get_root(t - 1);
-                        if (r != u && r != d)air[r].on_bit(t);
-                    }
-                }
-                if (j != (BOARDSIZE - 1)) {
-                    if (bitb[0].get(t + 1) || bitb[1].get(t + 1)) {
-                        l = get_root(t + 1);
-                        if (l != u && l != d && l != r)air[l].on_bit(t);
-                    }
-                }
-            }
-        }
-    }
-    for (i = 0; i < NUM_CELL; i++) {
-        if (bitb[0].get(i) || bitb[1].get(i)) {
-            if (parent[i] == i)countair[i] = air[i].count();
-        }
-    }
-}
+char Board::black_path[NUM_CELL + 10];
+int Board::num_black;
+char Board::white_path[NUM_CELL + 10];
+int Board::num_white;
 
 Board::Board() {}
 
-inline bool Board::get(int i, bool j) {
-    return bitb[j].get(i);
+int Board::get_root_region(int pos) {
+    char &pa = root_region[pos];
+    while (pa != root_region[pa]) pa = root_region[pa];
+    return pa;
 }
 
-bool Board::just_play_color() {
-    int bc = bitb[0].count();
-    int wc = bitb[1].count();
-    if (bc == wc)return 1;
-    return 0;
+void Board::merge_region(int x, int y) {
+    char i = get_root_region(x), j = get_root_region(y);
+    if (i < j)root_region[j] = i;
+    else root_region[i] = j;
 }
 
-void Board::getv(int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int &bsize, int &wsize, int &tsize) {
-    bool bc, wc;
+void Board::add_piece(int pos, bool color) {
+
+    int i, nei, root_nei;
+    BitBoard new_lib;
+
+    zero_go[0].on_bit(pos);
+    zero_go[1].on_bit(pos);
+    state[color].on_bit(pos);
+
+    for (i = 0; i < adj_cells[pos].size(); i++) {
+        nei = adj_cells[pos][i];
+        if (state[color].get(nei)) {
+            root_nei = get_root_region(nei);
+            new_lib |= lib[root_nei];
+            lib[root_nei].clear();
+            num_lib[root_nei] = 0;
+            merge_region(pos, root_nei);
+
+        } else if (state[!color].get(nei)) {
+
+            root_nei = get_root_region(nei);
+            lib[root_nei].off_bit(pos);
+            num_lib[root_nei] = lib[root_nei].count();
+
+            if (num_lib[root_nei] == 1) {
+                zero_go[color] |= lib[root_nei];
+                not_2_go[!color] |= lib[root_nei];
+            }
+        } else {
+            not_2_go[!color].on_bit(nei);
+            new_lib.on_bit(nei);
+        }
+    }
+
+    new_lib.off_bit(pos);
+    i = get_root_region(pos);
+    lib[i] = new_lib;
+    num_lib[i] = lib[i].count();
+
+    if (num_lib[i] == 1) {
+        zero_go[!color] |= lib[i];
+        not_2_go[color] |= lib[i];
+    }
+
+}
+
+bool Board::can_move(int pos, bool color) {
+
+    if (zero_go[color].get(pos)) return false;
+    else if (not_2_go[color].get(pos) == 0) return true;
+
+    not_2_go[color].off_bit(pos);
+
+    for (int i : adj_cells[pos]) {
+        int nei = i;
+        if (state[color].get(nei) && (num_lib[get_root_region(nei)] != 1)) return true;
+        if (!state[!color].get(nei)) return true;
+    }
+
+    zero_go[color].on_bit(pos);
+
+    return false;
+}
+
+int Board::just_play_color() {
+    int bc = state[0].count();
+    int wc = state[1].count();
+    return (bc == wc) ? WHITE : BLACK;
+}
+
+void Board::recheck_move(int *bone, int *wone, int *two, int &bsize, int &wsize, int &tsize) {
+
+    bool can_black, can_white;
     bsize = wsize = tsize = 0;
+
     for (int i = 0; i < NUM_CELL; i++) {
-        if (!bitb[0].get(i) && !bitb[1].get(i)) {
-            bc = can_move(i, 0);
-            wc = can_move(i, 1);
-            if (bc) {
-                if (wc) {
-                    two[tsize] = i;
-                    tsize++;
-                } else {
+        if (!state[0].get(i) && !state[1].get(i)) {
+
+            can_black = can_move(i, 0);
+            can_white = can_move(i, 1);
+
+            if (can_black && can_white) {
+                two[tsize] = i;
+                tsize++;
+            } else {
+                if (can_black) {
                     bone[bsize] = i;
                     bsize++;
+                } else if (can_white) {
+                    wone[wsize] = i;
+                    wsize++;
                 }
-            } else if (wc) {
-                wone[wsize] = i;
-                wsize++;
             }
         }
     }
 }
 
 void Board::clear_all() {
-    int i;
-    for (i = 0; i < NUM_CELL; i++) {
-        parent[i] = i;
-    }
+    for (int i = 0; i < NUM_CELL; i++) root_region[i] = i;
+    memset(lib, 0, sizeof(lib));
+    memset(num_lib, 0, sizeof(num_lib));
 
-    bitb[0].clear();
-    bitb[1].clear();
-    ban[0].clear();
-    ban[1].clear();
-    notsafe[0].clear();
-    notsafe[1].clear();
-    memset(air, 0, sizeof(air));
-    memset(countair, 0, sizeof(countair));
+    state[0].clear();
+    state[1].clear();
+    zero_go[0].clear();
+    zero_go[1].clear();
+    not_2_go[0].clear();
+    not_2_go[1].clear();
 }
 
 
@@ -204,77 +153,58 @@ string Board::inttostring(int i) {
     return s;
 }
 
-double
-Board::simulate(bool j, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize) {
-    int i, k;
-    bool bc, wc;
-    FLAG:
-    // showboard();
-    // system("pause");
-    while (tsize > 0) {
-        i = rand() % tsize;
-        k = two[i];
-        two[i] = two[tsize - 1];
-        tsize--;
-        bc = can_move(k, 0);
-        wc = can_move(k, 1);
-        if (can_move(k, j)) {
-            if (j == 0) {
-                bpath[bpsize] = k;
-                bpsize++;
-            } else {
-                wpath[wpsize] = k;
-                wpsize++;
-            }
-            add_piece(k, j);
-            j = !j;
-            goto FLAG;
-        } else {
-            if (!bc && wc) {
-                wone[wsize] = k;
-                wsize++;
-            } else if (bc && !wc) {
-                bone[bsize] = k;
-                bsize++;
-            }
-        }
-    }
-    FLAG2 :
-    if (j == 0) {
+double Board::simulate(bool color, int black_one[NUM_CELL], int white_one[NUM_CELL], int two[NUM_CELL], int black_size,
+                       int white_size, int two_size) {
+    int id, pos;
+    bool black_can, white_can;
 
-        while (bsize > 0) {
-            i = rand() % bsize;
-            k = bone[i];
-            bone[i] = bone[bsize - 1];
-            bsize--;
-            if (can_move(k, j)) {
-                add_piece(k, j);
-                // bpath[bpsize] = k;
-                // bpsize++;
-                j = !j;
-#if dolog == 1
-                cout << inttostring(k);
-#endif
-                goto FLAG2;
-            }
-        }
-    } else {
-        while (wsize > 0) {
-            i = rand() % wsize;
-            k = wone[i];
-            wone[i] = wone[wsize - 1];
-            wsize--;
-            if (can_move(k, j)) {
-                add_piece(k, j);
-                j = !j;
-                //  wpath[wpsize] = k;
-                //  wpsize++;
-#if dolog == 1
-                cout<<inttostring(k);
-#endif
-                goto FLAG2;
+    while (two_size > 0) {
+        id = rand() % two_size;
+        pos = two[id];
+        two[id] = two[two_size - 1];
+        two_size--;
+
+        black_can = can_move(pos, BLACK);
+        white_can = can_move(pos, WHITE);
+
+        if (can_move(pos, color)) {
+            if (color == BLACK) black_path[num_black++] = pos;
+            else white_path[num_white++] = pos;
+            add_piece(pos, color);
+            color = !color;
+        } else {
+            if (!black_can && white_can) {
+                white_one[white_size] = pos;
+                white_size++;
+            } else if (black_can && !white_can) {
+                black_one[black_size] = pos;
+                black_size++;
             }
         }
     }
-    return (j == 1) ? 1 : -1;
+
+    while (true) {
+        if (color == BLACK) {
+            if (black_size <= 0) break;
+            id = rand() % black_size;
+            pos = black_one[id];
+            black_one[id] = black_one[black_size - 1];
+            black_size--;
+            if (can_move(pos, color)) {
+                add_piece(pos, color);
+                color = !color;
+            }
+        } else {
+            if (white_size <= 0) break;
+            id = rand() % white_size;
+            pos = white_one[id];
+            white_one[id] = white_one[white_size - 1];
+            white_size--;
+            if (can_move(pos, color)) {
+                add_piece(pos, color);
+                color = !color;
+            }
+        }
+    }
+    return (color == WHITE) ? 1 : -1;
 }

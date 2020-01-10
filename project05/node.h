@@ -24,7 +24,7 @@ public:
     double rave_count, rave_mean;
     double log_count;
 
-    void init_node(int pos, int color);
+    void init_node(int pos, bool color);
 
     void add_normal_result(double result);
 

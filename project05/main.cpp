@@ -158,8 +158,10 @@ int make_AI_move(Board &board, int color) {
     }
 
     int child_id = tree.root->get_max_move();
-    int best_move = (tree.root->child_ptr + child_id)->last_pos;
+    double mean = (tree.root->child_ptr + child_id)->mean;
+    int best_move = (mean < 0.1) ? -1 : (tree.root->child_ptr + child_id)->last_pos;
     tree.clear();
+    debug(mean);
 
     return best_move;
 }
@@ -221,6 +223,7 @@ void exec_command(const std::string &raw_command) {
         } else {
             int pos = make_AI_move(mainboard, color);
             if (pos != -1) {
+                mainboard.add_piece(pos, color);
                 std::string move = get_move_string(pos);
                 response = get_response(true, command, move);
             } else {
@@ -238,6 +241,7 @@ void exec_command(const std::string &raw_command) {
 void init_program() {
     is_quit = false;
     Board::generate_all_adjs();
+    mainboard.clear_all();
 }
 
 /** ------------------ ENTRY POINT ---------------- */

@@ -16,122 +16,119 @@
 
 using namespace std;
 
-double MCTS::getscore(Node *nodeptr, int child) {
-    Node *tmp = (nodeptr->child_ptr) + child;
-    auto &p = tmp->last_pos;
-    auto &c = tmp->last_color;
-    double &N = tmp->count;
-    double &NR = tmp->rave_count;
-    double ret = tmp->rave_mean * NR + tmp->mean * N + sqrt(nodeptr->log_count * N) * C_BIAS;
+double MCTS::get_score(Node *nodeptr, int child_id) {
 
-    return ret / (N + NR);
+    Node *child = (nodeptr->child_ptr) + child_id;
+    auto &pos = child->last_pos;
+    auto &color = child->last_color;
+    double &count = child->count;
+    double &rcount = child->rave_count;
+
+    return (child->rave_mean * rcount + child->mean * count + sqrt(nodeptr->log_count * count) * C_BIAS) /
+           (count + rcount);
 }
 
-Node *MCTS::getbestchild(Node *nodeptr) {
-    if (nodeptr->num_child == 0)return nullptr;
-    int i, ret = 0;
-    double ans, tmp = getscore(nodeptr, 0), tma;//tmp minus anwser
-    ans = tmp;
-    selectlist[0] = 0;
-    slsize = 1;
-    for (i = 1; i < (nodeptr->num_child); i++) {
-        tmp = getscore(nodeptr, i);
-        tma = tmp - ans;
-        if (tma > -0.0001)//tmp >= ans
-        {
-            if (tma > 0.0001) // tmp > ans
-            {
-                selectlist[0] = i;
-                slsize = 1;
-                ans = tmp;
-            } else  //tmp == ans
-            {
-                selectlist[slsize] = i;
-                slsize++;
-            }
+Node *MCTS::get_UTC_RAVE(Node *node_ptr) {
+
+    if (node_ptr->num_child == 0)return nullptr;
+
+    int i, best_id = 0;
+    double max_score, curr_score = get_score(node_ptr, 0);
+    double diff;
+
+    max_score = curr_score;
+    num = 0; chosen[num++] = 0;
+    for (i = 1; i < (node_ptr->num_child); i++) {
+        curr_score = get_score(node_ptr, i);
+        diff = curr_score - max_score;
+        if (diff > -0.0001) {
+            if (diff > 0.0001) {
+                chosen[0] = i;
+                num = 1;
+                max_score = curr_score;
+            } else chosen[num++] = i;
         }
     }
-    //for(i=0;i<slsize;i++)
-    //{
-    //	cout<<selectlist[i]<<' ';
-    //}
-    //cout<<endl;
-    ret = selectlist[rand() % slsize];
-    return (nodeptr->child_ptr + ret);
+
+    best_id = chosen[rand() % num];
+    return (node_ptr->child_ptr + best_id);
 }
 
-void MCTS::select(Board &b) {
+void MCTS::select(Board &board) {
 
-    bool j = !b.just_play_color();//next to play
-    Node *nodeptr = root;
-    b.bpsize = 0;
-    b.wpsize = 0;
+    bool j = !board.just_play_color();//next to play
+
+    Node *node = root;
+    Board::num_black = 0;  Board::num_white = 0;
+
     path.clear();
-    path.push_back(nodeptr);
-    while (nodeptr->child_ptr != nullptr && nodeptr->num_child != 0) {
-        nodeptr = getbestchild(nodeptr);
-        path.push_back(nodeptr);
-        //	cout<<inttostring(nodeptr->last_pos)<<' ';
-        if (nodeptr->last_color == BLACK) {
-            b.addbp(nodeptr->last_pos);
+    path.push_back(node);
+
+    while (node->child_ptr != nullptr && node->num_child != 0) {
+        node = get_UTC_RAVE(node);
+        path.push_back(node);
+
+        if (node->last_color == BLACK) {
+            board.add_black_to_path(node->last_pos);
             sbnum++;
         } else {
-            b.addwp(nodeptr->last_pos);
+            board.add_white_to_path(node->last_pos);
             swnum++;
         }
-        b.add_piece(nodeptr->last_pos, nodeptr->last_color);
+        board.add_piece(node->last_pos, node->last_color);
     }
-//	b.showBoard();
-    //system("pause");
 }
 
 void MCTS::update(double result, Board &b) {
+
     for (int i = 0; i < path.size(); i++) {
         path[i]->add_normal_result(result);
         if (path[i]->last_color == 0) {
-            for (int j = 0; j < b.wpsize; j++) {
-                int k = (path[i]->child_pos[b.wpath[j]]);
-                if (k != -1)
-                    ((path[i]->child_ptr) + k)->add_rave_result(result);
+            for (int j = 0; j < Board::num_white; j++) {
+                int k = (path[i]->child_pos[Board::white_path[j]]);
+                if (k != -1) ((path[i]->child_ptr) + k)->add_rave_result(result);
             }
         } else {
-            for (int j = 0; j < b.bpsize; j++) {
-                int k = (path[i]->child_pos[b.bpath[j]]);
-                if (k != -1)
-                    ((path[i]->child_ptr) + k)->add_rave_result(result);
+            for (int j = 0; j < Board::num_black; j++) {
+                int k = (path[i]->child_pos[Board::black_path[j]]);
+                if (k != -1) ((path[i]->child_ptr) + k)->add_rave_result(result);
             }
         }
     }
 }
 
 void MCTS::run_a_cycle() {
+
     Board board;
     double result;
-    board = rBoard;
+    board = root_board;
     sbnum = swnum = 0;
     select(board);
     Node &last = (*(path.back()));
-    Node *nodeptr;
+    Node *node;
+
     if (last.num_child == 0 && last.count > PARENT_SIMS) {
         last.expansion(board);
         if (last.num_child != 0) {
             totalnode += last.num_child;
-            nodeptr = getbestchild(&last);
-            path.push_back(nodeptr);
-            if (nodeptr->last_color == 0) {
-                board.addbp(nodeptr->last_pos);
+            node = get_UTC_RAVE(&last);
+            path.push_back(node);
+
+            if (node->last_color == 0) {
+                board.add_black_to_path(node->last_pos);
                 sbnum++;
             } else {
-                board.addwp(nodeptr->last_pos);
+                board.add_white_to_path(node->last_pos);
                 swnum++;
             }
-            board.add_piece(nodeptr->last_pos, nodeptr->last_color);
+            board.add_piece(node->last_pos, node->last_color);
 
         }
     }
+
     total += sbnum;
     total += swnum;
-    board.getv(bone, wone, two, bsize, wsize, tsize);
+    board.recheck_move(bone, wone, two, bsize, wsize, tsize);
 
     if ((board.just_play_color() == BLACK) && (wsize + tsize) == 0) {
         result = 1;
@@ -143,15 +140,17 @@ void MCTS::run_a_cycle() {
     update(result, board);
 }
 
-void MCTS::reset(Board &b) {
-    rBoard = b;
+void MCTS::reset(Board &board) {
+
+    root_board = board;
     root = new Node;
-    root->last_color = rBoard.just_play_color();
+    root->last_color = root_board.just_play_color();
     root->last_pos = 81;
     root->count = 0;
     root->log_count = 1;
+
     memset(root->child_pos, -1, sizeof(root->child_pos));
-    root->expansion(b);
+    root->expansion(board);
     total = 0;
     totalnode = 0;
 }

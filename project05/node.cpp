@@ -15,7 +15,7 @@ Node::~Node() {
 }
 
 
-void Node::init_node(int pos, int color) {
+void Node::init_node(int pos, bool color) {
     last_color = color;
     last_pos = pos;
     mean = 0.5;
@@ -49,7 +49,8 @@ void Node::add_rave_result(double result) {
 
 void Node::expansion(Board &b) {
 
-    int pos, color;
+    int pos;
+    bool color;
     color = !b.just_play_color();
     num_child = 0;
     for (pos = 0; pos < NUM_CELL; pos++) {
