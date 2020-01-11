@@ -271,6 +271,7 @@ int main() {
     while (cin >> raw_command) {
         getline(std::cin, args);
         exec_command(raw_command.append(" ").append(args));
+        if (is_quit) break;
     }
 
     return 0;
