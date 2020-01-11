@@ -7,7 +7,6 @@
 
 #endif //PROJECT04_MCTS_H
 
-#include <iostream>
 #include <cmath>
 #include <cstring>
 
@@ -55,8 +54,6 @@ Node *MCTS::get_UTC_RAVE(Node *node_ptr) {
 }
 
 void MCTS::select(Board &board) {
-
-    bool j = !board.just_play_color();//next to play
 
     Node *node = root;
     Board::num_black = 0;  Board::num_white = 0;

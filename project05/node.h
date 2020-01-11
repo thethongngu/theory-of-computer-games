@@ -10,8 +10,6 @@
 #include "global.h"
 #include "board.h"
 
-#define basenum 0
-
 class Node {
 
 public:
