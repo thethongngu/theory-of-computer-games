@@ -16,8 +16,6 @@ public:
     int num;
     Node *root;
     Board root_board;
-    double rave_num[2][NUM_CELL];
-    double rave_wnum[2][NUM_CELL];
 
     MCTS();
 
@@ -26,9 +24,6 @@ public:
     vector<Node *> path;
     int bsize, wsize, tsize;
     int bone[NUM_CELL], wone[NUM_CELL], two[NUM_CELL];
-    int sbnum, swnum;
-    int total;
-    int totalnode;
 
     double get_score(Node *nodeptr, int child_id);
 
@@ -43,10 +38,4 @@ public:
     void reset(Board &board);
 
     void clear();
-
-    void show_path();
-
-    string inttostring(int i);
-
-    string inttoGTPstring(int i);
 };

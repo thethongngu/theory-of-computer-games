@@ -70,10 +70,8 @@ void MCTS::select(Board &board) {
 
         if (node->last_color == BLACK) {
             board.add_black_to_path(node->last_pos);
-            sbnum++;
         } else {
             board.add_white_to_path(node->last_pos);
-            swnum++;
         }
         board.add_piece(node->last_pos, node->last_color);
     }
@@ -102,7 +100,6 @@ void MCTS::run_a_cycle() {
     Board board;
     double result;
     board = root_board;
-    sbnum = swnum = 0;
     select(board);
     Node &last = (*(path.back()));
     Node *node;
@@ -110,24 +107,19 @@ void MCTS::run_a_cycle() {
     if (last.num_child == 0 && last.count > PARENT_SIMS) {
         last.expansion(board);
         if (last.num_child != 0) {
-            totalnode += last.num_child;
             node = get_UTC_RAVE(&last);
             path.push_back(node);
 
             if (node->last_color == 0) {
                 board.add_black_to_path(node->last_pos);
-                sbnum++;
             } else {
                 board.add_white_to_path(node->last_pos);
-                swnum++;
             }
             board.add_piece(node->last_pos, node->last_color);
 
         }
     }
 
-    total += sbnum;
-    total += swnum;
     board.recheck_move(bone, wone, two, bsize, wsize, tsize);
 
     if ((board.just_play_color() == BLACK) && (wsize + tsize) == 0) {
@@ -151,43 +143,10 @@ void MCTS::reset(Board &board) {
 
     memset(root->child_pos, -1, sizeof(root->child_pos));
     root->expansion(board);
-    total = 0;
-    totalnode = 0;
-}
-
-void MCTS::show_path() {
-    Node *nodeptr = root;
-    int i, k;
-    i = 0;
-    while (nodeptr->child_ptr != nullptr && i < 10) {
-        k = nodeptr->get_max_move();
-        nodeptr = nodeptr->child_ptr + k;
-        i++;
-        if (nodeptr != nullptr) {
-            if (nodeptr->last_color == BLACK)
-                cerr << "B(";
-            else
-                cerr << "W(";
-            cerr << inttostring(nodeptr->last_pos) << ") ";
-        }
-    }
-    cerr << endl;
 }
 
 void MCTS::clear() {
     delete root;
-}
-
-string MCTS::inttoGTPstring(int i) {
-    string s = "A1";
-    s[0] += i / 9;
-    if (s[0] >= 'I')s[0]++;
-    s[1] += i % 9;
-    return s;
-}
-
-string MCTS::inttostring(int i) {
-    return inttoGTPstring(i);
 }
 
 MCTS::MCTS() {
