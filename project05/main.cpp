@@ -266,10 +266,11 @@ int main() {
     init_program();
 
     std::string raw_command;
-    while (!is_quit) {
-        getline(std::cin, raw_command);
-        debug(raw_command);
-        exec_command(raw_command);
+    std::string args;
+
+    while (cin >> raw_command) {
+        getline(std::cin, args);
+        exec_command(raw_command.append(" ").append(args));
     }
 
     return 0;
