@@ -268,6 +268,7 @@ int main() {
     std::string raw_command;
     while (!is_quit) {
         getline(std::cin, raw_command);
+        debug(raw_command);
         exec_command(raw_command);
     }
 
