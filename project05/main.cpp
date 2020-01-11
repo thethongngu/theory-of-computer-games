@@ -159,8 +159,8 @@ int make_AI_move(Board &board, int color) {
     auto start = std::chrono::high_resolution_clock::now();
     int num_sims = 0;
     while (true) {
-        for (int i = 0; i < 10000; i++) tree.run_a_cycle();
-        num_sims += 10000;
+        for (int i = 0; i < 15000; i++) tree.run_a_cycle();
+        num_sims += 15000;
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> fp_ms = end - start;
         auto elapsed = fp_ms.count();
