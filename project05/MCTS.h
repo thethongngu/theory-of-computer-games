@@ -21,17 +21,17 @@ public:
 
     ~MCTS();
 
-    vector<Node *> path;
-    int bsize, wsize, tsize;
-    int bone[NUM_CELL], wone[NUM_CELL], two[NUM_CELL];
+    vector<Node *> tree_path;
+    int num_black, num_white, num_two;
+    int black_one[NUM_CELL], white_one[NUM_CELL], two[NUM_CELL];
 
-    double get_score(Node *nodeptr, int child_id);
+    double get_score(Node *node, int child_id);
 
-    Node *get_UTC_RAVE(Node *node_ptr);
+    Node *get_UTC_RAVE(Node *node);
 
     void select(Board &board);
 
-    void update(double result, Board &b);
+    void update(double result, Board &board);
 
     void run_a_cycle();
 
