@@ -94,17 +94,17 @@ void MCTS::update(double result, Board &b) {
 
 void MCTS::run_a_cycle() {
 
-    Board board;
-    double result;
-    board = root_board;
+    double outcome;
+    Board board = root_board;
+
     select(board);
-    Node &last = (*(path.back()));
+    Node &leaf = (*(path.back()));
     Node *node;
 
-    if (last.num_child == 0 && last.count > PARENT_SIMS) {
-        last.expansion(board);
-        if (last.num_child != 0) {
-            node = get_UTC_RAVE(&last);
+    if (leaf.num_child == 0 && leaf.count > PARENT_SIMS) {
+        leaf.expansion(board);
+        if (leaf.num_child != 0) {
+            node = get_UTC_RAVE(&leaf);
             path.push_back(node);
 
             if (node->last_color == 0) {
@@ -113,20 +113,15 @@ void MCTS::run_a_cycle() {
                 board.add_white_to_path(node->last_pos);
             }
             board.add_piece(node->last_pos, node->last_color);
-
         }
     }
 
     board.recheck_move(bone, wone, two, bsize, wsize, tsize);
 
-    if ((board.just_play_color() == BLACK) && (wsize + tsize) == 0) {
-        result = 1;
-    } else if (board.just_play_color() == WHITE && (bsize + tsize) == 0) {
-        result = -1;
-    } else {
-        result = board.simulate(!board.just_play_color(), bone, wone, two, bsize, wsize, tsize);
-    }
-    update(result, board);
+    if ((board.just_play_color() == BLACK) && (wsize + tsize) == 0) outcome = 1;
+    else if (board.just_play_color() == WHITE && (bsize + tsize) == 0) outcome = -1;
+    else outcome = board.simulate(!board.just_play_color(), bone, wone, two, bsize, wsize, tsize);
+    update(outcome, board);
 }
 
 void MCTS::reset(Board &board) {
