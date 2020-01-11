@@ -16,7 +16,7 @@
 #define ull unsigned long long
 #define BLACK 0
 #define WHITE 1
-#define SIM_TIMES 50000
+#define SIM_TIMES 200000
 #define PARENT_SIMS 0
 
 #define C_BIAS 0.25
