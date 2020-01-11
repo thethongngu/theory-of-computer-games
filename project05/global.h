@@ -14,8 +14,8 @@
 #define BOARDSIZE 9
 #define NUM_CELL 81
 #define ull unsigned long long
-#define BLACK 0
-#define WHITE 1
+#define BLACK false
+#define WHITE true
 #define MSLIMIT 9500
 #define PARENT_SIMS 0
 
