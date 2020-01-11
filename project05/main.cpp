@@ -5,6 +5,8 @@
 #include <sstream>
 #include <iterator>
 #include <cmath>
+#include <ctime>
+#include <chrono>
 
 #include "global.h"
 #include "MCTS.h"
@@ -153,14 +155,28 @@ bool make_input_move(Board &board, const std::vector<std::string> &args) {
 
 int make_AI_move(Board &board, int color) {
     tree.reset(board);
-    for (int i = 0; i < SIM_TIMES; i++) {
-        tree.run_a_cycle();
+
+    auto start = std::chrono::high_resolution_clock::now();
+    int num_sims = 0;
+    while (true) {
+        for (int i = 0; i < 10000; i++) tree.run_a_cycle();
+        num_sims += 10000;
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> fp_ms = end - start;
+        auto elapsed = fp_ms.count();
+        debug(elapsed);
+        if (elapsed > MSLIMIT) break;
     }
+
+//    for (int i = 0; i < 200000; i++) tree.run_a_cycle();
 
     int child_id = tree.root->get_max_move();
     double mean = (tree.root->child_ptr + child_id)->mean;
     int best_move = (mean < 0.1) ? -1 : (tree.root->child_ptr + child_id)->last_pos;
     tree.clear();
+
+
+    debug(num_sims);
     debug(mean);
 
     return best_move;
@@ -181,7 +197,7 @@ void exec_command(const std::string &raw_command) {
         response = get_response(true, command, "2");
 
     } else if (head == "name") {
-        response = get_response(true, command, "0860832_" + std::to_string(SIM_TIMES));
+        response = get_response(true, command, "0860832_" + std::to_string(MSLIMIT));
 
     } else if (head == "version") {
         response = get_response(true, command, "0.0");
