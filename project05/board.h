@@ -61,7 +61,7 @@ public:
 
     bool can_move(int pos, bool color);
 
-    int just_play_color();
+    int last_color();
 
     void recheck_move(int *black_one, int *white_one, int *two, int &bsize, int &wsize, int &tsize);
 
@@ -69,7 +69,7 @@ public:
 
     double simulate(bool color, int one_black[NUM_CELL], int one_white[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
 
-    void add_game_path(int pos, bool color) {
+    inline void add_game_path(int pos, bool color) {
         if (color == BLACK) black_path[num_black++] = pos;
         else white_path[num_white++] = pos;
     }

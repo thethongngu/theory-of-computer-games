@@ -154,12 +154,12 @@ bool make_input_move(Board &board, const std::vector<std::string> &args) {
 }
 
 int make_AI_move(Board &board, int color) {
-    tree.reset(board);
+    tree.reset_tree(board);
 
     auto start = std::chrono::high_resolution_clock::now();
     int num_sims = 0;
     while (true) {
-        for (int i = 0; i < 15000; i++) tree.run_a_cycle();
+        for (int i = 0; i < 15000; i++) tree.run_once();
         num_sims += 15000;
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> fp_ms = end - start;

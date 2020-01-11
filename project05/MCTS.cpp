@@ -53,7 +53,7 @@ Node *MCTS::get_UTC_RAVE(Node *node) {
     return (node->child_ptr + best_id);
 }
 
-void MCTS::select(Board &board) {
+void MCTS::selection(Board &board) {
 
     Node *node = root;
     Board::num_black = 0;  Board::num_white = 0;
@@ -69,7 +69,7 @@ void MCTS::select(Board &board) {
     }
 }
 
-void MCTS::update(double result, Board &board) {
+void MCTS::backpropagation(double result, Board &board) {
 
     for (int i = 0; i < tree_path.size(); i++) {
         tree_path[i]->add_normal_result(result);
@@ -87,12 +87,12 @@ void MCTS::update(double result, Board &board) {
     }
 }
 
-void MCTS::run_a_cycle() {
+void MCTS::run_once() {
 
     double outcome;
     Board board = root_board;
 
-    select(board);
+    selection(board);
     Node &leaf = (*(tree_path.back()));
     Node *node;
 
@@ -108,17 +108,17 @@ void MCTS::run_a_cycle() {
 
     board.recheck_move(black_one, white_one, two, num_black, num_white, num_two);
 
-    if ((board.just_play_color() == BLACK) && (num_white + num_two) == 0) outcome = 1;
-    else if (board.just_play_color() == WHITE && (num_black + num_two) == 0) outcome = -1;
-    else outcome = board.simulate(!board.just_play_color(), black_one, white_one, two, num_black, num_white, num_two);
-    update(outcome, board);
+    if ((board.last_color() == BLACK) && (num_white + num_two) == 0) outcome = 1;
+    else if (board.last_color() == WHITE && (num_black + num_two) == 0) outcome = -1;
+    else outcome = board.simulate(!board.last_color(), black_one, white_one, two, num_black, num_white, num_two);
+    backpropagation(outcome, board);
 }
 
-void MCTS::reset(Board &board) {
+void MCTS::reset_tree(Board &board) {
 
     root_board = board;
     root = new Node;
-    root->last_color = root_board.just_play_color();
+    root->last_color = root_board.last_color();
     root->last_pos = 81;
     root->count = PARENT_SIMS;
     root->log_count = 1;

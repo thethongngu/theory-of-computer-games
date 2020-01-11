@@ -99,7 +99,7 @@ bool Board::can_move(int pos, bool color) {
     return false;
 }
 
-int Board::just_play_color() {
+int Board::last_color() {
     int bc = state[0].count();
     int wc = state[1].count();
     return (bc == wc) ? WHITE : BLACK;

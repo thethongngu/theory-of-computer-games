@@ -49,7 +49,7 @@ void Node::add_rave_result(double result) {
 
 void Node::expansion(Board &board) {
 
-    bool color = !board.just_play_color();
+    bool color = !board.last_color();
     num_child = 0;
 
     for (int pos = 0; pos < NUM_CELL; pos++) {

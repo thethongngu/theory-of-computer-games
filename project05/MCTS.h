@@ -29,13 +29,13 @@ public:
 
     Node *get_UTC_RAVE(Node *node);
 
-    void select(Board &board);
+    void selection(Board &board);
 
-    void update(double result, Board &board);
+    void backpropagation(double result, Board &board);
 
-    void run_a_cycle();
+    void run_once();
 
-    void reset(Board &board);
+    void reset_tree(Board &board);
 
     void clear();
 };
