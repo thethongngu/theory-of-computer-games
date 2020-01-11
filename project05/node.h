@@ -32,17 +32,7 @@ public:
 
     int get_max_move();
 
-    vector<float> getPolicy();
-
-    void show_child();
-
-    float show_inf(int child);
-
     void expansion(Board &board);
-
-    string inttostring(int i);
-
-    string inttoGTPstring(int i);
 
     Node();
 

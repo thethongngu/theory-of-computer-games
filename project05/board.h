@@ -67,9 +67,7 @@ public:
 
     void clear_all();
 
-    string inttostring(int i);
-
-    double simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
+    double simulate(bool color, int one_black[NUM_CELL], int one_white[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
 
     inline void add_black_to_path(int pos) {
         black_path[num_black] = pos;

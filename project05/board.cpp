@@ -145,17 +145,10 @@ void Board::clear_all() {
     not_2_go[1].clear();
 }
 
+double Board::simulate(
+        bool color, int one_black[NUM_CELL], int one_white[NUM_CELL], int two[NUM_CELL],
+        int bsize, int wsize, int tsize) {
 
-string Board::inttostring(int i) {
-    string s = "A1";
-    s[0] += i / BOARDSIZE;
-    if (s[0] >= 'H')s[0]++;
-    s[1] += i % BOARDSIZE;
-    return s;
-}
-
-double Board::simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int two[NUM_CELL], int bsize, int wsize,
-                       int tsize) {
     int i, pos;
     bool can_black, can_white;
 
@@ -177,10 +170,10 @@ double Board::simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int t
 
         } else {
             if (!can_black && can_white) {
-                wone[wsize] = pos;
+                one_white[wsize] = pos;
                 wsize++;
             } else if (can_black && !can_white) {
-                bone[bsize] = pos;
+                one_black[bsize] = pos;
                 bsize++;
             }
         }
@@ -191,8 +184,8 @@ double Board::simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int t
 
         while (bsize > 0) {
             i = rand() % bsize;
-            pos = bone[i];
-            bone[i] = bone[bsize - 1];
+            pos = one_black[i];
+            one_black[i] = one_black[bsize - 1];
             bsize--;
             if (can_move(pos, color)) {
                 add_piece(pos, color);
@@ -203,8 +196,8 @@ double Board::simulate(bool color, int bone[NUM_CELL], int wone[NUM_CELL], int t
     } else {
         while (wsize > 0) {
             i = rand() % wsize;
-            pos = wone[i];
-            wone[i] = wone[wsize - 1];
+            pos = one_white[i];
+            one_white[i] = one_white[wsize - 1];
             wsize--;
             if (can_move(pos, color)) {
                 add_piece(pos, color);
