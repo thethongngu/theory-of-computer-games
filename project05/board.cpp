@@ -105,30 +105,21 @@ int Board::just_play_color() {
     return (bc == wc) ? WHITE : BLACK;
 }
 
-void Board::recheck_move(int *bone, int *wone, int *two, int &bsize, int &wsize, int &tsize) {
+void Board::recheck_move(int *black_one, int *white_one, int *two, int &bsize, int &wsize, int &tsize) {
 
     bool can_black, can_white;
     bsize = wsize = tsize = 0;
 
-    for (int i = 0; i < NUM_CELL; i++) {
-        if (!state[0].get(i) && !state[1].get(i)) {
+    for (int pos = 0; pos < NUM_CELL; pos++) {
 
-            can_black = can_move(i, BLACK);
-            can_white = can_move(i, WHITE);
+        if (state[0].get(pos) || state[1].get(pos)) continue;
+        can_black = can_move(pos, BLACK);
+        can_white = can_move(pos, WHITE);
 
-            if (can_black && can_white) {
-                two[tsize] = i;
-                tsize++;
-            } else {
-                if (can_black) {
-                    bone[bsize] = i;
-                    bsize++;
-                } else if (can_white) {
-                    wone[wsize] = i;
-                    wsize++;
-                }
-            }
-        }
+        if (!can_black && !can_white) continue;
+        if (can_black && can_white) two[tsize++] = pos;
+        else if (can_black) black_one[bsize++] = pos;
+        else white_one[wsize++] = pos;
     }
 }
 

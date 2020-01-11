@@ -63,7 +63,7 @@ public:
 
     int just_play_color();
 
-    void recheck_move(int *bone, int *wone, int *two, int &bsize, int &wsize, int &tsize);
+    void recheck_move(int *black_one, int *white_one, int *two, int &bsize, int &wsize, int &tsize);
 
     void clear_all();
 
