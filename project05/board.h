@@ -69,13 +69,8 @@ public:
 
     double simulate(bool color, int one_black[NUM_CELL], int one_white[NUM_CELL], int two[NUM_CELL], int bsize, int wsize, int tsize);
 
-    inline void add_black_to_path(int pos) {
-        black_path[num_black] = pos;
-        num_black++;
-    }
-
-    inline void add_white_to_path(int pos) {
-        white_path[num_white] = pos;
-        num_white++;
+    void add_game_path(int pos, bool color) {
+        if (color == BLACK) black_path[num_black++] = pos;
+        else white_path[num_white++] = pos;
     }
 };

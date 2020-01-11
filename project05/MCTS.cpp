@@ -64,12 +64,7 @@ void MCTS::select(Board &board) {
     while (node->child_ptr != nullptr && node->num_child != 0) {
         node = get_UTC_RAVE(node);
         path.push_back(node);
-
-        if (node->last_color == BLACK) {
-            board.add_black_to_path(node->last_pos);
-        } else {
-            board.add_white_to_path(node->last_pos);
-        }
+        board.add_game_path(node->last_pos, node->last_color);
         board.add_piece(node->last_pos, node->last_color);
     }
 }
@@ -106,12 +101,7 @@ void MCTS::run_a_cycle() {
         if (leaf.num_child != 0) {
             node = get_UTC_RAVE(&leaf);
             path.push_back(node);
-
-            if (node->last_color == 0) {
-                board.add_black_to_path(node->last_pos);
-            } else {
-                board.add_white_to_path(node->last_pos);
-            }
+            board.add_game_path(node->last_pos, node->last_color);
             board.add_piece(node->last_pos, node->last_color);
         }
     }
