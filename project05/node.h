@@ -38,7 +38,7 @@ public:
 
     float show_inf(int child);
 
-    void expansion(Board &b);
+    void expansion(Board &board);
 
     string inttostring(int i);
 

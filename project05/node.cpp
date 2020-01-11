@@ -47,22 +47,21 @@ void Node::add_rave_result(double result) {
     rave_count += 1;
 }
 
-void Node::expansion(Board &b) {
+void Node::expansion(Board &board) {
 
-    int pos;
-    bool color;
-    color = !b.just_play_color();
+    bool color = !board.just_play_color();
     num_child = 0;
-    for (pos = 0; pos < NUM_CELL; pos++) {
-        if (b.can_move(pos, color)) num_child++;
+
+    for (int pos = 0; pos < NUM_CELL; pos++) {
+        if (board.can_move(pos, color)) num_child++;
     }
     if (num_child == 0) return;
 
     child_ptr = new Node[num_child];
 
     int child_id = 0;
-    for (pos = 0; pos < NUM_CELL; pos++) {
-        if (b.can_move(pos, color)) {
+    for (int pos = 0; pos < NUM_CELL; pos++) {
+        if (board.can_move(pos, color)) {
             child_pos[pos] = child_id;
             child_ptr[child_id].init_node(pos, color);
             child_id++;

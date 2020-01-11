@@ -26,7 +26,7 @@ public:
     vector<Node *> path;
     int bsize, wsize, tsize;
     int bone[NUM_CELL], wone[NUM_CELL], two[NUM_CELL];
-    int sbnum, swnum;//select num
+    int sbnum, swnum;
     int total;
     int totalnode;
 

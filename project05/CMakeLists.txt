@@ -3,4 +3,15 @@ project(project05)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(project05 main.cpp bit_board.h global.h board.cpp MCTS.cpp node.cpp board.h node.h MCTS.h)
+include_directories(.)
+
+add_executable(project05
+        bit_board.h
+        board.cpp
+        board.h
+        global.h
+        main.cpp
+        MCTS.cpp
+        MCTS.h
+        node.cpp
+        node.h)
